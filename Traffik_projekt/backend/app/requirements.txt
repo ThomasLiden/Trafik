@@ -1,0 +1,3 @@
+## Lista på Python-paket som behövs eller andra tekniker 
+## som man behöver installera, skriv gärna upp om ni 
+## använder något som man behöver installera!
