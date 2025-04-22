@@ -14,3 +14,14 @@ dist/
 
 # OS-filer
 Thumbs.db
+
+
+# Python cachefiler
+__pycache__/
+*.py[cod]
+
+#  Paketcache
+*.egg-info/
+pip-wheel-metadata/
+
+get-pip.py

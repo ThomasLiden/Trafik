@@ -7,3 +7,5 @@
 
 supabase
 python-dotenv
+flask
+flask-cors
