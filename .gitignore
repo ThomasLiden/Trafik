@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.env
+*.env.*
+.env
+.DS_Store
+.vscode/
+.idea/
+
+# Node.js (för frontend/Vue)
+node_modules/
+dist/
+
+# OS-filer
+Thumbs.db
+
+
+# Python cachefiler
+__pycache__/
+*.py[cod]
+
+#  Paketcache
+*.egg-info/
+pip-wheel-metadata/
+
+get-pip.py

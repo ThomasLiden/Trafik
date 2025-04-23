@@ -1,0 +1,11 @@
+## Lista på Python-paket som behövs eller andra tekniker 
+## som man behöver installera, skriv gärna upp om ni 
+## använder något som man behöver installera!
+
+## för databas: Python 3.12 (rekommenderat) eller annan version med pip
+
+
+supabase
+python-dotenv
+flask
+flask-cors
