@@ -1,21 +1,15 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Bli medlem</title>
   <script src="https://unpkg.com/vue@3"></script>
 </head>
 <body>
   <div id="app">
-    <h2>Bli medlem</h2>
-    <form @submit.prevent="signup">
-      <input v-model="email" type="email" placeholder="E-post" required>
-      <input v-model="password" type="password" placeholder="Lösenord" required>
-      <button type="submit">Skapa konto</button>
-    </form>
-    <p v-if="message">{{ message }}</p>
+    <signup-form></signup-form>
   </div>
 
-  <script src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
