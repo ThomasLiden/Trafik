@@ -1,5 +1,5 @@
 # Alla ruttter samlade i en blueprint! 
-#De andra är ej aktiva just nu, tror det är smartast att ha de samlade såhär 
+# De andra är ej aktiva just nu, tror det är smartast att ha de samlade såhär 
 
 from flask import Blueprint, request, jsonify
 from models.supabase_client import supabase
