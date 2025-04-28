@@ -1,6 +1,9 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyc 
+*.pyo 
+*.pyd
 *.env
 *.env.*
 .env
@@ -8,13 +11,12 @@ __pycache__/
 .vscode/
 .idea/
 
-# Node.js (för frontend/Vue)
-node_modules/
-dist/
+# Virtual enviroments
+venv/
+.env/
 
 # OS-filer
 Thumbs.db
-
 
 # Python cachefiler
 __pycache__/
@@ -25,3 +27,11 @@ __pycache__/
 pip-wheel-metadata/
 
 get-pip.py
+
+#Node
+node_modules/
+dist/
+build/
+*.log
+
+
