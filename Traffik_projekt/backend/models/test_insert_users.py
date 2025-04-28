@@ -6,7 +6,7 @@ new_user = {
     "id": str(uuid.uuid4()),
     "name": "Test Testsson",
     "phone": "0701234567",
-    "email": "test@example.com"
+    "email": "katja.bjorlinger@gmail.com"
 }
 
 # Försök att skriva till tabellen "users"
