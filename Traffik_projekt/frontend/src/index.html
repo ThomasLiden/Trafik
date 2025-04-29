@@ -1,18 +1,33 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8" />
-  <title>Bli medlem</title>
-  <script src="https://unpkg.com/vue@3"></script>
+  <meta charset="UTF-8">
+  <title>Trafiknotiser</title>
+  <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.js"></script>
+  <script src="app.js" type="module" defer></script>
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <div id="app">
-    <signup-form></signup-form>
-    <login-form></login-form>
-    <reset-password-form></reset-password-form>
-    <update-profile-form></update-profile-form>
-  </div>
+    <div class="map-section">
+      <iframe src="https://www.google.com/maps/embed" width="800" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+      <div class="buttons">
+        <button @click="openModal('login')">Logga in</button>
+        <button @click="showSubscriptionModal = true">Prenumerera</button>
 
-  <script type="module" src="./app.js"></script>
+        <subscription-modal v-if="showSubscriptionModal" @close="showSubscriptionModal = false"></subscription-modal>
+
+
+      </div>
+    </div>
+
+    <div class="modal" v-if="modalView">
+      <div class="modal-content">
+        <button class="close" @click="closeModal">X</button>
+        <login-form v-if="modalView === 'login'"></login-form>
+        <signup-form v-if="modalView === 'signup'"></signup-form>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
