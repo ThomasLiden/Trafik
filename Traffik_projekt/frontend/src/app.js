@@ -1,8 +1,10 @@
 import SignupForm from "./components/SignupForm.js";
+import PaymentPage from "./components/PaymentPage.js";  
 const { createApp } = Vue;
 
 createApp({
   components: {
-    SignupForm
+    SignupForm,               
+    PaymentPage           
   }
 }).mount("#app");
