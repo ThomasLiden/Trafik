@@ -1,68 +1,111 @@
 body {
-    font-family: Arial, sans-serif;
-    background: #f0f4f8;
-    margin: 0;
-    padding: 0;
-  }
-  
-  .map-section {
-    position: relative;
-    text-align: center;
-  }
-  
-  .buttons {
-    margin-top: 10px;
-  }
-  
-  button {
-    margin: 10px;
-    padding: 12px 24px;
-    font-size: 18px;
-    cursor: pointer;
-    background-color: black;
-    color: white;
-    border: none;
-    border-radius: 2px;
-    transition: background 0.3s;
-  }
-  
-  button:hover {
-    background-color: #838486;
-  }
-  
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .modal-content {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    position: relative;
-    width: 400px;
-    max-width: 90%;
-  }
-  
-  .close {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: black;
-  }
+  font-family: Arial, sans-serif;
+  background: #f0f4f8;
+  margin: 0;
+  padding: 0;
+}
 
-  .close:hover{
-    background: none;
-  }
-  
+.map-section {
+  position: relative;
+  text-align: center;
+  margin-bottom: 20px; /* Lägg till lite utrymme */
+}
+
+#map {
+  height: 450px; /* Eller den höjd du önskar */
+  width: 800px; /* Eller den bredd du önskar */
+  margin: 0 auto; /* Centrera kartan om dess container är bredare */
+  border: 1px solid #ccc; /* Valfri ram */
+}
+
+.controls {
+  margin-top: 10px;
+  margin-bottom: 10px; /* Lite utrymme under dropdown */
+  text-align: center;
+}
+
+.controls label {
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.controls select {
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.buttons {
+  margin-top: 10px;
+  text-align: center; /* Centrera knapparna */
+}
+
+button {
+  margin: 10px;
+  padding: 12px 24px;
+  font-size: 18px;
+  cursor: pointer;
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 2px;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background-color: #838486;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Se till att modalen ligger över kartan */
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  position: relative;
+  width: 400px;
+  max-width: 90%;
+  z-index: 1001; /* Se till att innehållet ligger över bakgrunden */
+}
+
+.close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: black;
+}
+
+.close:hover{
+  background: none;
+}
+
+
+/* Leaflet popups kan behöva lite justering */
+.leaflet-popup-content-wrapper {
+border-radius: 5px;
+}
+.leaflet-popup-content {
+font-size: 14px;
+line-height: 1.4;
+}
+.leaflet-popup-content h3 {
+margin-top: 0;
+margin-bottom: 5px;
+font-size: 16px;
+}
