@@ -18,10 +18,8 @@ def signup():
     try:
         result = supabase.auth.sign_up({
             "email": email,
-            "password": password,
-            "name": name,
-            "phone": phone
-        }) #kolla om det här räcker för att lagra 
+            "password": password
+        }) #ändrat detta så namn och telefon inte skickas till auth
 
         user = result.user
         if user:

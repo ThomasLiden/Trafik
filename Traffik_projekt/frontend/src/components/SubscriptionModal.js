@@ -1,0 +1,75 @@
+// detta är modalen för prenumerationer, det innehåller flera steg med info och att bli prenumerat
+// ska kopplas till rätt data enligt singup i flask appen
+
+
+export default {
+    name: 'subscription-modal',
+    template: `
+      <div class="modal">
+        <div class="modal-content">
+          <button class="close" @click="$emit('close')">X</button>
+  
+          <div v-if="step === 1">
+            <h2>Prenumerera på trafikinfo</h2>
+            <h3> Steg 1 av 6 </h3>
+            <p>Du kommer få info om olyckor, hinder och vägarbete via SMS.</p>
+            <button @click="nextStep">Fortsätt</button>
+          </div>
+  
+          <div v-if="step === 2">
+            <h3>Steg 1: Välj område</h3>
+            <select v-model="region">
+              <option>Östergötland</option>
+              <option>Stockholm</option>
+            </select>
+            <button @click="nextStep">Nästa</button>
+          </div>
+  
+          <div v-if="step === 3">
+            <h3>Steg 2: Kontaktuppgifter</h3>
+            <input v-model="email" placeholder="E-post" />
+            <input v-model="phone" placeholder="Telefonnummer" />
+            <button @click="nextStep">Nästa</button>
+          </div>
+  
+          <div v-if="step === 4">
+            <h3>Steg 3: Välj händelsetyp</h3>
+            <label><input type="checkbox" v-model="incidentTypes" value="olycka"> Olycka</label>
+            <label><input type="checkbox" v-model="incidentTypes" value="vägarbete"> Vägarbete</label>
+            <button @click="nextStep">Nästa</button>
+          </div>
+  
+          <div v-if="step === 5">
+            <h3>Bekräftelse</h3>
+            <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
+            <p>Till: {{ phone }} ({{ email }})</p>
+            <button @click="submit">Bekräfta</button>
+          </div>
+  
+          <div v-if="step === 6">
+            <h3>Tack!</h3>
+            <p>Du är nu prenumerant.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    data() {
+      return {
+        step: 1,
+        region: '',
+        email: '',
+        phone: '',
+        incidentTypes: []
+      };
+    },
+    methods: {
+      nextStep() {
+        this.step++;
+      },
+      submit() {
+        // validering + anrop till backend här
+        this.step++;
+      }
+    }
+  };
+  

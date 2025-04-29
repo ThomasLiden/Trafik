@@ -1,7 +1,7 @@
 export default {
     template: `
       <div>
-        <h2>Bli medlem</h2>
+        <h2>Skapa prenumeration</h2>
         <form @submit.prevent="signup">
           <input v-model="name" type="text" placeholder="Namn" required />
           <input v-model="email" type="email" placeholder="E-post" required />
