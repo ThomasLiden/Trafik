@@ -4,8 +4,8 @@ export default {
        <div>
          <h2> Återställ lösenord </h2>
          <form @submit.prevent="resetPassword">
-             <input v-model="newPassword" type="password" placeholder="Nytt lösenord" required /> 
-             <button type="submit">Byt lösenord </button>
+             <input v-model="newPassword" type="password" placeholder="Nytt lösenord" class="form-field" required /> 
+             <button type="submit" class="button-primary">Byt lösenord </button>
          </form>
          <p v-if="message">{{ message }} </p>
        </div>

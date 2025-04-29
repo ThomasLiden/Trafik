@@ -6,14 +6,15 @@
   <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.js"></script>
   <script src="app.js" type="module" defer></script>
   <link rel="stylesheet" href="./style.css">
+  <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
 </head>
 <body>
   <div id="app">
     <div class="map-section">
       <iframe src="https://www.google.com/maps/embed" width="800" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
       <div class="buttons">
-        <button @click="openModal('login')">Logga in</button>
-        <button @click="showSubscriptionModal = true">Prenumerera</button>
+        <button @click="openModal('login')" class="button-secondary">Logga in</button>
+        <button @click="showSubscriptionModal = true" class="button-primary">Prenumerera</button>
 
         <subscription-modal v-if="showSubscriptionModal" @close="showSubscriptionModal = false"></subscription-modal>
 
