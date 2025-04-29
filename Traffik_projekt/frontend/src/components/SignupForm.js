@@ -34,6 +34,14 @@ export default {
               password: this.password
             })
           });
+
+          if (data.message) {
+            this.$emit("signup-success", {
+              email: this.email,
+              phone: this.phone
+            });
+          }
+          
   
           const data = await response.json();
           this.message = data.message || data.error;
