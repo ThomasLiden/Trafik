@@ -103,10 +103,10 @@ def get_traffic_situations():
 
     if county_number_filter is not None:
         # Lägg till filter för länsnummer om det finns i requesten
-        # Använd <IN> för att filtrera på värden i en lista (Deviation.County är int[])
-        # Skicka värdet som en sträng följt av ett komma för att matcha API-dokumentationens exempel
-        filter_elements.append(f'<IN name="Deviation.County" value="{county_number_filter}," />')
-        current_app.logger.debug(f"Filtering by County Number: {county_number_filter} ({county_name_filter}) using IN with comma.")
+        # Använd <IN> för att filtrera på värden i en lista (Deviation.CountyNo är int[])
+        # Skicka värdet som en enkel sträng utan extra kommatecken
+        filter_elements.append(f'<IN name="Deviation.CountyNo" value="{county_number_filter}" />')
+        current_app.logger.debug(f"Filtering by County Number: {county_number_filter} ({county_name_filter}) using IN on CountyNo.")
 
     if message_type_value_filter:
         # Lägg till filter för meddelandetypvärde om det finns i requesten
@@ -131,7 +131,7 @@ def get_traffic_situations():
         filter_xml = filter_elements[0] # Använd bara det enda filterelementet
 
     # Definiera XML-frågan till Trafikverkets API
-    # Inkludera nödvändiga fält, inklusive Geometry.SWEREF99TM, Deviation.County och Deviation.MessageTypeValue
+    # Inkludera nödvändiga fält, inklusive Geometry.SWEREF99TM, Deviation.CountyNo och Deviation.MessageTypeValue
     # Säkerställ korrekt XML-struktur och indrag
     xml_query = f"""
 <REQUEST>
@@ -140,14 +140,23 @@ def get_traffic_situations():
         <FILTER>
 {filter_xml}
         </FILTER>
+        <INCLUDE>Deviation.Id</INCLUDE>
         <INCLUDE>Deviation.Header</INCLUDE>
         <INCLUDE>Deviation.CreationTime</INCLUDE>
-        <INCLUDE>Deviation.IconId</INCLUDE>
+        <INCLUDE>Deviation.CountyNo</INCLUDE>
         <INCLUDE>Deviation.Geometry.SWEREF99TM</INCLUDE>
+        <INCLUDE>Deviation.Geometry.WGS84</INCLUDE>
+        <INCLUDE>Deviation.LocationDescriptor</INCLUDE>
         <INCLUDE>Deviation.RoadNumber</INCLUDE>
+        <INCLUDE>Deviation.RoadName</INCLUDE>
+        <INCLUDE>Deviation.PositionalDescription</INCLUDE>
+        <INCLUDE>Deviation.Message</INCLUDE>
         <INCLUDE>Deviation.MessageType</INCLUDE>
         <INCLUDE>Deviation.MessageTypeValue</INCLUDE>
-        <INCLUDE>Deviation.County</INCLUDE>
+        <INCLUDE>Deviation.SeverityText</INCLUDE>
+        <INCLUDE>Deviation.StartTime</INCLUDE>
+        <INCLUDE>Deviation.EndTime</INCLUDE>
+        <INCLUDE>Deviation.IconId</INCLUDE>
     </QUERY>
 </REQUEST>
 """
@@ -180,28 +189,39 @@ def get_traffic_situations():
             if deviation_list and isinstance(deviation_list, list):
                  processed_deviations = []
                  for dev in deviation_list:
-                    # Kontrollera om avvikelsen har geometridata innan bearbetning
-                    if "Geometry" in dev and (dev["Geometry"].get("PointSWEREF99TM") or dev["Geometry"].get("LineSWEREF99TM")):
-                        # current_app.logger.debug(f"Processing Geometry for deviation {dev.get('Id')}")
-                        wkt_geometry_point = dev["Geometry"].get("PointSWEREF99TM")
-                        wkt_geometry_line = dev["Geometry"].get("LineSWEREF99TM")
+                    # Förbättrad hantering av Geometry
+                    geometry_data = dev.get("Geometry")
+                    coordinates = None
+                    if geometry_data:
+                        wkt_geometry_point = geometry_data.get("PointSWEREF99TM")
+                        wkt_geometry_line = geometry_data.get("LineSWEREF99TM")
 
-                        coordinates = extract_coordinates_from_wkt(wkt_geometry_point or wkt_geometry_line)
-
-                        if coordinates:
-                            dev["WGS84Coordinates"] = coordinates
-                            # Lägg till den bearbetade avvikelsen
-                            processed_deviations.append(dev)
+                        if wkt_geometry_point or wkt_geometry_line:
+                             coordinates = extract_coordinates_from_wkt(wkt_geometry_point or wkt_geometry_line)
                         else:
-                             current_app.logger.warning(f"Could not extract valid WGS84 coordinates for deviation: {dev.get('Id')}. WKT Point: {dev['Geometry'].get('PointSWEREF99TM')}, WKT Line: {dev['Geometry'].get('LineSWEREF99TM')}")
+                             # Logga Geometry-objektet om det finns men saknar förväntade nycklar
+                             current_app.logger.warning(f"Geometry object found for deviation {dev.get('Id')} but missing PointSWEREF99TM or LineSWEREF99TM. Geometry data: {geometry_data}")
+
+
+                    if coordinates:
+                        dev["WGS84Coordinates"] = coordinates
+                        # Lägg till den bearbetade avvikelsen
+                        processed_deviations.append(dev)
                     else:
-                        # Logga om Geometry saknas eller är tom för en avvikelse
-                        current_app.logger.warning(f"Geometry object missing or empty for deviation: {dev.get('Id')}")
+                         # Logga varning om Geometry saknades helt eller om koordinater inte kunde extraheras
+                         current_app.logger.warning(f"Could not process geometry for deviation: {dev.get('Id')}. Geometry data present: {bool(geometry_data)}. Coordinates extracted: {bool(coordinates)}")
 
 
                  # Lägg bara till situationen om den innehåller bearbetade avvikelser med koordinater
                  if processed_deviations:
-                    situation["Deviation"] = processed_deviations # Uppdatera Deviation med bearbetade avvikelser
+                    # Uppdatera Deviation med bearbetade avvikelser
+                    # Lägg till länsnamnet baserat på CountyNo för enklare användning i frontend
+                    for p_dev in processed_deviations:
+                         # CountyNo är en lista, ta det första elementet för uppslagning
+                         county_number = p_dev.get("CountyNo", [None])[0]
+                         p_dev["CountyName"] = COUNTY_NUMBER_TO_NAME.get(county_number, f"Okänt län ({county_number})")
+
+                    situation["Deviation"] = processed_deviations
                     processed_situations.append(situation)
             else:
                  # Logga varning om Deviation saknas eller inte är en lista för en situation
