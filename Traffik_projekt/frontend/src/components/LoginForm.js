@@ -5,11 +5,11 @@ export default {
     <div>
       <h2> Logga in </h2>
       <form @submit.prevent="login">
-         <input v-model="email" type="email" placeholder="E-post" required />
-         <input v-model="password" type="password" placeholder="Lösenord" required />
-         <button type="submit"> Logga in </button>
+         <input v-model="email" type="email" placeholder="E-post"  class="form-field" required />
+         <input v-model="password" type="password" placeholder="Lösenord" class="form-field" required />
+         <button type="submit" class="button-primary"> Logga in </button-primary>
       </form>
-      <button @click="forgotPassword" style="margin-top: 1rem;">Glömt lösenord?</button>
+      <button @click="forgotPassword" style="margin-top: 1rem;" class="button-tertiary">Glömt lösenord?</button>
       <p v-if="message">{{ message }}</p>
     </div>
     `,

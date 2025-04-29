@@ -15,18 +15,17 @@ export default {
   
           <div v-if="step === 1">
             <h2>Prenumerera på trafikinfo</h2>
-            <h3> Steg 1 av 6 </h3>
             <p>Du kommer få info om olyckor, hinder och vägarbete via SMS.</p>
-            <button @click="nextStep">Fortsätt</button>
+            <button class="button-primary" @click="nextStep">Fortsätt</button>
           </div>
   
           <div v-if="step === 2">
-            <h3>Steg 1: Välj område</h3>
-            <select v-model="region">
-              <option>Östergötland</option>
-              <option>Stockholm</option>
+            <h3>Steg 1 av 4: Välj område</h3>
+            <select v-model="region" class="option" >
+              <option class="option-text">Östergötland</option>
+              <option class="option-text">Stockholm</option>
             </select>
-            <button @click="nextStep">Nästa</button>
+            <button @click="nextStep" class="button-primary">Nästa</button>
           </div>
   
           <div v-if="step === 3">
@@ -34,17 +33,17 @@ export default {
           </div>
   
           <div v-if="step === 4">
-            <h3>Steg 3: Välj händelsetyp</h3>
+            <h3>Steg 2 av 4: Välj händelsetyp</h3>
             <label><input type="checkbox" v-model="incidentTypes" value="olycka"> Olycka</label>
             <label><input type="checkbox" v-model="incidentTypes" value="vägarbete"> Vägarbete</label>
-            <button @click="nextStep">Nästa</button>
+            <button @click="nextStep" class="button-primary">Nästa</button>
           </div>
   
           <div v-if="step === 5">
             <h3>Bekräftelse</h3>
             <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
             <p>Till: {{ phone }} ({{ email }})</p>
-            <button @click="submit">Bekräfta</button>
+            <button @click="submit" class="button-primary">Bekräfta</button>
           </div>
   
           <div v-if="step === 6">

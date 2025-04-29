@@ -1,17 +1,53 @@
 export default {
     template: `
-      <div>
-        <h2>Skapa prenumeration</h2>
-        <form @submit.prevent="signup">
-          <input v-model="name" type="text" placeholder="Namn" required />
-          <input v-model="email" type="email" placeholder="E-post" required />
-          <input v-model="phone" type="text" placeholder="Telefonnummer" required />
-          <input v-model="password" type="password" placeholder="Lösenord" required />
-          <button type="submit">Skapa konto</button>
-        </form>
-        <p v-if="message">{{ message }}</p>
+  <div class="signup-modal-content">
+    <div class="form-header">
+      <h2>Steg 2/4: Registrera dig</h2>
+      <p>Vänligen fyll i alla obligatoriska fält innan du går vidare.</p>
+    </div>
+
+    <form class="signup-form" @submit.prevent="signup">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Förnamn <span class="required">*</span></label>
+          <input v-model="firstName" type="text" required />
+        </div>
+        <div class="form-group">
+          <label>Efternamn <span class="required">*</span></label>
+          <input v-model="lastName" type="text" required />
+        </div>
       </div>
-    `,
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Mobilnummer <span class="required">*</span></label>
+          <input v-model="phone" type="text" required />
+        </div>
+        <div class="form-group">
+          <label>E-post <span class="required">*</span></label>
+          <input v-model="email" type="email" required />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Lösenord <span class="required">*</span></label>
+          <input v-model="password" type="password" required />
+          <small>Minst 8 tecken, varav en versal och en siffra.</small>
+        </div>
+        <div class="form-group">
+          <label>Bekräfta lösenord <span class="required">*</span></label>
+          <input v-model="confirmPassword" type="password" required />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="button-primary" type="submit">Gå vidare</button>
+      </div>
+    </form>
+  </div>
+`
+,
     data() {
       return {
         name: "",
