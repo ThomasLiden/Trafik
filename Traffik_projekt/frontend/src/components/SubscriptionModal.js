@@ -1,9 +1,13 @@
 // detta är modalen för prenumerationer, det innehåller flera steg med info och att bli prenumerat
 // ska kopplas till rätt data enligt singup i flask appen
 
+import SignupForm from "./SignupForm.js";
 
 export default {
     name: 'subscription-modal',
+    components: {
+        SignupForm
+      },
     template: `
       <div class="modal">
         <div class="modal-content">
@@ -26,10 +30,7 @@ export default {
           </div>
   
           <div v-if="step === 3">
-            <h3>Steg 2: Kontaktuppgifter</h3>
-            <input v-model="email" placeholder="E-post" />
-            <input v-model="phone" placeholder="Telefonnummer" />
-            <button @click="nextStep">Nästa</button>
+          <signup-form @signup-success="handleSignupSuccess" />
           </div>
   
           <div v-if="step === 4">
@@ -65,6 +66,11 @@ export default {
     methods: {
       nextStep() {
         this.step++;
+      },
+      handleSignupSuccess(payload) {
+        this.email = payload.email;
+        this.phone = payload.phone;
+        this.nextStep();
       },
       submit() {
         // validering + anrop till backend här
