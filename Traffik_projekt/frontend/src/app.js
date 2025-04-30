@@ -19,7 +19,8 @@ createApp({
     return {
       modalView: null,
       showSubscriptionModal: false,
-      userId: null, page: "map" 
+      userId: null, page: "map", 
+      showSubscriptionModal: false
     };
   },
   methods: {

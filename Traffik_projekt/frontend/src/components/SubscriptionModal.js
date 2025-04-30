@@ -11,12 +11,12 @@ export default {
     template: `
       <div class="modal">
         <div class="modal-content">
-          <button class="close" @click="$emit('close')">X</button>
+           <button class="close" @click="closeModal">X</button>
   
           <div v-if="step === 1">
             <h2>Prenumerera på trafikinfo</h2>
             <p>Du kommer få info om olyckor, hinder och vägarbete via SMS.</p>
-            <button class="button-primary" @click="nextStep">Fortsätt</button>
+            <button class="button-primary" @click="nextStep">Nästa</button>
           </div>
   
           <div v-if="step === 2">
@@ -74,6 +74,9 @@ export default {
       submit() {
         // validering + anrop till backend här
         this.step++;
+      },
+      closeModal() {
+        this.$emit('close');
       }
     }
   };
