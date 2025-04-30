@@ -1,5 +1,5 @@
 // detta är modalen för prenumerationer, det innehåller flera steg med info och att bli prenumerat
-// ska kopplas till rätt data enligt singup i flask appen
+//steg 3 är komponenten signupform
 
 import SignupForm from "./SignupForm.js";
 
@@ -72,7 +72,7 @@ export default {
         this.nextStep();
       },
       submit() {
-        // validering + anrop till backend här
+        
         this.step++;
       },
       closeModal() {

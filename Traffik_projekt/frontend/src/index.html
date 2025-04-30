@@ -21,7 +21,7 @@
   </head>
   <body>
     <div id="app">
-      <!-- Kartsektionen visas alltid när vi inte är på overview -->
+      <!-- Kartsektionen-->
       <div v-if="page !== 'overview'" class="map-section">
         <iframe src="https://www.google.com/maps/embed" width="800" height="450"
                 style="border:0;" allowfullscreen="" loading="lazy"></iframe>
@@ -41,7 +41,7 @@
                       @login-success="onLoginSuccess"
           ></login-form>
           
-          <!-- Signup (för prenumerationens steg 3) -->
+          <!-- Subscription modal som innehåller signupform -->
           <subscription-modal v-if="modalView === 'signup'"
                        @signup-success="onSignupSuccess"
                        @close="closeModal"
@@ -51,7 +51,7 @@
         </div>
       </div>
   
-      <!-- Översiktssidan när inloggad -->
+      <!-- Översiktssidan för inloggadanvändare-->
       <logged-in-user v-if="page === 'overview'"
                       :user-id="userId"
                       @logout="onLogout"

@@ -7,40 +7,6 @@ from models.supabase_client import supabase
 member_blueprint = Blueprint('member', __name__)
 
 #Registrering
-""" @member_blueprint.route('/api/signup', methods=['POST'])
-def signup():
-    data = request.get_json()
-    email = data.get("email")
-    password = data.get("password")
-    first_name = data.get("first_name")
-    last_name = data.get("last_name")
-    phone = data.get("phone")
-
-    try:
-        result = supabase.auth.sign_up({
-            "email": email,
-            "password": password
-        }) #ändrat detta så namn och telefon inte skickas till auth
-
-        user = result.user
-        if user:
-            user_id = user.id
-
-            supabase.table("users").insert({
-                "user_id": user_id, #ändrat från id
-                "email": email,
-                "first_name": first_name,
-                "last_name": last_name,
-                "phone": phone
-            }).execute()
-
-        return jsonify({"message": "User created", "email": email}), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400 """
-
-
-#lagt in en ny signup för med felsökning
 @member_blueprint.route('/api/signup', methods=['POST'])
 def signup():
     data = request.get_json()

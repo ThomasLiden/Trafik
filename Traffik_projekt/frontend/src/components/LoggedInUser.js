@@ -21,7 +21,7 @@ export default {
         });
         this.profile = await res.json();
   
-        // Hämta abonnemang (gör en ny route t.ex. /api/subscriptions?user_id=…)
+        // Hämta abonnemang
         res = await fetch(`http://127.0.0.1:5000/api/subscriptions?user_id=${this.userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });

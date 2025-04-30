@@ -1,5 +1,7 @@
 
 //Här finns även forgot password, kanske ska flyttas sen när man börjar hålla på med routes?
+
+
 export default {
     template: `
     <div>

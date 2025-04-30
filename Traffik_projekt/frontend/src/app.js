@@ -37,11 +37,8 @@ createApp({
     },
 
     onSignupSuccess(payload) {
-      // Här kan du både ta emot email/phone och
-      // byta vidare till prenumerations-stegen i en flerstegs-modal
       console.log('Signup lyckades, payload:', payload);
       this.closeModal();
-      // ex. this.openModal('subscriptionFlow');
     },
     onLogout() {
       this.userId = null;
