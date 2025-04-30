@@ -42,11 +42,12 @@
           ></login-form>
           
           <!-- Signup (för prenumerationens steg 3) -->
-          <signup-form v-if="modalView === 'signup'"
+          <subscription-modal v-if="modalView === 'signup'"
                        @signup-success="onSignupSuccess"
-          ></signup-form>
+                       @close="closeModal"
+          ></subscription-modal>
           
-          <!-- Här kan du i framtiden lägga flerstegs-modalen för prenumeration -->
+          <
         </div>
       </div>
   

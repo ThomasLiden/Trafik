@@ -5,7 +5,8 @@ export default {
       <div>
         <h2>Ändra kontaktuppgifter</h2>
         <form @submit.prevent="updateProfile">
-          <input v-model="name" type="text" placeholder="Namn" />
+          <input v-model="first_name" type="text" placeholder="Förnamn" />
+          <input v-model="last_name" type="text" placeholder="Efternamn" />
           <input v-model="email" type="email" placeholder="E-post" />
           <input v-model="phone" type="text" placeholder="Telefonnummer" />
           <button type="submit">Spara</button>
