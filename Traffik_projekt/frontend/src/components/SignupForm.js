@@ -79,7 +79,6 @@ export default {
           const data = await response.json();
 
           if (!response.ok) {
-            // Visa exakt det fel som backend returnerar
             this.message = data.error || data.message || "Något gick fel.";
             return;
           }
