@@ -10,11 +10,11 @@ export default {
       <div class="form-row">
         <div class="form-group">
           <label>Förnamn <span class="required">*</span></label>
-          <input v-model="firstName" type="text" required />
+          <input v-model="first_name" type="text" required />
         </div>
         <div class="form-group">
           <label>Efternamn <span class="required">*</span></label>
-          <input v-model="lastName" type="text" required />
+          <input v-model="last_name" type="text" required />
         </div>
       </div>
 
@@ -35,11 +35,9 @@ export default {
           <input v-model="password" type="password" required />
           <small>Minst 8 tecken, varav en versal och en siffra.</small>
         </div>
-        <div class="form-group">
-          <label>Bekräfta lösenord <span class="required">*</span></label>
-          <input v-model="confirmPassword" type="password" required />
-        </div>
+
       </div>
+      <p v-if="message" class="error-message">{{ message }}</p>
 
       <div class="form-actions">
         <button class="button-primary" type="submit">Gå vidare</button>
@@ -50,7 +48,8 @@ export default {
 ,
     data() {
       return {
-        name: "",
+        first_name: "",
+        last_name: "",
         phone: "",
         email: "",
         password: "",
@@ -59,33 +58,46 @@ export default {
     },
     methods: {
       async signup() {
+        this.message = ""; 
         try {
+          const payload = {
+            first_name: this.first_name,
+            last_name: this.last_name,
+            phone: this.phone,
+            email: this.email,
+            password: this.password
+          };
+      
+          console.log(" Payload som skickas:", payload);
+      
           const response = await fetch("http://127.0.0.1:5000/api/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: this.name,
-              phone: this.phone,
-              email: this.email,
-              password: this.password
-            })
+            body: JSON.stringify(payload)
           });
+      
+          const data = await response.json();
 
+          if (!response.ok) {
+            // Visa exakt det fel som backend returnerar
+            this.message = data.error || data.message || "Något gick fel.";
+            return;
+          }
+      
           if (data.message) {
             this.$emit("signup-success", {
               email: this.email,
               phone: this.phone
             });
           }
-          
-  
-          const data = await response.json();
+      
           this.message = data.message || data.error;
         } catch (error) {
           this.message = "Fel vid registrering.";
           console.error(error);
         }
       }
+      
     }
   };
   

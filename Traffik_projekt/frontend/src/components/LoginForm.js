@@ -5,9 +5,15 @@ export default {
     <div>
       <h2> Logga in </h2>
       <form @submit.prevent="login">
+        <div>
+        <label>E-post <span class="required">*</span></label>
          <input v-model="email" type="email" placeholder="E-post"  class="form-field" required />
+         </div>
+         <div>
+         <label>Lösenord<span class="required">*</span></label>
          <input v-model="password" type="password" placeholder="Lösenord" class="form-field" required />
-         <button type="submit" class="button-primary"> Logga in </button-primary>
+         </div>
+         <button type="submit" class="button-primary"> Logga in </button>
       </form>
       <button @click="forgotPassword" style="margin-top: 1rem;" class="button-tertiary">Glömt lösenord?</button>
       <p v-if="message">{{ message }}</p>
@@ -34,13 +40,21 @@ export default {
 
             const data = await response.json();
 
+         
+
             if (response.ok) {
                 //Token och user_id sparas i localStorage
+                
                 localStorage.setItem("access_token", data.access_token);
-                localStorage.setItem("user_id, data.user_id");
+                localStorage.setItem("user_id", data.user_id);
+
 
                 this.message = "Inloggning lyckades!";
                 console.log("Inloggad:", data); 
+
+                this.$emit("login-success", { user_id: data.user_id });
+
+                
             } else {
                 this.message = data.error || "Fel vid inloggning";
             }
@@ -53,6 +67,7 @@ export default {
 
 //forgot password
         async forgotPassword() {
+            this.message = "";
           try {
             const response = await fetch("http://127.0.0.1:5000/api/forgot-password", {
                 method: "POST",
