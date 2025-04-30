@@ -4,6 +4,7 @@ import ResetPasswordForm from "./components/ResetPasswordForm.js";
 //import UpdateProfileForm from "./components/UpdateProfileForm.js";
 const { createApp } = Vue;
 import SubscriptionModal from "./components/SubscriptionModal.js";
+import LoggedInUser from "./components/LoggedInUser.js";
 
 
 createApp({
@@ -11,12 +12,14 @@ createApp({
     SignupForm,
     LoginForm,
     ResetPasswordForm, 
-    SubscriptionModal
+    SubscriptionModal,
+    LoggedInUser
   },
   data() {
     return {
       modalView: null,
-      showSubscriptionModal: false
+      showSubscriptionModal: false,
+      userId: null, page: "map" 
     };
   },
   methods: {
@@ -25,6 +28,23 @@ createApp({
     },
     closeModal() {
       this.modalView = null;
+    },
+    onLoginSuccess(payload) {
+      this.userId = payload.user_id;
+      this.page = "overview";
+      this.closeModal();
+    },
+
+    onSignupSuccess(payload) {
+      // Här kan du både ta emot email/phone och
+      // byta vidare till prenumerations-stegen i en flerstegs-modal
+      console.log('Signup lyckades, payload:', payload);
+      this.closeModal();
+      // ex. this.openModal('subscriptionFlow');
+    },
+    onLogout() {
+      this.userId = null;
+      this.page   = 'map';
     }
   }
 }).mount("#app");

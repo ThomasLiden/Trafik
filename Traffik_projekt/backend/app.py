@@ -9,7 +9,7 @@ from routes.member import member_blueprint
 #from routes.profile import edit_profile_blueprint
 
 app = Flask(__name__)
-CORS(app)
+CORS(app,supports_credentials=True)
 
 app.register_blueprint(member_blueprint)
 #app.register_blueprint(signup_blueprint)

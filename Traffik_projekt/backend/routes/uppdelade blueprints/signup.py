@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from models.supabase_client import supabase
 
 signup_blueprint = Blueprint('signup', __name__)
-print("✅ signup.py är laddad!")
+print(" signup.py är laddad!")
 
 @signup_blueprint.route('/api/signup', methods=['POST'])
 def signup():
@@ -25,7 +25,7 @@ def signup():
             user_id = user.id
 
             supabase.table("users").insert({
-                "id": user_id,
+                "user_id": user_id, #ändrat från id till user_id efter 400 fel
                 "email": email,
                 "name": name,
                 "phone": phone

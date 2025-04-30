@@ -9,26 +9,55 @@
   <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
 </head>
 <body>
-  <div id="app">
-    <div class="map-section">
-      <iframe src="https://www.google.com/maps/embed" width="800" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-      <div class="buttons">
-        <button @click="openModal('login')" class="button-secondary">Logga in</button>
-        <button @click="showSubscriptionModal = true" class="button-primary">Prenumerera</button>
-
-        <subscription-modal v-if="showSubscriptionModal" @close="showSubscriptionModal = false"></subscription-modal>
-
-
+  <!DOCTYPE html>
+  <html lang="sv">
+  <head>
+    <meta charset="UTF-8">
+    <title>Trafiknotiser</title>
+    <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.js"></script>
+    <script src="app.js" type="module" defer></script>
+    <link rel="stylesheet" href="./style.css">
+    <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Kartsektionen visas alltid när vi inte är på overview -->
+      <div v-if="page !== 'overview'" class="map-section">
+        <iframe src="https://www.google.com/maps/embed" width="800" height="450"
+                style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        <div class="buttons">
+          <button @click="openModal('login')" class="button-secondary">Logga in</button>
+          <button @click="openModal('signup')" class="button-primary">Prenumerera</button>
+        </div>
       </div>
-    </div>
-
-    <div class="modal" v-if="modalView">
-      <div class="modal-content">
-        <button class="close" @click="closeModal">X</button>
-        <login-form v-if="modalView === 'login'"></login-form>
-        <signup-form v-if="modalView === 'signup'"></signup-form>
+  
+      <!-- Huvud-modal för login/signup/prenumeration -->
+      <div class="modal" v-if="modalView && page !== 'overview'">
+        <div class="modal-content">
+          <button class="close" @click="closeModal">X</button>
+          
+          <!-- Login -->
+          <login-form v-if="modalView === 'login'"
+                      @login-success="onLoginSuccess"
+          ></login-form>
+          
+          <!-- Signup (för prenumerationens steg 3) -->
+          <signup-form v-if="modalView === 'signup'"
+                       @signup-success="onSignupSuccess"
+          ></signup-form>
+          
+          <!-- Här kan du i framtiden lägga flerstegs-modalen för prenumeration -->
+        </div>
       </div>
+  
+      <!-- Översiktssidan när inloggad -->
+      <logged-in-user v-if="page === 'overview'"
+                      :user-id="userId"
+                      @logout="onLogout"
+      ></logged-in-user>
     </div>
-  </div>
+  </body>
+  </html>
+  
 </body>
 </html>
