@@ -108,13 +108,14 @@ def reset_password():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-#Ändra kontaktuppgifter (påbörjad)
+#Ändra kontaktuppgifter 
 @member_blueprint.route('/api/user-profile', methods = ['GET'])
 def get_user_profile():
     user_id = request.args.get("user_id")
     result = supabase.table("users").select("*").eq("user_id", user_id).single().execute()
     return jsonify(result.data)
 
+#uppdaterar profilen 
 @member_blueprint.route('/api/update-profile', methods=['POST'])
 def update_user_profile():
     data = request.get_json()
@@ -126,3 +127,18 @@ def update_user_profile():
         "phone": data["phone"]
     }).eq("user_id", user_id).execute()
     return jsonify({"message": "Profil uppdaterad!"})
+
+#hämtar prenumerationer för inloggad medlem
+@member_blueprint.route('/api/subscriptions', methods=['GET', 'OPTIONS'])
+def get_subscriptions():
+    # Preflight-svar
+    if request.method == 'OPTIONS':
+        return {}, 200
+
+    user_id = request.args.get("user_id")
+    # Hämta alla subscriptions för just den user_id
+    resp = supabase.table("subscriptions") \
+                   .select("*") \
+                   .eq("user_id", user_id) \
+                   .execute()
+    return jsonify(resp.data), 200

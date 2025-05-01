@@ -21,6 +21,8 @@ export default {
     async mounted() {
       const token = localStorage.getItem("access_token");
       try {
+        if (!this.userId) return;     // ingen userId → inget fetch
+        const token = localStorage.getItem("access_token");
         // Hämta profil
         let res = await fetch(`http://127.0.0.1:5000/api/user-profile?user_id=${this.userId}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -42,10 +44,18 @@ export default {
         localStorage.removeItem("access_token");
         localStorage.removeItem("user_id");
         this.$emit("logout");
+      },
+      backToMap() {
+        // Skicka event uppåt
+        this.$emit("back-to-map");
       }
     },
     template: `
         <div v-if="profile" class="logged-in-user">
+        <button class="button-tertiary" @click="$emit('back-to-map')">
+        Till kartan
+        </button>
+
       <h2>Välkommen, {{ profile.first_name }}!</h2>
       <p>E-post: {{ profile.email }}</p>
       <p>Telefon: {{ profile.phone }}</p>

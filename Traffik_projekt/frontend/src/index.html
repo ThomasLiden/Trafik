@@ -25,8 +25,16 @@
       <div v-if="page !== 'overview'" class="map-section">
         <iframe src="https://www.google.com/maps/embed" width="800" height="450"
                 style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+
         <div class="buttons">
-          <button @click="openModal('login')" class="button-secondary">Logga in</button>
+            <!-- Logga in / till min sida -->
+            <button
+            @click="openModal('login')"
+            class="button-secondary"
+          >
+            {{ loggedIn ? 'Till min sida' : 'Logga in' }}
+          </button>
+
           <button @click="openModal('signup')" class="button-primary">Prenumerera</button>
         </div>
       </div>
@@ -37,9 +45,10 @@
           <button class="close" @click="closeModal">X</button>
           
           <!-- Login -->
-          <login-form v-if="modalView === 'login'"
-                      @login-success="onLoginSuccess"
-          ></login-form>
+          <login-form
+          v-if="modalView==='login' && !loggedIn"
+          @login-success="onLoginSuccess"
+        ></login-form>
           
           <!-- Subscription modal som innehåller signupform -->
           <subscription-modal v-if="modalView === 'signup'"
@@ -54,6 +63,7 @@
       <logged-in-user v-if="page === 'overview'"
                       :user-id="userId"
                       @logout="onLogout"
+                      @back-to-map="goToMap"
       ></logged-in-user>
     </div>
   </body>

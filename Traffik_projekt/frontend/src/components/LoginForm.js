@@ -54,7 +54,10 @@ export default {
                 this.message = "Inloggning lyckades!";
                 console.log("Inloggad:", data); 
 
-                this.$emit("login-success", { user_id: data.user_id });
+                this.$emit("login-success", { 
+                    user_id: data.user_id,
+                    access_token: data.access_token
+                 });
 
                 
             } else {
