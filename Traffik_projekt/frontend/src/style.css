@@ -120,6 +120,13 @@ body {
     position: relative;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
+
+  .logged-in-user{
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 2rem;
+  }
   
   .form-header {
     text-align: center;

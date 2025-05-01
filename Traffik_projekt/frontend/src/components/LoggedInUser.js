@@ -1,6 +1,11 @@
+import UpdateProfileForm from "./UpdateProfileForm.js";
+
+
 export default {
     name: "LoggedInUser",
     props: ["userId"],
+    components: {
+        UpdateProfileForm},
     data() {
       return {
         profile: {
@@ -9,7 +14,8 @@ export default {
             phone: ''
           },
         subscriptions: [],
-        message: ""
+        message: "",
+        editing: false,
       };
     },
     async mounted() {
@@ -39,7 +45,7 @@ export default {
       }
     },
     template: `
-        <div v-if="profile">
+        <div v-if="profile" class="logged-in-user">
       <h2>Välkommen, {{ profile.first_name }}!</h2>
       <p>E-post: {{ profile.email }}</p>
       <p>Telefon: {{ profile.phone }}</p>
@@ -53,6 +59,12 @@ export default {
       </ul>
 
       <button class="button-secondary" @click="logout">Logga ut</button>
+      <button class="button-secondary" @click="editing = true">Ändra uppgifter</button>
+      <update-profile-form v-if="editing"
+         @profile-updated="reloadProfile(); editing = false"
+         @cancel="editing = false"
+            />
+
     </div>
     <p v-else>Laddar profil…</p>
     `
