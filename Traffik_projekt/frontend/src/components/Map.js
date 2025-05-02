@@ -1,22 +1,13 @@
-// map.js
-// This file exports a function (a Vue Composition API "composable")
-// that manages the Leaflet map instance and logic.
+import 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; // Importera Leaflet library
 
-import 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; // Import Leaflet library
-
-// This function is the composable. It takes configuration data and returns methods
-// that a Vue component can call to interact with the map.
 export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
-    let mapInstance = null; // Internal state for the Leaflet map object
-    let trafficMarkers = []; // Internal state for the Leaflet marker objects
+    let mapInstance = null; 
+    let trafficMarkers = [];
 
-    // Function to initialize the map on a specific DOM element
     const initMap = (mapElementId) => {
         console.log("Initializing Leaflet map...");
         if (!mapInstance) {
-            // Create the map instance
-            mapInstance = L.map(mapElementId).setView([62.0, 15.0], 5); // Default view (Sweden)
-            // Add the tile layer
+            mapInstance = L.map(mapElementId).setView([62.0, 15.0], 5);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -27,23 +18,19 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
         }
     };
 
-    // Function to fetch traffic data and update markers on the map
     const updateMapWithTrafficData = async (selectedCountyValue) => {
         console.log(`Attempting to fetch traffic data for county: ${selectedCountyValue}`);
 
-        // Build the API URL with parameters for county and message type
         let url = apiUrl;
         const params = new URLSearchParams();
 
-        // Find county info from the provided list based on the selected value
         const selectedCountyInfo = countyList.find(c => c.value === selectedCountyValue);
         if (selectedCountyInfo && selectedCountyInfo.value) {
              params.append('county', selectedCountyInfo.value); // Pass the county name/value to the backend
         }
-        // Always filter for 'Accident' message type
-        params.append('messageTypeValue', 'Accident');
+        params.append('messageTypeValue', 'Accident,Roadwork');
 
-        url += params.toString(); // Append parameters to the URL
+        url += params.toString(); 
 
         console.log("Fetching from URL:", url);
 
@@ -52,71 +39,64 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            const situations = await response.json(); // Parse the JSON response
+            const situations = await response.json();
             console.log("Received data:", situations);
 
             // --- Map Marker Logic ---
-            // Clear existing markers from the map before adding new ones
             trafficMarkers.forEach(marker => marker.remove());
             trafficMarkers = []; // Reset the array
 
             if (mapInstance && situations && situations.length > 0) {
-                situations.forEach(situation => {
-                    // Process each situation, specifically looking at its Deviations
-                    if (situation.Deviation && Array.isArray(situation.Deviation)) {
-                        situation.Deviation.forEach(deviation => {
-                            // Use the WGS84Coordinates field provided by the backend
-                            const coords = deviation.WGS84Coordinates;
-
-                            if (coords) {
-                                 // Get county name(s) from the county numbers in Deviation.County list
-                                 const countyNames = (deviation.County || [])
-                                     .map(num => countyNumberToName[num] || `Okänt län (${num})`)
-                                     .join(', '); // Join multiple county names if present
-
-
-                                // Create popup content using the deviation data
-                                const popupContent = `
-                                    <h3>${deviation.Header || 'Ingen rubrik'}</h3>
-                                    <p>Väg: ${deviation.RoadNumber || 'N/A'}</p>
-                                    <p>Typ: ${deviation.MessageType || 'N/A'} (${deviation.MessageTypeValue || 'N/A'})</p>
-                                    <p>Län: ${countyNames || 'N/A'}</p>
-                                    <p>Tid: ${deviation.CreationTime ? new Date(deviation.CreationTime).toLocaleString() : 'N/A'}</p>
-                                `;
-
-                                // Create a Leaflet marker at the coordinates and bind the popup
-                                const marker = L.marker(coords)
-                                    .addTo(mapInstance) // Add marker to the map
-                                    .bindPopup(popupContent); // Attach the popup content
-                                trafficMarkers.push(marker); // Store the marker instance
-                            } else {
-                                console.warn("Could not place event on map (missing WGS84Coordinates):", deviation.Header);
-                            }
-                        });
-                    } else {
-                        console.warn("Situation missing Deviation or Deviation is not an array:", situation);
-                    }
+                situations.forEach(deviation => {
+                    // Använd det nya fältet WGS84Coordinates som vi lägger till i backend
+                    const coords = deviation.WGS84Coordinates; // Detta fält finns nu garanterat om deviation är i listan
+           
+                    // Hämta länsnamn från det nya fältet CountyName som vi lägger till i backend
+                    const countyNames = deviation.CountyName || 'N/A'; // Backend skickar nu ett ensamt länsnamn eller 'N/A'
+           
+                    if (coords) { // Kollar igen ifall något oväntat hänt, men borde alltid vara sant
+                         // Skapa popup-innehåll
+                         const popupContent = `
+                             <h3>${deviation.Header || 'Ingen rubrik'}</h3>
+                             <p>Väg: ${deviation.RoadNumber || 'N/A'}</p>
+                             <p>Typ: ${deviation.MessageType || 'N/A'} (${deviation.MessageTypeValue || 'N/A'})</p>
+                             <p>Län: ${countyNames}</p> <p>Tid: ${deviation.CreationTime ? new Date(deviation.CreationTime).toLocaleString() : 'N/A'}</p>
+                         `;
+           
+                         // Skapa markör vid koordinaterna
+                         const marker = L.marker(coords)
+                             .addTo(mapInstance)
+                             .bindPopup(popupContent);
+                         trafficMarkers.push(marker);
+           
+                     } else {
+                         console.warn("Received a deviation without coordinates unexpectedly:", deviation.Header);
+                     }
                 });
-                console.log(`Added ${trafficMarkers.length} markers to the map.`);
-
-                // --- Map Centering/Zooming Logic ---
-                // If markers were added, fit the map bounds to include all markers
-                if (trafficMarkers.length > 0) {
-                     const group = new L.featureGroup(trafficMarkers);
-                     mapInstance.fitBounds(group.getBounds(), { padding: [20, 20] }); // Add some padding around the markers
+                console.log(`La till ${trafficMarkers.value.length} markörer på kartan.`);
+           
+                // Centrera kartan om markörer lades till
+                if (trafficMarkers.value.length > 0) {
+                     const group = new L.featureGroup(trafficMarkers.value);
+                     mapInstance.fitBounds(group.getBounds(), { padding: [20, 20] });
+                } else if (selectedCounty.value) { // Om inga markörer men ett län är valt, centrera på det länet
+                     const countyInfo = countyList.find(c => c.value === selectedCounty.value);
+                     if (countyInfo && mapInstance) {
+                         mapInstance.setView(countyInfo.coords, countyInfo.zoom);
+                     }
                 }
-
+           
+           
             } else {
-                // If no data or no markers, handle map view based on selected county
-                console.log("No traffic data to display for selected county/type.");
-                 const countyInfo = countyList.find(c => c.value === selectedCountyValue);
-                 if (countyInfo && countyInfo.value && mapInstance) {
-                     // If a county is selected but no markers, center on the county's default view
+                console.log("Ingen trafikdata att visa för valt län/typ.");
+                 // Om inget län är valt, centrera på standardvyn
+                const countyInfo = countyList.find(c => c.value === selectedCounty.value);
+                if (countyInfo && mapInstance) {
                      mapInstance.setView(countyInfo.coords, countyInfo.zoom);
-                 } else if (mapInstance) {
-                     // If no county is selected and no markers, revert to the default Sweden view
+                } else if (mapInstance) {
+                     // Centrera på Sverige om inget län är valt och inga markörer finns
                      mapInstance.setView([62.0, 15.0], 5);
-                 }
+                }
             }
 
         } catch (error) {
@@ -131,7 +111,7 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
         }
     };
 
-    // Function to simply center the map on a specific county's default view
+    // Function att centrera kartan via county
     const centerMapOnCounty = (selectedCountyValue) => {
         if (!mapInstance) {
             console.warn("Map not initialized yet, cannot center.");
@@ -144,14 +124,13 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
             mapInstance.setView(countyInfo.coords, countyInfo.zoom);
         } else {
             console.log("Centering map on default view (Sweden).");
-            mapInstance.setView([62.0, 15.0], 5); // Default view (Sweden)
+            mapInstance.setView([62.0, 15.0], 5); 
         }
     };
 
-    // Return the public methods that the Vue component will use
     return {
-        initMap, // Call this once in onMounted
-        updateMapWithTrafficData, // Call this to fetch and display data
-        centerMapOnCounty // Call this to just change the map view
+        initMap, 
+        updateMapWithTrafficData, 
+        centerMapOnCounty 
     };
 }

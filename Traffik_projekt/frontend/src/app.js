@@ -3,7 +3,7 @@ import SignupForm from "./components/SignupForm.js";
 import LoginForm from "./components/LoginForm.js";
 import ResetPasswordForm from "./components/ResetPasswordForm.js";
 import SubscriptionModal from "./components/SubscriptionModal.js";
-import { useTrafficMap } from "./components/map.js"; // Import the new map composable
+import { useTrafficMap } from "./components/map.js"; 
 
 const { createApp, ref, onMounted, watch } = Vue;
 
@@ -17,10 +17,9 @@ createApp({
     setup() {
         const modalView = ref(null);
         const showSubscriptionModal = ref(false);
-        // Removed map-specific state (map, trafficMarkers) - handled by map.js
-        const selectedCounty = ref(''); // State for selected county, needed for UI binding
+        const selectedCounty = ref(''); 
 
-        // List of Swedish counties - needed for UI dropdown and for map.js config
+        
         const counties = ref([
             { name: 'Välj län', value: '', number: null, coords: [62.0, 15.0], zoom: 5 }, // Default view
             { name: 'Blekinge län', value: 'Blekinge', number: 10, coords: [56.2, 14.8], zoom: 9 },
@@ -46,15 +45,14 @@ createApp({
             { name: 'Östergötlands län', value: 'Östergötland', number: 5, coords: [58.4, 15.6], zoom: 8 }
         ]);
 
-         // Mapping from county number to county name for popup display - derived here, passed to map.js
          const countyNumberToName = counties.value.reduce((map, county) => {
              if (county.number !== null) {
-                 map[county.number] = county.name.replace(' län', ''); // Remove " län" for shorter display
+                 map[county.number] = county.name.replace(' län', ''); 
              }
              return map;
          }, {});
 
-        // Use the map composable, passing necessary configuration data
+        
         const { initMap, updateMapWithTrafficData, centerMapOnCounty } = useTrafficMap(
             "http://127.0.0.1:5000/api/traffic-situations?", // API URL config
             counties.value, // County list config
@@ -70,20 +68,17 @@ createApp({
             modalView.value = null;
         };
 
-        // Watcher that reacts when selectedCounty changes (UI interaction)
+        
         watch(selectedCounty, (newValue, oldValue) => {
             console.log(`Selected county changed from ${oldValue} to ${newValue}`);
-            // Trigger map actions via the map handler
-            centerMapOnCounty(newValue); // Center map view
-            updateMapWithTrafficData(newValue); // Fetch and display new data
+            centerMapOnCounty(newValue); 
+            updateMapWithTrafficData(newValue); 
         });
 
 
         onMounted(() => {
             console.log("Vue app mounted, initializing Leaflet...");
-            // Initialize the map instance when component is mounted
             initMap('map');
-            // Fetch and display initial data based on default selectedCounty ('')
             updateMapWithTrafficData(selectedCounty.value);
             // Optional: Set up interval for updates if needed
             // setInterval(() => updateMapWithTrafficData(selectedCounty.value), 5 * 60 * 1000); // Update every 5 minutes
@@ -94,8 +89,8 @@ createApp({
             showSubscriptionModal,
             openModal,
             closeModal,
-            selectedCounty, // Exposed for the dropdown v-model
-            counties // Exposed for the dropdown v-for
+            selectedCounty,
+            counties
         };
     }
 }).mount("#app");
