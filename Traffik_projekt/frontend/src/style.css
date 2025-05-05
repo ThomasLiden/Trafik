@@ -178,3 +178,67 @@ body {
     margin-top: 1.5rem;
   }
   
+  /* Stripe Card Element Styling */
+  .stripe-card-element {
+    padding: 15px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    margin: 15px 0;
+    background: white;
+    font-size: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .stripe-card-errors {
+    color: #dc3545;
+    font-size: 14px;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 6px;
+    background-color: #fff3f3;
+  }
+
+  /* Anpassa Stripe-elementet */
+  .StripeElement {
+    padding: 15px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    background: white;
+    font-size: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .StripeElement--focus {
+    border-color: #3A86FF;
+    box-shadow: 0 0 0 0.2rem rgba(58, 134, 255, 0.25);
+  }
+
+  .StripeElement--invalid {
+    border-color: #dc3545;
+    background-color: #fff3f3;
+  }
+
+  .StripeElement--webkit-autofill {
+    background-color: #fefde5 !important;
+  }
+
+  /* Lägg till en container för betalningssektionen */
+  .payment-section {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin: 20px 0;
+  }
+
+  .payment-amount {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+  }
+  

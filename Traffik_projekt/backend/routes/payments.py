@@ -9,7 +9,7 @@ load_dotenv()
 # Skapa en ny blueprint för betalningar
 payments_blueprint = Blueprint('payments', __name__)
 
-# Konfigurera Stripe med din hemliga nyckel
+# Konfigurera Stripe secret key
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 @payments_blueprint.route('/create-checkout-session', methods=['POST'])
@@ -25,7 +25,7 @@ def create_checkout_session():
                         'name': 'Trafikinfo Prenumeration',
                         'description': 'Månatlig prenumeration på trafikinformation',
                     },
-                    'unit_amount': 9900,  # 99 kr i öre
+                    'unit_amount': 9900,
                     'recurring': {
                         'interval': 'month',
                     },
