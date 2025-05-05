@@ -18,7 +18,6 @@ createApp({
         const modalView = ref(null);
         const showSubscriptionModal = ref(false);
         const selectedCounty = ref(''); 
-
         
         const counties = ref([
             { name: 'Välj län', value: '', number: null, coords: [62.0, 15.0], zoom: 5 }, // Default view
