@@ -18,7 +18,7 @@ createApp({
         const modalView = ref(null);
         const showSubscriptionModal = ref(false);
         const selectedCounty = ref(''); 
-        
+        // Här kan vi ändra för zoomen på kartan
         const counties = ref([
             { name: 'Välj län', value: '', number: null, coords: [62.0, 15.0], zoom: 5 }, // Default view
             { name: 'Blekinge län', value: 'Blekinge', number: 10, coords: [56.2, 14.8], zoom: 9 },
@@ -53,7 +53,7 @@ createApp({
 
         
         const { initMap, updateMapWithTrafficData, centerMapOnCounty } = useTrafficMap(
-            "http://127.0.0.1:5000/api/traffic-situations?", // API URL config
+            "http://127.0.0.1:5000/api/traffic-info", // API URL config
             counties.value, // County list config
             countyNumberToName // County name mapping config
         );
