@@ -42,7 +42,7 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
 
     const updateMapWithTrafficData = async (selectedCountyValue) => {
         const logPrefix = `[County: ${selectedCountyValue || 'All'}]`;
-        // console.log(`${logPrefix} Attempting to fetch traffic info...`);
+        console.log(`${logPrefix} Attempting to fetch traffic info...`);
         if (!mapInstance) {
             console.warn(`${logPrefix} Map not initialized.`);
             return { success: false, message: "Kartan är inte initierad." };
@@ -57,7 +57,7 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
         params.append('messageTypeValue', 'Accident,Roadwork');
         const queryString = params.toString();
         if (queryString) { url += (apiUrl.includes('?') ? '&' : '?') + queryString; }
-        // console.log(`${logPrefix} Fetching from constructed URL: ${url}`);
+        console.log(`${logPrefix} Fetching from constructed URL: ${url}`);
 
         try {
             const response = await fetch(url);
