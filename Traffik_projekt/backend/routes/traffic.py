@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from pyproj import Transformer
 from pyproj.exceptions import CRSError
 import re
+import json
 
 # Ladda miljövariabler
 load_dotenv()
@@ -153,9 +154,29 @@ def get_traffic_info():
             data=xml_query.encode('utf-8'),
             headers={'Content-Type': 'text/xml'}
         )
-        response.raise_for_status()
-        logging.info(f"Successfully fetched data (Extended Situation, Basic TrafficSafetyCamera) from Trafikverket.")
-        return jsonify(response.json())
+        response.raise_for_status() # Kollar om statuskoden indikerar ett HTTP-fel (4xx eller 5xx)
+
+        # Hämta JSON-data från svaret
+        response_data = response.json()
+
+      # Försök att logga endast Situation/Deviation-delen
+        try:
+            # API-svaret har vanligtvis en struktur där första elementet i RESULT-arrayen innehåller Situation-data
+            situation_data = response_data.get('RESPONSE', {}).get('RESULT', [{}])[0].get('Situation', None)
+            if situation_data:
+                logging.debug(f"API Response - Situation/Deviations Data:\n{json.dumps(situation_data, indent=2, ensure_ascii=False)}")
+            else:
+                logging.debug("API Response did not contain 'Situation' data in the expected location, or it was empty.")
+                # Logga hela svaret om Situation-delen inte hittas som förväntat, för felsökning
+                logging.debug(f"Full API Response for context:\n{json.dumps(response_data, indent=2, ensure_ascii=False)}")
+        except (IndexError, KeyError, TypeError) as e:
+            logging.warning(f"Could not extract Situation data for logging: {e}. Logging full response instead.")
+            logging.debug(f"Full API Response for context:\n{json.dumps(response_data, indent=2, ensure_ascii=False)}")
+
+
+        logging.info(f"Successfully fetched data from Trafikverket.")
+        return jsonify(response_data)
+
     except requests.exceptions.RequestException as e:
         err_msg = f"Error fetching data from Trafikverket: {e}"
         status_code = e.response.status_code if e.response is not None else "N/A"

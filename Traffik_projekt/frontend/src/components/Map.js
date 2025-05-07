@@ -1,6 +1,6 @@
 // map.js
 export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
-    console.log("useTrafficMap initialized with apiUrl:", apiUrl); // Kan tas bort om det blir för mycket i loggen
+    // console.log("useTrafficMap initialized with apiUrl:", apiUrl);
 
     let mapInstance = null;
     let markerClusterGroup = null;
@@ -12,6 +12,9 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
         iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
     });
+
+    // impreciseIcon är borttagen, vi använder defaultIcon eller Trafikverkets ikon.
+
     const defaultTrafficSafetyCameraIcon = L.icon({
         iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x-red.png',
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
@@ -42,7 +45,6 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
 
     const updateMapWithTrafficData = async (selectedCountyValue) => {
         const logPrefix = `[County: ${selectedCountyValue || 'All'}]`;
-        console.log(`${logPrefix} Attempting to fetch traffic info...`);
         if (!mapInstance) {
             console.warn(`${logPrefix} Map not initialized.`);
             return { success: false, message: "Kartan är inte initierad." };
@@ -57,7 +59,6 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
         params.append('messageTypeValue', 'Accident,Roadwork');
         const queryString = params.toString();
         if (queryString) { url += (apiUrl.includes('?') ? '&' : '?') + queryString; }
-        console.log(`${logPrefix} Fetching from constructed URL: ${url}`);
 
         try {
             const response = await fetch(url);
@@ -66,18 +67,16 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
 
             markerClusterGroup.clearLayers();
             
-            // Nya räknare för specifika typer av markörer som faktiskt läggs på kartan
             let deviationMarkersOnMap = 0;
             let safetyCameraMarkersOnMap = 0;
+            let impreciseDeviationMarkersOnMap = 0;
 
-            const results = backendResponse?.RESPONSE?.RESULT;
-            // Räknare för totalt antal objekt returnerade från API:et (oavsett om de har koordinater)
             let totalDeviationsFromApi = 0;
             let totalSafetyCamerasFromApi = 0;
 
+            const results = backendResponse?.RESPONSE?.RESULT;
 
             if (results && Array.isArray(results)) {
-                // Bearbeta Situationer/Deviations
                 if (results.length > 0 && results[0].Situation) {
                     const situationArray = results[0].Situation;
                     let allDeviations = [];
@@ -86,11 +85,42 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
 
                     allDeviations.forEach(deviation => {
                         const devId = deviation.Id || 'Unknown Dev';
-                        const coords = parseWktPoint(deviation.Geometry?.WGS84, devId);
-                        if (!coords) return; // Hoppa över om inga koordinater
+                        let coords = parseWktPoint(deviation.Geometry?.WGS84, devId);
+                        let isImprecise = false;
+                        let markerIcon = defaultIcon; // Börja med standardikonen
 
-                        let icon = defaultIcon;
-                        if (deviation.IconId) { try { icon = L.icon({ iconUrl: `${TRAFIKVERKET_ICON_BASE_URL}${deviation.IconId}?type=png32x32`, iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32] }); } catch(e) {console.error(`Icon error for Deviation ${devId}:`, e)} }
+                        if (!coords) { // Om exakta koordinater saknas
+                            if (deviation.CountyNo && deviation.CountyNo.length > 0) {
+                                const firstCountyNo = deviation.CountyNo[0];
+                                const countyForImpreciseMarker = countyList.find(c => c.number === firstCountyNo);
+                                if (countyForImpreciseMarker && countyForImpreciseMarker.coords) {
+                                    coords = countyForImpreciseMarker.coords;
+                                    isImprecise = true;
+                                    // console.log(`No precise coords for ${devId}. Using generic coords for county ${firstCountyNo}: ${coords}`);
+                                } else {
+                                    // console.log(`No precise coords for ${devId} and could not find generic coords for county ${firstCountyNo}. Skipping.`);
+                                    return; 
+                                }
+                            } else {
+                                // console.log(`No precise coords for ${devId} and no CountyNo. Skipping.`);
+                                return; 
+                            }
+                        }
+                        
+                        // Försök använda Trafikverkets ikon om IconId finns
+                        if (deviation.IconId) {
+                           try { 
+                               markerIcon = L.icon({ 
+                                   iconUrl: `${TRAFIKVERKET_ICON_BASE_URL}${deviation.IconId}?type=png32x32`, 
+                                   iconSize: [32, 32], 
+                                   iconAnchor: [16, 32], // Vanligtvis nedre mitten för denna typ av ikon
+                                   popupAnchor: [0, -32]  // Justera så popupen pekar rätt
+                               }); 
+                           } catch(e) {
+                               console.error(`Icon error for Deviation ${devId} with IconId ${deviation.IconId}:`, e);
+                               // markerIcon är redan defaultIcon, så den fungerar som fallback
+                           }
+                        }
                         
                         const countyNumbers = deviation.CountyNo;
                         let countyNames = 'N/A';
@@ -98,6 +128,10 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
                         else if (countyNumbers) { countyNames = countyNumberToName[countyNumbers] || `Okänt län (${countyNumbers})`; }
 
                         let devPopupContent = `<b>${deviation.Header || 'Händelse'}</b> (${deviation.MessageTypeValue || 'Okänd typ'})<br>`;
+                        if (isImprecise) {
+                            devPopupContent += `<span style="color: orange; font-weight: bold;">OBS! Positionen är ungefärlig (visar länets mittpunkt).</span><br>`;
+                        }
+                        // ... (resten av din popup-logik för deviation, som tidigare)
                         if (deviation.Message) devPopupContent += `Meddelande: ${deviation.Message}<br>`;
                         if (deviation.SeverityText) devPopupContent += `Allvarlighetsgrad: ${deviation.SeverityText}<br>`;
                         let roadInfo = '';
@@ -117,12 +151,16 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
                         devPopupContent += `Län: ${countyNames}<br>`;
                         if (deviation.VersionTime) devPopupContent += `Senast uppdaterad: ${new Date(deviation.VersionTime).toLocaleString('sv-SE')}<br>`;
                         
-                        markerClusterGroup.addLayer(L.marker(coords, { icon: icon }).bindPopup(devPopupContent));
-                        deviationMarkersOnMap++; // Räkna tillagd deviation-markör
+                        markerClusterGroup.addLayer(L.marker(coords, { icon: markerIcon }).bindPopup(devPopupContent));
+                        if (isImprecise) {
+                            impreciseDeviationMarkersOnMap++;
+                        } else {
+                            deviationMarkersOnMap++;
+                        }
                     });
                 }
 
-                // Bearbeta Fartkameror
+                // ... (logik för TrafficSafetyCamera är oförändrad)
                 if (results.length > 1 && results[1].TrafficSafetyCamera) {
                     const cameras = results[1].TrafficSafetyCamera;
                     if (Array.isArray(cameras)) { 
@@ -130,7 +168,7 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
                         cameras.forEach(camera => {
                             const camId = camera.Id || 'Unknown SafetyCam';
                             const coords = parseWktPoint(camera.Geometry?.WGS84, camId);
-                            if (!coords) return; // Hoppa över om inga koordinater
+                            if (!coords) return;
 
                             let icon = defaultTrafficSafetyCameraIcon;
                             if (camera.IconId) { try { icon = L.icon({ iconUrl: `${TRAFIKVERKET_ICON_BASE_URL}${camera.IconId}?type=png32x32`, iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -16] }); } catch(e) {console.error(`Icon error for SafetyCamera ${camId}:`, e)} }
@@ -144,7 +182,7 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
                             camPopupContent += `Län: ${countyName}`;
                             
                             markerClusterGroup.addLayer(L.marker(coords, { icon: icon }).bindPopup(camPopupContent));
-                            safetyCameraMarkersOnMap++; // Räkna tillagd fartkamera-markör
+                            safetyCameraMarkersOnMap++;
                         });
                     }
                 }
@@ -152,44 +190,46 @@ export function useTrafficMap(apiUrl, countyList, countyNumberToName) {
                 console.log(`${logPrefix} No RESPONSE.RESULT array found or it was empty.`);
             }
             
+            // ... (logik för att bygga statusmeddelande och returnera är oförändrad)
             const countyDisplayName = countyList.find(c => c.value === selectedCountyValue)?.name?.replace(' län', '') || selectedCountyValue || "Sverige";
             let message = "";
-            let success = false;
+            let success = false; 
 
-            if (deviationMarkersOnMap > 0 || safetyCameraMarkersOnMap > 0) {
+            let messageParts = [];
+            if (deviationMarkersOnMap > 0) {
+                const text = deviationMarkersOnMap > 1 ? "exakta olyckor/vägarbeten" : "exakt olycka/vägarbete";
+                messageParts.push(`${deviationMarkersOnMap} ${text}`);
+            }
+            if (impreciseDeviationMarkersOnMap > 0) {
+                const text = impreciseDeviationMarkersOnMap > 1 ? "ungefärliga olyckor/vägarbeten" : "ungefärlig olycka/vägarbete";
+                messageParts.push(`${impreciseDeviationMarkersOnMap} ${text}`);
+            }
+            if (safetyCameraMarkersOnMap > 0) {
+                const text = safetyCameraMarkersOnMap > 1 ? "fartkameror" : "fartkamera";
+                messageParts.push(`${safetyCameraMarkersOnMap} ${text}`);
+            }
+
+            if (messageParts.length > 0) {
                 success = true;
-                let messageParts = [];
-                if (deviationMarkersOnMap > 0) {
-                    const deviationText = deviationMarkersOnMap > 1 ? "olyckor/vägarbeten" : "olycka/vägarbete";
-                    messageParts.push(`${deviationMarkersOnMap} ${deviationText}`);
-                }
-                if (safetyCameraMarkersOnMap > 0) {
-                    const cameraText = safetyCameraMarkersOnMap > 1 ? "fartkameror" : "fartkamera";
-                    messageParts.push(`${safetyCameraMarkersOnMap} ${cameraText}`);
-                }
                 message = `Visar ${messageParts.join(' och ')} för ${countyDisplayName} län.`;
                 
-                // Anpassa kartvyn om det finns markörer
-                 if (markerClusterGroup.getLayers().length > 0) {
+                if (markerClusterGroup.getLayers().length > 0) {
                     try {
                         mapInstance.fitBounds(markerClusterGroup.getBounds(), { padding: [50, 50], maxZoom: 16 });
                     } catch (boundsError) {
                         console.error(`${logPrefix} Could not fit map bounds for MarkerClusterGroup:`, boundsError);
                         if (selectedCountyValue) centerMapOnCounty(selectedCountyValue);
-                        else mapInstance.setView([62.0, 15.0], 5); // Default Sverige
+                        else mapInstance.setView([62.0, 15.0], 5);
                     }
                 }
-            } else {
-                // Inga markörer på kartan, centrera som tidigare
-                success = false; // Inget visas på kartan = inte "success" ur användarperspektiv
+            } else { 
+                success = false;
                 if (selectedCountyValue) centerMapOnCounty(selectedCountyValue);
-                else mapInstance.setView([62.0, 15.0], 5); // Default Sverige
+                else mapInstance.setView([62.0, 15.0], 5);
 
                 if (totalDeviationsFromApi > 0 || totalSafetyCamerasFromApi > 0) {
-                    // API:et returnerade objekt, men inga med koordinater som kunde visas
                     message = `Inga händelser med positionsdata att visa på kartan för ${countyDisplayName} just nu.`;
                 } else {
-                    // API:et returnerade inga relevanta objekt alls
                     message = `Inga trafikstörningar eller fartkameror rapporterade för ${countyDisplayName} just nu.`;
                 }
             }
