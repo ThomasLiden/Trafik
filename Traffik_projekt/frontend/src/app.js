@@ -25,7 +25,7 @@ createApp({
       const trafficStatusMessage = ref('');
 
       const counties = ref([
-          { name: 'Välj län', value: '', number: null, coords: [62.0, 15.0], zoom: 5 }, // Default view
+          { name: 'Alla län', value: '', number: null, coords: [62.0, 15.0], zoom: 5 }, // Default view
           { name: 'Blekinge län', value: 'Blekinge', number: 10, coords: [56.2, 14.8], zoom: 9 },
           { name: 'Dalarnas län', value: 'Dalarna', number: 20, coords: [60.8, 15.6], zoom: 7 },
           { name: 'Gotlands län', value: 'Gotland', number: 9, coords: [57.5, 18.5], zoom: 8 },
