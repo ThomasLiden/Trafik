@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Testa Notification Service</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 2em auto;
+    }
+    label {
+      display: block;
+      margin-top: 1em;
+    }
+    input[type="text"],
+    input[type="email"],
+    select {
+      width: 100%;
+      padding: 0.5em;
+    }
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1em;
+    }
+    button {
+      margin-top: 1.5em;
+      padding: 0.7em 1.2em;
+      font-size: 1em;
+    }
+    #responseMsg {
+      margin-top: 1em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Testa Notification Service</h1>
+
+  <form id="notificationForm">
+    <label>
+      Välj län:
+      <select id="county" required>
+        <option value="">-- Välj län --</option>
+        <option value="1">Stockholms län</option>
+        <option value="2">Västerbottens län</option>
+        <option value="3">Uppsala län</option>
+        <option value="4">Södermanlands län</option>
+        <option value="5">Östergötlands län</option>
+        <option value="6">Jönköpings län</option>
+        <option value="7">Kronobergs län</option>
+        <option value="8">Kalmar län</option>
+        <option value="9">Gotlands län</option>
+        <option value="10">Blekinge län</option>
+        <option value="12">Skåne län</option>
+        <option value="13">Hallands län</option>
+        <option value="14">Västra Götalands län</option>
+        <option value="17">Värmlands län</option>
+        <option value="18">Örebro län</option>
+        <option value="19">Västmanlands län</option>
+        <option value="20">Dalarnas län</option>
+        <option value="21">Gävleborgs län</option>
+        <option value="22">Västernorrlands län</option>
+        <option value="23">Jämtlands län</option>
+        <option value="24">Västerbottens län</option>
+        <option value="25">Norrbottens län</option>
+      </select>
+    </label>
+
+    <label>Vilka typer av uppdateringar vill du ha?</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" name="types" value="ACCIDENT"> Olyckor</label>
+      <label><input type="checkbox" name="types" value="ROADWORKS"> Vägarbeten</label>
+      <label><input type="checkbox" name="types" value="SPEED_CAMERA"> Fartkameror</label>
+    </div>
+
+    <label>
+      Ditt mobilnummer (för SMS):
+      <input type="text" id="phone" placeholder="+46701234567">
+    </label>
+
+    <label>
+      Din e-postadress:
+      <input type="email" id="email" placeholder="namn@example.com">
+    </label>
+
+    <button type="submit">Skicka testmeddelande</button>
+  </form>
+
+  <p id="responseMsg"></p>
+
+  <script>
+    function formatPhoneNumber(number) {
+      const trimmed = number.replace(/\s+/g, '');
+      if (trimmed.startsWith('0')) {
+        return '+46' + trimmed.slice(1);
+      }
+      return trimmed;
+    }
+
+    document.getElementById('notificationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const county = document.getElementById('county').value;
+      const rawPhone = document.getElementById('phone').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const types = Array.from(document.querySelectorAll('input[name="types"]:checked'))
+                         .map(cb => cb.value);
+      const responseMsg = document.getElementById('responseMsg');
+
+      if (!county || types.length === 0 || (!rawPhone && !email)) {
+        responseMsg.textContent = 'Vänligen fyll i alla obligatoriska fält.';
+        return;
+      }
+
+      const phone = rawPhone ? formatPhoneNumber(rawPhone) : null;
+      const message = `Trafikinformation för län ${county}: ${types.join(', ')}`;
+
+      try {
+        responseMsg.textContent = 'Skickar...';
+
+        if (phone) {
+          const smsRes = await fetch('https://trafikwidget-projekt.onrender.com/send-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: phone, message })
+          });
+          if (!smsRes.ok) throw new Error('Misslyckades med SMS');
+        }
+
+        if (email) {
+          const emailRes = await fetch('https://trafikwidget-projekt.onrender.com/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: email, subject: "Trafikuppdatering", text: message })
+          });
+          if (!emailRes.ok) throw new Error('Misslyckades med e-post');
+        }
+
+        responseMsg.textContent = 'Meddelande skickat!';
+      } catch (err) {
+        console.error(err);
+        responseMsg.textContent = 'Något gick fel vid skickandet.';
+      }
+    });
+  </script>
+</body>
+</html>
