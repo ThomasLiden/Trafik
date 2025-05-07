@@ -29,7 +29,7 @@ export default {
           </div>
   
           <div v-if="step === 3">
-          <signup-form @signup-success="handleSignupSuccess" />
+          <SignupForm @signup-success="handleSignupSuccess" />
           </div>
   
           <div v-if="step === 4">

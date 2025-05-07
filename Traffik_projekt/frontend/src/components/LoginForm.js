@@ -1,10 +1,11 @@
 
-//Här finns även forgot password, kanske ska flyttas sen när man börjar hålla på med routes?
-
+//Här finns även forgot password
 
 export default {
+    name: "LoginForm",
     template: `
     <div>
+    <div v-if="view === 'login'">
       <h2> Logga in </h2>
       <form @submit.prevent="login">
         <div>
@@ -17,15 +18,34 @@ export default {
          </div>
          <button type="submit" class="button-primary"> Logga in </button>
       </form>
-      <button @click="forgotPassword" style="margin-top: 1rem;" class="button-tertiary">Glömt lösenord?</button>
+
+      <button @click="view = 'forgot'; message = ''" style="margin-top: 1rem;" class="button-tertiary">Glömt lösenord?</button>
+      </div>
+
+      <div v-else-if="view === 'forgot'">
+        <h2>Återställ lösenord</h2>
+        <form @submit.prevent="forgotPassword">
+          <label>E‑post</label>
+          <input v-model="email" type="email" required class="form-field"/>
+          <button class="button-primary" type="submit">
+            Skicka återställningslänk
+          </button>
+        </form>
+        <button
+          class="button-tertiary"
+          @click="view = 'login'; message = ''"
+        >Tillbaka till inloggning</button>
+      </div>
       <p v-if="message">{{ message }}</p>
+    
     </div>
     `,
     data() {
         return {
             email: "",
             password: "",
-            message: ""
+            message: "", 
+            view: "login"
         };
     },
     methods: {

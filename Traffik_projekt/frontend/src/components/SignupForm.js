@@ -1,5 +1,5 @@
 export default {
-    template: `
+  template: `
   <div class="signup-modal-content">
     <div class="form-header">
       <h2>Steg 2/4: Registrera dig</h2>
@@ -44,59 +44,56 @@ export default {
       </div>
     </form>
   </div>
-`
-,
-    data() {
-      return {
-        first_name: "",
-        last_name: "",
-        phone: "",
-        email: "",
-        password: "",
-        message: ""
-      };
-    },
-    methods: {
-      async signup() {
-        this.message = ""; 
-        try {
-          const payload = {
-            first_name: this.first_name,
-            last_name: this.last_name,
-            phone: this.phone,
-            email: this.email,
-            password: this.password
-          };
-      
-          console.log(" Payload som skickas:", payload);
-      
-          const response = await fetch("http://127.0.0.1:5000/api/signup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-      
-          const data = await response.json();
+`,
+  data() {
+    return {
+      first_name: "",
+      last_name: "",
+      phone: "",
+      email: "",
+      password: "",
+      message: "",
+    };
+  },
+  methods: {
+    async signup() {
+      this.message = "";
+      try {
+        const payload = {
+          first_name: this.first_name,
+          last_name: this.last_name,
+          phone: this.phone,
+          email: this.email,
+          password: this.password,
+        };
 
-          if (!response.ok) {
-            this.message = data.error || data.message || "Något gick fel.";
-            return;
-          }
-      
-          if (data.message) {
-            this.$emit("signup-success", {
-              email: this.email,
-              phone: this.phone
-            });
-          }
-      
-          this.message = data.message || data.error;
-        } catch (error) {
-          this.message = "Fel vid registrering.";
-          console.error(error);
+        console.log(" Payload som skickas:", payload);
+
+        const response = await fetch("http://127.0.0.1:5000/api/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          this.message = data.error || data.message || "Något gick fel.";
+          return;
         }
+
+        if (data.message) {
+          this.$emit("signup-success", {
+            email: this.email,
+            phone: this.phone,
+          });
+        }
+
+        this.message = data.message || data.error;
+      } catch (error) {
+        this.message = "Fel vid registrering.";
+        console.error(error);
       }
-      
-    }
-  };
-  
+    },
+  },
+};
