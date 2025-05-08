@@ -35,8 +35,15 @@ const routes = [
     },
     
   },
+  
 
-  {
+/*   {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: ResetPasswordForm
+  },
+ */
+/*   {
     path: '/reset-password',
     name: 'reset-password',
     components: {
@@ -44,21 +51,12 @@ const routes = [
       modal: ResetPasswordForm
     },
     props: {
-      modal: (route) => {
-        console.log("Router Access Token:", route.query.access_token);
-        return { accessToken: route.query.access_token || "" };
-      }
-    },
-    beforeEnter: (to, from, next) => {
-        console.log("Navigerar till ResetPasswordForm");
-        next();
-      },
-      beforeEnter: (to, from, next) => {
-        console.log("Navigerar till ResetPasswordForm");
-        next();
-      }
-
-  }
+        modal: (route) => {
+            console.log("Router Access Token:", route.query.access_token);
+            return { access_token: route.query.access_token || "" };
+        }
+    }
+  } */
 
  
 

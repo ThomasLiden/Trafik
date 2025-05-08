@@ -22,18 +22,18 @@ export default {
       <button @click="view = 'forgot'; message = ''" style="margin-top: 1rem;" class="button-tertiary">Glömt lösenord?</button>
       </div>
 
-      <div v-else-if="view === 'forgot'">
+            <div v-else-if="view === 'forgot'">
         <h2>Återställ lösenord</h2>
         <form @submit.prevent="forgotPassword">
           <label>E‑post</label>
-          <input v-model="email" type="email" required class="form-field"/>
+          <input v-model="email" type="email" required class="form-field" />
           <button class="button-primary" type="submit">
             Skicka återställningslänk
           </button>
         </form>
         <button
           class="button-tertiary"
-          @click="view = 'login'; message = ''"
+          @click="switchToLogin"
         >Tillbaka till inloggning</button>
       </div>
       <p v-if="message">{{ message }}</p>
@@ -45,7 +45,8 @@ export default {
             email: "",
             password: "",
             message: "", 
-            view: "login"
+            view: "login",
+            messageClass: ""
         };
     },
     methods: {

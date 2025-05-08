@@ -2,6 +2,8 @@
 # De andra är ej aktiva just nu, tror det är smartast att ha de samlade såhär 
 
 from flask import Blueprint, request, jsonify
+import os
+import requests
 from models.supabase_client import supabase
 
 member_blueprint = Blueprint('member', __name__)
@@ -80,33 +82,97 @@ def login():
         return jsonify({"error": str(e)}), 400 
 
 #Glömt lösenord
+""" @member_blueprint.route('/api/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json()
+    email = data.get("email")
+    
+    try:
+        supabase.auth.reset_password_for_email(email) 
+        return jsonify({"message": "Återställningslänk skickad till din e-post."}), 200
+    except Exception as e: 
+        return jsonify({"error": str(e)}), 400  """
+
+### Glömt Lösenord med Supabase inbyggda sida
 @member_blueprint.route('/api/forgot-password', methods=['POST'])
 def forgot_password():
     data = request.get_json()
     email = data.get("email")
 
-    try:
-        supabase.auth.reset_password_for_email(email)
-        return jsonify({"message": "Återställningslänk skickad till din e-post."}), 200
-    except Exception as e: 
-        return jsonify({"error": str(e)}), 400 
+    if not email:
+        return jsonify({"error": "E-post krävs"}), 400
 
+    try:
+        # Använd direkt HTTP-förfrågan för lösenordsåterställning
+        redirect_url = "http://127.0.0.1:5500/Traffik_projekt/frontend/src/index.html#/login"  # Ändrad till exakt path
+        url = f"{os.getenv('SUPABASE_URL')}/auth/v1/recover"
+        headers = {
+            "apikey": os.getenv("SUPABASE_KEY"),
+            "Authorization": f"Bearer {os.getenv('SUPABASE_KEY')}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "email": email,
+            "redirect_to": redirect_url
+        }
+
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code == 200:
+            return jsonify({"message": "Återställningslänk skickad till din e-post."}), 200
+        else:
+            print("Fel vid lösenordsåterställning:", response.text)
+            return jsonify({"error": "Fel vid lösenordsåterställning: " + response.text}), 400
+    except Exception as e:
+        print("EXCEPTION I FORGOT PASSWORD:", e)
+        return jsonify({"error": "Fel vid lösenordsåterställning: " + str(e)}), 400 
 
 #Återställ lösenord
-@member_blueprint.route('/api/reset-password', methods=['POST'])
+""" @member_blueprint.route('/api/reset-password', methods=['POST']) 
 def reset_password():
     data = request.get_json()
+    print("Inkommande data:", data)
     access_token = data.get("access_token")
     new_password = data.get("new_password")
 
+    
+    if not access_token:
+        print("Access token saknas")
+        return jsonify({"error": "Access token saknas"}), 400
+
+    if not new_password:
+        print("Nytt lösenord saknas")
+        return jsonify({"error": "Nytt lösenord saknas"}), 400
     try:
-        supabase.auth.update_user(access_token, {
-            "password": new_password
+        # Verifiera användare med åtkomsttoken
+        user = supabase.auth.get_user(access_token)
+        print("Användare hittad:", user)
+
+        if user:
+            # Uppdatera lösenordet för användaren
+            supabase.auth.update_user(
+                user=user, 
+                password=new_password
+            )
+            print("Lösenord uppdaterat för användare:", user['id'])
+            return jsonify({"message": "Lösenordet har uppdaterats!"}), 200
+        else:
+            print("Ogiltig access token")
+            return jsonify({"error": "Ogiltig access token"}), 400
+
+    except Exception as e:
+        print("Fel vid återställning:", str(e))
+        return jsonify({"error": "Ett fel uppstod vid återställning av lösenordet."}), 500 """
+
+    ##try:
+"""         response = supabase.auth.update_user({"password": new_password
         })
+        print("Resultat från Supabase:", response)
         return jsonify({"message": "Lösenordet har uppdaterats!"}), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        print("Fel vid återställning:", str(e))
+    
+    return jsonify({"error": str(e)}), 400  """
 
 #Ändra kontaktuppgifter 
 @member_blueprint.route('/api/user-profile', methods = ['GET'])

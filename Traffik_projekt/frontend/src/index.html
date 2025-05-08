@@ -27,51 +27,10 @@
   </head>
   <body>
     <div id="app">
-      <!-- Kartsektionen-->
-<!--       <div v-if="page !== 'overview'" class="map-section">
-        <iframe src="https://www.google.com/maps/embed" width="800" height="450"
-                style="border:0;" allowfullscreen="" loading="lazy"></iframe> -->
-
-  <!--       <div class="buttons"> -->
-            <!-- Logga in / till min sida -->
-<!--             <button
-            @click="openModal('login')"
-            class="button-secondary"
-          >
-            {{ loggedIn ? 'Till min sida' : 'Logga in' }}
-          </button>
-
-          <button @click="openModal('signup')" class="button-primary">Prenumerera</button>
-        </div>
-      </div> -->
-  
-      <!-- Huvud-modal för login/signup/prenumeration -->
-<!--       <div class="modal" v-if="modalView && page !== 'overview'">
-        <div class="modal-content">
-          <button class="close" @click="closeModal">X</button> -->
-          
-          <!-- Login -->
-<!--           <login-form
-          v-if="modalView==='login' && !loggedIn"
-          @login-success="onLoginSuccess"
-        ></login-form> -->
-          
-          <!-- Subscription modal som innehåller signupform -->
-    <!--       <subscription-modal v-if="modalView === 'signup'"
-                       @signup-success="onSignupSuccess"
-                       @close="closeModal"
-          ></subscription-modal> -->
-      
+     
         </div>
       </div>
-  
-      <!-- Översiktssidan för inloggadanvändare-->
-<!--       <logged-in-user v-if="page === 'overview'"
-                      :user-id="userId"
-                      @logout="onLogout"
-                      @back-to-map="goToMap"
-      ></logged-in-user> -->
-    </div>
+
   </body>
   </html>
   
