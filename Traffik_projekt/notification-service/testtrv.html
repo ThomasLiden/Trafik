@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trafikinformation – Län 24</title>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 2em auto; }
+    button { padding: 0.5em 1em; margin-top: 1em; }
+    li { margin-bottom: 1em; border: 1px solid #ccc; padding: 1em; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Olyckor & Vägarbeten (län 24)</h1>
+  <button id="fetchBtn">Hämta</button>
+  <ul id="results"></ul>
+
+  <script>
+    const API_KEY = "f7c45907919840f7b1913e1bd686977e";
+
+    const xmlRequest = `
+      <REQUEST>
+        <LOGIN authenticationkey="${API_KEY}" />
+        <QUERY objecttype="Situation" namespace="road.trafficinfo" schemaversion="1.5" limit="50">
+          <INCLUDE>Deviation</INCLUDE>
+        </QUERY>
+      </REQUEST>
+    `.trim();
+
+    document.getElementById("fetchBtn").addEventListener("click", async () => {
+      const results = document.getElementById("results");
+      results.innerHTML = "<li>Hämtar data...</li>";
+
+      try {
+        const res = await fetch("https://api.trafikinfo.trafikverket.se/v2/data.json", {
+          method: "POST",
+          headers: { "Content-Type": "text/xml" },
+          body: xmlRequest
+        });
+
+        if (!res.ok) throw new Error("Nätverksfel");
+
+        const data = await res.json();
+        const situations = data.RESPONSE.RESULT[0]?.Situation || [];
+
+        // Manuell filtrering: län 24 och typerna vi vill ha
+        const filtered = situations.filter(item => {
+          const dev = item.Deviation?.[0];
+          return dev?.CountyNo?.includes(24) &&
+                 ["ACCIDENT", "ROADWORKS"].includes(dev.DeviationType);
+        });
+
+        results.innerHTML = filtered.length === 0
+          ? "<li>Inga relevanta händelser i län 24.</li>"
+          : "";
+
+        filtered.forEach(item => {
+          const dev = item.Deviation?.[0];
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>${dev.Message || "Ingen titel"}</strong><br>
+            Plats: ${dev.LocationDescriptor || "Okänd"}<br>
+            Typ: ${dev.DeviationType}, Påverkan: ${dev.SeverityText || "?"}<br>
+            Start: ${new Date(dev.StartTime).toLocaleString()}
+          `;
+          results.appendChild(li);
+        });
+
+      } catch (err) {
+        console.error(err);
+        results.innerHTML = "<li>Fel vid hämtning av data.</li>";
+      }
+    });
+  </script>
+</body>
+</html>
