@@ -12,13 +12,7 @@ export default {
   created() {
     const resellerId = localStorage.getItem("reseller_id");
   
-    fetch(`http://localhost:5000/api/admin/account`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ reseller_id: resellerId })
-    })
+    fetch(`http://localhost:5000/api/admin/account?reseller_id=${resellerId}`)
       .then(async res => {
         if (!res.ok) {
           const err = await res.text();

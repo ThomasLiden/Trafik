@@ -3,11 +3,6 @@ from models.supabase_client import supabase
 
 admin_blueprint = Blueprint('admin', __name__, url_prefix= '/api/admin')
 
-from flask import Blueprint, request, jsonify
-from models.supabase_client import supabase
-
-admin_blueprint = Blueprint('admin', __name__, url_prefix='/api/admin')
-
 
 @admin_blueprint.route('/login', methods=['POST'])
 def admin_login():
@@ -26,9 +21,9 @@ def admin_login():
         user = result.user
 
         if session and user:
-            # Hämta roll från reseller-tabellen baserat på email
-            reseller = supabase.table("reseller").select("role").eq("email", email).single().execute()
-            user_role = reseller.data.get("role") if reseller.data else "admin"
+            # Hämta roll från reseller-tabellen baserat på id.
+            reseller = supabase.table("reseller").select("role").eq("reseller_id", user.id).single().execute()
+            user_role = reseller.data.get("role") if reseller.data else "reseller"
 
             return jsonify({
                 "access_token": session.access_token,
@@ -44,11 +39,10 @@ def admin_login():
 
 
 
-#Hämta konto för en tidning för att redigera uppgifter. - Ändra till att basera på id och inte epost!
-@admin_blueprint.route('/account', methods=['POST'])
+#Hämta konto för en tidning för att redigera uppgifter.
+@admin_blueprint.route('/account', methods=['GET'])
 def get_account():
-    data = request.get_json()
-    reseller_id = data.get("reseller_id")
+    reseller_id = request.args.get("reseller_id")
 
     if not reseller_id: 
         return jsonify({"error": "reseller_id saknas"}), 400 
