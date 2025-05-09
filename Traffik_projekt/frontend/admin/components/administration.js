@@ -1,0 +1,24 @@
+import AddResellerModal from "./addResellerModal.js";
+
+export default {
+  components: { AddResellerModal },
+  data() {
+    return {
+      showAddReseller: false
+    };
+  },
+  template: `
+    <div class="container">
+      <h2>Administration</h2>
+
+      <!-- adminsida för superadmin, där statistik visas, funktion för att lägga till en ny tidning osv -->
+
+      <button @click="showAddReseller = true">Lägg till ny tidning</button>
+
+      <add-reseller-modal 
+        :show="showAddReseller" 
+        :onClose="() => showAddReseller = false">
+      </add-reseller-modal>
+    </div>
+  `
+};
