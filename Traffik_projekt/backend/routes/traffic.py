@@ -113,8 +113,10 @@ def get_traffic_info():
     <INCLUDE>Deviation.Header</INCLUDE>
     <INCLUDE>Deviation.CreationTime</INCLUDE>
     <INCLUDE>Deviation.CountyNo</INCLUDE>
-    <INCLUDE>Deviation.Geometry.WGS84</INCLUDE>
-    <INCLUDE>Deviation.Geometry.SWEREF99TM</INCLUDE>
+    <INCLUDE>Deviation.Geometry.Point.WGS84</INCLUDE>
+    <INCLUDE>Deviation.Geometry.Point.SWEREF99TM</INCLUDE>
+    <INCLUDE>Deviation.Geometry.Line.WGS84</INCLUDE>
+    <INCLUDE>Deviation.Geometry.Line.SWEREF99TM</INCLUDE>
     <INCLUDE>Deviation.LocationDescriptor</INCLUDE>
     <INCLUDE>Deviation.RoadNumber</INCLUDE>
     <INCLUDE>Deviation.RoadName</INCLUDE>
