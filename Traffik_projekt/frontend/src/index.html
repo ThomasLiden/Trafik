@@ -2,6 +2,7 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trafiknotiser</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -22,10 +23,24 @@
   <div id="app">
     <div class="map-section">
       <div id="map"></div>
-      <div class="controls"> <label for="county-select">Välj län:</label>
-        <select id="county-select" v-model="selectedCounty">
-          <option v-for="county in counties" :value="county.value">{{ county.name }}</option>
-        </select>
+      <div class="controls">
+        <div>
+          <label for="county-select">Välj län:</label>
+          <select id="county-select" v-model="selectedCounty">
+            <option v-for="county in counties" :value="county.value">{{ county.name }}</option>
+          </select>
+        </div>
+        <div class="filter-controls">
+          <label>
+            <input type="checkbox" v-model="filterShowAccidents" /> Visa olyckor
+          </label>
+          <label>
+            <input type="checkbox" v-model="filterShowRoadworks" /> Visa vägarbeten
+          </label>
+          <label>
+            <input type="checkbox" v-model="filterShowCameras" /> Visa fartkameror
+          </label>
+        </div>
         <div class="traffic-status-message" v-if="trafficStatusMessage">{{ trafficStatusMessage }}</div>
       </div>
       <div class="buttons">
