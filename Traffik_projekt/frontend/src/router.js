@@ -42,7 +42,7 @@ const routes = [
     name: 'ResetPassword',
     component: ResetPasswordForm
   },
- */
+ 
 /*   {
     path: '/reset-password',
     name: 'reset-password',
