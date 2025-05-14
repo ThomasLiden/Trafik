@@ -1,4 +1,4 @@
-/* import { createRouter, createWebHashHistory } from 'vue-router' */
+
 
 const { createRouter, createWebHashHistory } = VueRouter;
 
@@ -10,8 +10,7 @@ import ResetPasswordForm from './components/ResetPasswordForm.js';
 const EmptyModal = { template: "" };
 
 const routes = [
-  /*      { path: '/',               name: 'map',      component: MapView }, */
-  /*     { path: '/overview',       name: 'overview', component: OverviewView },  */
+
   {
     path: "/",
     name: "home",
