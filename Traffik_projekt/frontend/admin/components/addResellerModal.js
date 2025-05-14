@@ -69,10 +69,11 @@ export default {
         const creator_id = localStorage.getItem("reseller_id");
   
         try {
-          const response = await fetch("http://localhost:5000/api/superadmin/create_reseller", {
+          const response = await fetch("http://localhost:5000/api/admin/create_reseller", {
             method: "POST",
             headers: {
-              "Content-Type": "application/json"
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${localStorage.getItem("access_token")}`
             },
             body: JSON.stringify({
               creator_id: creator_id,

@@ -10,10 +10,12 @@ import adminSubscriptions from "./components/adminSubscriptions.js";
 const routes = [
     { path: '/', redirect: '/admin/login' },
     { path: '/admin/login', component: adminLogin },
+    //Skyddade vyer. 
     { path: '/admin', component: adminHome },
     { path: '/admin/subscriptions', component: adminSubscriptions },
     { path: '/admin/pricing', component: adminPricing },
     { path: '/admin/account', component: adminAccount},
+    //endast för superadmin.
     { path: '/admin/administration', component: administration },      
 ];
 
@@ -24,19 +26,19 @@ const router = VueRouter.createRouter({
 
 
  router.beforeEach((to, from, next) => {
+    //Hämtar roll. 
     const userRole = localStorage.getItem("user_role");
-    const resellerId = localStorage.getItem("reseller_id");
-    console.log(resellerId);
     console.log(userRole);
-
+    
+    //Om ej inloggad, redirect till inloggningsvyn.  
     if (!userRole && to.path !== '/admin/login') {
-        return next('/admin/login');  // om ingen är inloggad redirecta till login
+        return next('/admin/login');  
     }
-
+    //Om inloggad reseller försöker gå till superadminsida, redirect till startsida. 
     if (to.path === '/admin/administration' && userRole !== 'superadmin') {
         return next('/admin');
     }
-
+    //Annars tillåt navigering. 
     next(); 
 });
 

@@ -6,7 +6,7 @@ from routes.member import member_blueprint
 #from routes.reset_password import reset_password_blueprint
 #from routes.forgot_password import forgot_password_blueprint
 #from routes.profile import edit_profile_blueprint
-from routes.superadmin import superadmin_blueprint
+#from routes.superadmin import superadmin_blueprint
 from routes.admin import admin_blueprint
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ app.register_blueprint(member_blueprint)
 #app.register_blueprint(reset_password_blueprint)
 #app.register_blueprint(forgot_password_blueprint)
 #app.register_blueprint(edit_profile_blueprint)
-app.register_blueprint(superadmin_blueprint)
+#app.register_blueprint(superadmin_blueprint)
 app.register_blueprint(admin_blueprint)
 
 

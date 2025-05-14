@@ -30,36 +30,34 @@ export default {
         async login() {
             try {
                 const response = await fetch("http://localhost:5000/api/admin/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        email: this.email,
-                        password: this.password
-                    })
-                });
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                   email: this.email,
+                   password: this.password
+                })
+        });
 
-                const data = await response.json();
+        const data = await response.json();
 
-                if (!response.ok) {
-                    this.message = data.error || "Fel vid inloggning";
-                    return;
-                }
+        if (!response.ok) {
+           this.message = data.error || "Fel vid inloggning";
+           return;
+        }
 
-                // Spara info i localStorage
-                localStorage.setItem("user_role", data.role); // superadmin eller admin
-                localStorage.setItem("reseller_id", data.reseller_id);
-                localStorage.setItem("email", this.email);
+        // Skicka login-resultat till app.js via event
+        this.$emit("login-success", {
+          access_token: data.access_token,
+          reseller_id: data.reseller_id,
+          role: data.role
+        });
 
-                this.message = "Inloggning lyckades!";
-
-                // Redirecta till admin startsida
-                this.$router.push('/admin');
-
-            } catch (error) {
-                this.message = "Ett fel uppstod vid inloggningen.";
-                console.error(error);
-            }
+        } catch (error) {
+           this.message = "Ett fel uppstod vid inloggningen.";
+           console.error(error);
         }
     }
+}
+    
 }; 
 
