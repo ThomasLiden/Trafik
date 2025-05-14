@@ -1,3 +1,5 @@
+// this is the modal, it has no content on default. Works as a container for login and sigup
+
 export default {
     name: 'Modal',
     emits: ['close'],

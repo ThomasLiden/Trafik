@@ -1,5 +1,4 @@
-# Alla ruttter samlade i en blueprint! 
-# De andra är ej aktiva just nu, tror det är smartast att ha de samlade såhär 
+#routes for user memberships
 
 from flask import Blueprint, request, jsonify
 import os

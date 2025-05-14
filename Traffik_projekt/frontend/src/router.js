@@ -8,6 +8,7 @@ import LoginForm from "./components/LoginForm.js";
 import ResetPasswordForm from './components/ResetPasswordForm.js';
 
 const EmptyModal = { template: "" };
+//needed for close modal
 
 const routes = [
 
@@ -17,6 +18,7 @@ const routes = [
     components: { default: MapView },
   },
 
+  //create subscription, component is presented in the modal
   {
     path: "/signup",
     name: "signup",
@@ -25,6 +27,7 @@ const routes = [
     },
   },
 
+  // log in page, also inside modal 
   {
     path: "/login",
     name: "login",
@@ -33,34 +36,7 @@ const routes = [
       modal: LoginForm,
     },
     
-  },
-  
-
-/*   {
-    path: '/reset-password',
-    name: 'ResetPassword',
-    component: ResetPasswordForm
-  },
- 
-/*   {
-    path: '/reset-password',
-    name: 'reset-password',
-    components: {
-      default: MapView,
-      modal: ResetPasswordForm
-    },
-    props: {
-        modal: (route) => {
-            console.log("Router Access Token:", route.query.access_token);
-            return { access_token: route.query.access_token || "" };
-        }
-    }
-  } */
-
- 
-
-  /*     { path: '/password-reset', name: 'reset',    component: ResetPasswordForm }, */
-  // { path: '/verify/:token', name: 'verify', component: VerifyEmailForm, props: true },
+  }
 ];
 
 const router = createRouter({
@@ -68,11 +44,5 @@ const router = createRouter({
   routes,
 });
 
-/*   router.beforeEach((to, from, next) => {
-    console.log('NAVIGERA →', to.name, to.path, to.matched);
-    next();
-  }); */
-
-console.log("SubscriptionModal", SubscriptionModal);
 
 export default router;
