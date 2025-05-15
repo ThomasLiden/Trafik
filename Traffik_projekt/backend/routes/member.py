@@ -33,6 +33,14 @@ def signup():
             "phone": phone
         }).execute()
 
+        stockholm_id = "7105f685-89fd-4d5c-808f-cb38012911f6"
+
+        supabase.table("subscriptions").insert({
+            "user_id": user_id,
+            "active":True,
+            "location_id": stockholm_id
+        }).execute()
+
         return jsonify({"message": "User created", "email": email}), 200
 
     except Exception as e:
@@ -138,12 +146,40 @@ def update_user_profile():
     return jsonify({"message": "Profil uppdaterad!"})
 
 
-# Hämta prenumerationer för inloggad medlem
+""" # Hämta prenumerationer för inloggad medlem
 @member_blueprint.route('/api/subscriptions', methods=['GET', 'OPTIONS'])
 def get_subscriptions():
     if request.method == 'OPTIONS':
         return {}, 200
 
     user_id = request.args.get("user_id")
+    print("Hämtar prenumerationer för användare:", user_id)
     resp = supabase.table("subscriptions").select("*").eq("user_id", user_id).execute()
+    return jsonify(resp.data), 200 """
+
+@member_blueprint.route('/api/subscriptions', methods=['GET'])
+def get_subscriptions():
+    user_id = request.args.get("user_id")
+    print("Hämtar prenumerationer för användare:", user_id)  # Debug
+
+    resp = supabase.table("subscriptions").select("*").eq("user_id", user_id).execute()
+    print("Prenumerationer från databasen:", resp.data)  # Debug
+
     return jsonify(resp.data), 200
+
+@member_blueprint.route('/api/cancel-subscription', methods=['POST', 'OPTIONS'])
+def cancel_subscription():
+    if request.method == 'OPTIONS':
+        return {}, 200
+
+    data = request.get_json()
+    subscription_id = data.get("subscription_id")
+
+    if not subscription_id:
+        return jsonify({"error": "Prenumerations-ID krävs"}), 400
+
+    try:
+        supabase.table("subscriptions").update({"active": False}).eq("subscription_id", subscription_id).execute()
+        return jsonify({"message": "Prenumerationen har avslutats"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
