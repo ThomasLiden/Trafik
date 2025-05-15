@@ -1,3 +1,6 @@
+//Ej påbörjad - enbart htmlstruktur finns! 
+
+
 export default {
   data() {
     return {

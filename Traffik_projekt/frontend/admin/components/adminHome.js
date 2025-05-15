@@ -1,4 +1,5 @@
 
+//EJ KLAR! - Behöver hämtas data på riktigt via blueprint och uppdatera api-anrop. 
 
 export default {
 
@@ -25,10 +26,10 @@ export default {
           this.loading = false;
         }, 500); // Liten delay för att simulera laddning
       } else {
-        // RIKTIG API-KOPPLING
-        const resellerId = localStorage.getItem("reseller_id") || "mock-tidning";
+        // RIKTIG API-KOPPLING - ändras till att använda api.js som hjälpmetod!
+        const token = localStorage.getItem("access_token") || "mock-tidning";
         
-        fetch(`http://localhost:5000/api/stats?tidning=${resellerId}`)
+        fetch(`http://localhost:5000/api/stats?tidning=${token}`)
           .then(res => res.json())
           .then(data => {
             this.statistik = data;

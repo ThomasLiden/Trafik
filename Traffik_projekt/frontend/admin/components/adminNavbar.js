@@ -22,7 +22,6 @@ export default {
         <li><router-link to="/admin/subscriptions">Prenumerationer</router-link></li>
         <li><router-link to="/admin/pricing">Prissättning</router-link></li>
         <li><router-link to="/admin/account">Kontoinställningar</router-link></li>
-
         <li v-if="isLoggedIn && role === 'superadmin'">
           <router-link to="/admin/administration">Administration</router-link>
         </li>

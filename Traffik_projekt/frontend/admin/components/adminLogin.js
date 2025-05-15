@@ -1,3 +1,4 @@
+//Login-komponent som hanterar inloggning för tidningar och superadmin. 
 export default {
     data() {
         return {
@@ -27,6 +28,7 @@ export default {
     </div>
     `,
     methods: {
+      //Inloggning - skickar användarens epost och lösenord till backend via en post-request. 
         async login() {
             try {
                 const response = await fetch("http://localhost:5000/api/admin/login", {
@@ -37,9 +39,10 @@ export default {
                    password: this.password
                 })
         });
-
+        
         const data = await response.json();
 
+        //Om inloggning misslyckas, skriv ut felmeddelande. 
         if (!response.ok) {
            this.message = data.error || "Fel vid inloggning";
            return;
@@ -56,6 +59,10 @@ export default {
            this.message = "Ett fel uppstod vid inloggningen.";
            console.error(error);
         }
+    },
+    //Metod för glömt lösenord - INTE implementerat!
+    forgotPassword() {
+      this.message = "Lösenordshantering ej implementerad ännu..";
     }
 }
     

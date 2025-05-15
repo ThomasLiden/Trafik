@@ -1,5 +1,9 @@
+import regions from "../regions.js"
+import { apiFetch } from "../api.js";
+
 export default {
-    props: ["show", "onClose"],
+    props: ["show"],
+    emits: ["close"],
     data() {
       return {
         name: "",
@@ -9,15 +13,60 @@ export default {
         domain: "",
         region: "",
         price: "",
-        message: ""
+        message: "",
+        regions,
+
       };
+    },
+    methods: {
+      //Skicka data till backend för att lägga till en ny reseller. 
+      async addReseller() {
+        this.message = ""; //Nollställ eventuella tidigare felmeddelanden. 
+       
+        //Kontrollera så att fälten är ifyllda.
+        if (!this.name || !this.email || !this.password || !this.domain || !this.region || !this.price) {
+          this.message = "Fyll i alla fält (telefon valfritt)";
+          return;
+        }
+        
+        try {
+          //Skicka post-anrop till backend via apiFetch-funktionen. 
+          const data = await apiFetch("http://localhost:5000/api/admin/create_reseller", {
+            method: "POST",
+            body: JSON.stringify({
+              name: this.name,
+              email: this.email,
+              password: this.password,
+              phone: this.phone || null, 
+              domain: this.domain,
+              region: this.region,
+              price: this.price !== "" ? parseFloat(this.price) : null
+            })
+          });
+          //Om lyckat, visa meddelande. 
+          this.message = "Tidning skapad!";
+          
+          // Rensa fälten
+          this.name = "";
+          this.email = "";
+          this.password = "";
+          this.phone = "";
+          this.domain = "";
+          this.region = ""; 
+          this.price = "";
+  
+        } catch (error) {
+          this.message = "Ett fel uppstod.";
+          console.error(error);
+        }
+      }
     },
     template: `
       <div v-if="show" class="modal">
         <div class="modal-content">
-          <span class="close-button" @click="onClose">&times;</span>  
+          <span class="close-button" @click="$emit('close')"> x </span>  
           <h3>Lägg till ny tidning</h3>
-          <p v-if="message" style="color:red;">{{ message }}</p>
+          <p v-if="message">{{ message }}</p>
   
           <form @submit.prevent="addReseller" class="form-grid">
   
@@ -43,72 +92,24 @@ export default {
               <input v-model="domain" type="text">
             </div>
             <div class="form-row">
-              <label>Region (län):</label>
-              <input v-model="region" type="text">
+             <label>Region (län):</label>
+             <select v-model="region">
+                <option value="" disabled selected>Välj län</option>
+                <option v-for="län in regions" :key="län" :value="län">
+                {{ län }} 
+                </option>
+             </select>
             </div>
             <div class="form-row">
               <label>Pris:</label>
               <input v-model="price" type="number">
             </div>
-            <div class="form-row">
+            <div class="form-row form-actions">
               <button type="submit" class="button-primary" >Lägg till tidning</button>
-              <button type="button" @click="onClose" class="button-secondary">Stäng</button>
+              <button type="button" @click="$emit ('close')" class="button-secondary">Stäng</button>
             </div>
           </form>
         </div>
       </div>
-    `,
-    methods: {
-      async addReseller() {
-        this.message = "";
-  
-         if (!this.name || !this.email || !this.password || !this.domain || !this.region || !this.price) {
-          this.message = "Fyll i alla fält (telefon valfritt)";
-          return;
-        }
-        const creator_id = localStorage.getItem("reseller_id");
-  
-        try {
-          const response = await fetch("http://localhost:5000/api/admin/create_reseller", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${localStorage.getItem("access_token")}`
-            },
-            body: JSON.stringify({
-              creator_id: creator_id,
-              name: this.name,
-              email: this.email,
-              password: this.password,
-              phone: this.phone || null, 
-              domain: this.domain,
-              region: this.region,
-              price: this.price !== "" ? parseFloat(this.price) : null
-            })
-          });
-  
-          const data = await response.json();
-  
-          if (!response.ok) {
-            this.message = data.error || "Fel vid skapande.";
-            return;
-          }
-  
-          this.message = "Tidning skapad!";
-          // Rensa fälten
-          this.name = "";
-          this.email = "";
-          this.password = "";
-          this.phone = "";
-          this.domain = "";
-          this.region = ""; 
-          this.price = "";
-  
-        } catch (error) {
-          this.message = "Ett fel uppstod.";
-          console.error(error);
-        }
-      }
-    },
-    
+    `,    
   };

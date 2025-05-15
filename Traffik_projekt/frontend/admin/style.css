@@ -133,18 +133,6 @@ nav ul li a:hover {
   margin-top: 0;
 }
 
-/* .modal-content label {
-  display: block;
-  margin: 0.625rem 0 0.3125rem;
-  font-weight: bold;
-}
-
-.modal-content input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border-radius: 4px; 
-  border: 1px solid #ccc;
-} */
 
 .close,
 .close-button {
@@ -176,14 +164,23 @@ nav ul li a:hover {
 .form-row label {
   display: block;
   margin-bottom: 0.25rem;
-  font-weight: bold;
+  font-weight: normal;
 }
 
-.form-row input {
+.form-row input,
+.form-row select {
   width: 90%;
   padding: 0.5rem;
   border-radius: 4px;
   border: 1px solid #ccc;
+}
+
+.form-actions {
+  grid-column: span 2;
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end; /* eller center */
+  gap: 1rem;
 }
 
 .form-grid {
@@ -195,6 +192,9 @@ nav ul li a:hover {
 @media (max-width: 600px) {
   .form-grid {
     grid-template-columns: 1fr;
+  }
+  .form-row {
+    grid-column: span 1;
   }
 }
 

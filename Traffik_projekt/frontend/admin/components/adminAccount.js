@@ -1,7 +1,9 @@
+//importerar fetch-funktion.
+import { apiFetch } from "../api.js";
+
 export default {
   data() {
     return {
-      reseller_id: "",
       name: "",
       lan: "",
       phone: "",
@@ -9,55 +11,45 @@ export default {
       message: ""
     };
   },
-  created() {
-    const resellerId = localStorage.getItem("reseller_id");
-  
-    fetch(`http://localhost:5000/api/admin/account?reseller_id=${resellerId}`)
-      .then(async res => {
-        if (!res.ok) {
-          const err = await res.text();
-          console.error("Fel vid hämtning:", err);
-          return;
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (!data) return;
-  
-        this.name = data.name || "";
-        this.lan = data.region || "";
-        this.phone = data.phone || "";
-        this.email = data.email || "";
-        this.reseller_id = data.reseller_id;
-      });
+  //När komponenten skapas - hämta aktuell kontoinformation. 
+  async created() {
+    try {
+      //Gör ett get-anrop till backend för att hämta uppgifter.
+      const data = await apiFetch("http://localhost:5000/api/admin/account");
+      
+      //fyll i formuläret med data.
+      this.name = data.name || "";
+      this.lan = data.region || "";
+      this.phone = data.phone || "";
+      this.email = data.email || "";
+
+    } catch (err) {
+      console.error("Fel vid hämtning:", err.message);
+      this.message = "Kunde inte ladda kontouppgifter.";
+    }
   },
   methods: {
-    saveProfile() {
-      fetch("http://localhost:5000/api/admin/account/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reseller_id: this.reseller_id,
-          name: this.name,
-          region: this.lan,
-          phone: this.phone,
-          email: this.email
-        })
-      })
-      .then(async res => {
-        if (!res.ok) {
-          const err = await res.text();
-          console.error("Fel vid uppdatering:", err);
-          this.message = "Kunde inte spara ändringar.";
-          return;
-        }
-        const data = await res.json();
+    //Metod för att spara uppdaterad information.
+    async saveProfile() {
+      //skicka uppdaterade uppgifter till backend via ett Post.
+      try {
+        const data = await apiFetch("http://localhost:5000/api/admin/account/update", {
+          method: "POST",
+          body: JSON.stringify({
+            name: this.name,
+            region: this.lan,
+            phone: this.phone,
+            email: this.email
+          })
+        });
+        //Skriv ut meddelande. 
         this.message = data.message || "Uppdaterat!";
-      })
-      .catch(err => {
-        console.error("Nätverksfel:", err);
-        this.message = "Ett nätverksfel uppstod.";
-      });
+        
+        //skriv ut vid fel och logga till konsolen. 
+      } catch (err) {
+        console.error("Fel vid uppdatering:", err.message);
+        this.message = "Kunde inte spara ändringar.";
+      }
     }
   },
   template: `
@@ -65,7 +57,7 @@ export default {
       <h1>Kontoinställningar</h1>
       <p>Här kan du ändra dina kontaktuppgifter.</p>
     
-    <form class="form-grid">
+    <form class="form-grid" @submit.prevent="saveProfile">
       <div class="form-row">
         <label>Tidningsnamn</label>
         <input v-model="name" type="text" placeholder="Tidningsnamn" />
@@ -87,7 +79,7 @@ export default {
       </div>
 
       <div class="form-row">
-        <button class="button-primary" @click="saveProfile">Spara</button>
+        <button type="submit" class="button-primary">Spara</button>
       </div>
       <p v-if="message">{{ message }}</p>
     </form>
