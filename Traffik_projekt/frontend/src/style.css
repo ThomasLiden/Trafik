@@ -8,19 +8,19 @@ body {
 .map-section {
   position: relative;
   text-align: center;
-  margin-bottom: 20px; /* Lägg till lite utrymme */
+  margin-bottom: 20px; 
 }
 
 #map {
-  height: 450px; /* Eller den höjd du önskar */
-  width: 800px; /* Eller den bredd du önskar */
-  margin: 0 auto; /* Centrera kartan om dess container är bredare */
-  border: 1px solid #ccc; /* Valfri ram */
+  height: 450px; 
+  width: 800px; 
+  margin: 0 auto;
+  border: 1px solid #ccc; 
 }
 
 .controls {
   margin-top: 10px;
-  margin-bottom: 10px; /* Lite utrymme under dropdown */
+  margin-bottom: 10px; 
   text-align: center;
 }
 
@@ -38,7 +38,7 @@ body {
 
 .buttons {
   margin-top: 10px;
-  text-align: center; /* Centrera knapparna */
+  text-align: center; 
 }
 
 button {
