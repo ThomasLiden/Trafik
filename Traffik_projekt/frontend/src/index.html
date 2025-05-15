@@ -1,62 +1,99 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trafiknotiser</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Applikation (med Justerbar Ram)</title>
+    <style>
+        /* Grundläggande styling för sidan och iframe-behållaren */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #e9e9e9; /* Ljusgrå bakgrund för området utanför iframen */
+            display: flex; /* Använd flexbox för centrering */
+            justify-content: center; /* Centrera horisontellt */
+            align-items: center; /* Centrera vertikalt */
+        }
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-        crossorigin=""/>
-  
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+        /* Behållare för iframen som kan justeras i storlek */
+        .iframe-wrapper {
+            width: 90%; /* Startbredd */
+            max-width: 1400px; /* Maximal bredd */
+            height: 85vh; /* Starthöjd (85% av skärmens höjd) */
+            border: 3px solid #005c99; /* Mörkblå ram */
+            overflow: auto; /* Nödvändigt för att 'resize' ska fungera och för scroll inuti behållaren */
+            resize: both; /* Tillåter justering av storlek i båda riktningarna */
+            min-width: 300px; /* Minsta tillåtna bredd */
+            min-height: 250px; /* Minsta tillåtna höjd */
+            box-sizing: border-box;
+            background-color: #ffffff; /* Vit bakgrund inuti behållaren innan iframe laddas */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); /* Tydligare skugga */
+            border-radius: 6px; /* Lätt rundade hörn */
+            display: flex; /* För att iframen ska fylla utrymmet */
+        }
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+        /* Själva iframen */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none; /* Tar bort standardramen för iframen */
+            display: block;
+        }
 
-  <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.js"></script>
-  <script src="app.js" type="module" defer></script>
-  <link rel="stylesheet" href="./style.css">
+        /* Fallback-meddelande om iframen inte kan laddas */
+        .iframe-fallback-content {
+            padding: 20px;
+            text-align: center;
+            color: #555;
+            margin: auto; /* Centrera fallback-texten */
+        }
+    </style>
 </head>
 <body>
-  <div id="app">
-    <div class="map-section">
-      <div id="map"></div>
-      <div class="controls">
-        <div>
-          <label for="county-select">Välj län:</label>
-          <select id="county-select" v-model="selectedCounty">
-            <option v-for="county in counties" :value="county.value">{{ county.name }}</option>
-          </select>
-        </div>
-        <div class="filter-controls">
-          <label>
-            <input type="checkbox" v-model="filterShowAccidents" /> Visa olyckor
-          </label>
-          <label>
-            <input type="checkbox" v-model="filterShowRoadworks" /> Visa vägarbeten
-          </label>
-          <label>
-            <input type="checkbox" v-model="filterShowCameras" /> Visa fartkameror
-          </label>
-        </div>
-        <div class="traffic-status-message" v-if="trafficStatusMessage">{{ trafficStatusMessage }}</div>
-      </div>
-      <div class="buttons">
-        <button @click="openModal('login')">Logga in</button>
-        <button @click="showSubscriptionModal = true">Prenumerera</button>
-        <subscription-modal v-if="showSubscriptionModal" @close="showSubscriptionModal = false"></subscription-modal>
-      </div>
+
+    <div class="iframe-wrapper" id="resizableIframeContainer">
+        <iframe src="./app-content.html" title="Min Applikationsinnehåll">
+            <div class="iframe-fallback-content">
+                <p>Din webbläsare verkar inte stödja iframes, eller så kunde innehållet inte laddas.</p>
+                <p>Kontrollera att filen <code>app-content.html</code> finns i samma mapp som denna fil.</p>
+            </div>
+        </iframe>
     </div>
 
-    <div class="modal" v-if="modalView">
-      <div class="modal-content">
-        <button class="close" @click="closeModal">X</button>
-        <login-form v-if="modalView === 'login'"></login-form>
-        <signup-form v-if="modalView === 'signup'"></signup-form>
-      </div>
-    </div>
-  </div>
+    <script>
+        // Ingen JavaScript behövs för den grundläggande funktionen att justera storlek,
+        // det hanteras av CSS-egenskapen 'resize: both;' på .iframe-wrapper.
+        console.log("Huvudsida med iframe-behållare laddad.");
+        // Du kan lägga till JavaScript här om du vill spara/återställa storlek via localStorage,
+        // eller lägga till knappar för förinställda storlekar.
+        
+        // Exempel på att spara och återställa storlek (valfritt)
+        const iframeContainer = document.getElementById('resizableIframeContainer');
+
+        // Ladda sparad storlek
+        const savedWidth = localStorage.getItem('iframeAppWidth');
+        const savedHeight = localStorage.getItem('iframeAppHeight');
+
+        if (savedWidth && iframeContainer) {
+            iframeContainer.style.width = savedWidth;
+        }
+        if (savedHeight && iframeContainer) {
+            iframeContainer.style.height = savedHeight;
+        }
+
+        // Spara storlek vid ändring (mouseup är en enkel trigger)
+        if (iframeContainer) {
+            document.addEventListener('mouseup', () => {
+                // Kontrollera att det är iframeContainer som har ändrats (mer robust kontroll kan behövas)
+                if (document.activeElement === iframeContainer || iframeContainer.style.width !== savedWidth || iframeContainer.style.height !== savedHeight) {
+                     localStorage.setItem('iframeAppWidth', iframeContainer.style.width);
+                     localStorage.setItem('iframeAppHeight', iframeContainer.style.height);
+                }
+            });
+        }
+    </script>
+
 </body>
 </html>

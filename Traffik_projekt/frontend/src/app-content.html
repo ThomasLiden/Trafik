@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trafiknotiser</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.js"></script>
+  <script src="app.js" type="module" defer></script>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="app">
+    <div class="map-section">
+      <div id="map"></div>
+      <div class="controls">
+        <div>
+          <label for="county-select">Välj län:</label>
+          <select id="county-select" v-model="selectedCounty">
+            <option v-for="county in counties" :value="county.value">{{ county.name }}</option>
+          </select>
+        </div>
+        <div class="filter-controls">
+          <label>
+            <input type="checkbox" v-model="filterShowAccidents" /> Visa olyckor
+          </label>
+          <label>
+            <input type="checkbox" v-model="filterShowRoadworks" /> Visa vägarbeten
+          </label>
+          <label>
+            <input type="checkbox" v-model="filterShowCameras" /> Visa fartkameror
+          </label>
+        </div>
+        <div class="traffic-status-message" v-if="trafficStatusMessage">{{ trafficStatusMessage }}</div>
+      </div>
+      <div class="buttons">
+        <button @click="openModal('login')">Logga in</button>
+        <button @click="showSubscriptionModal = true">Prenumerera</button>
+        <subscription-modal v-if="showSubscriptionModal" @close="showSubscriptionModal = false"></subscription-modal>
+      </div>
+    </div>
+
+    <div class="modal" v-if="modalView">
+      <div class="modal-content">
+        <button class="close" @click="closeModal">X</button>
+        <login-form v-if="modalView === 'login'"></login-form>
+        <signup-form v-if="modalView === 'signup'"></signup-form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
