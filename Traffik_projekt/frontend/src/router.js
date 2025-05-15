@@ -1,41 +1,30 @@
-
-
 const { createRouter, createWebHashHistory } = VueRouter;
 
 import SubscriptionModal from "./components/SubscriptionModal.js";
 import MapView from "./components/MapView.js";
 import LoginForm from "./components/LoginForm.js";
-import ResetPasswordForm from './components/ResetPasswordForm.js';
-
-const EmptyModal = { template: "" };
-//needed for close modal
+import ResetPasswordForm from "./components/ResetPasswordForm.js";
 
 const routes = [
-
   {
     path: "/",
     name: "home",
     components: { default: MapView },
   },
-
-  //create subscription, component is presented in the modal
   {
     path: "/signup",
     name: "signup",
-    components: {
-      modal: SubscriptionModal,
-    },
+    components: { modal: SubscriptionModal },
   },
-
-  // log in page, also inside modal 
   {
     path: "/login",
     name: "login",
-    components: {
-      default: MapView,
-      modal: LoginForm,
-    },
-    
+    components: { default: MapView, modal: LoginForm },
+  },
+  {
+    path: "/reset-password",
+    name: "reset-password",
+    components: { default: MapView, modal: ResetPasswordForm },
   }
 ];
 
@@ -44,5 +33,17 @@ const router = createRouter({
   routes,
 });
 
+//  Om access_token finns i hash men vi inte redan är på rätt route
+router.beforeEach((to, from, next) => {
+  if (
+    window.location.hash.includes("access_token") &&
+    !to.path.includes("/reset-password")
+  ) {
+    console.log(" Upptäckte token i hash – navigerar till /reset-password");
+    next({ path: "/reset-password" });
+  } else {
+    next();
+  }
+});
 
 export default router;
