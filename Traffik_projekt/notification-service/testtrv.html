@@ -2,72 +2,109 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <title>Trafikinformation – Län 24</title>
+  <title>Trafikinformation – Alla län</title>
   <style>
     body { font-family: sans-serif; max-width: 700px; margin: 2em auto; }
-    button { padding: 0.5em 1em; margin-top: 1em; }
+    select, button { padding: 0.5em; margin-top: 1em; }
     li { margin-bottom: 1em; border: 1px solid #ccc; padding: 1em; border-radius: 5px; }
+    .sent { background-color: #e7ffe7; }
   </style>
 </head>
 <body>
-  <h1>Olyckor & Vägarbeten (län 24)</h1>
-  <button id="fetchBtn">Hämta</button>
+  <h1>Olyckor & Vägarbeten – Välj län</h1>
+
+  <label for="countySelect">Välj län:</label>
+  <select id="countySelect">
+    <option value="1">Stockholm</option>
+    <option value="3">Uppsala</option>
+    <option value="4">Södermanland</option>
+    <option value="5">Östergötland</option>
+    <option value="6">Jönköping</option>
+    <option value="7">Kronoberg</option>
+    <option value="8">Kalmar</option>
+    <option value="9">Gotland</option>
+    <option value="10">Blekinge</option>
+    <option value="12">Skåne</option>
+    <option value="13">Halland</option>
+    <option value="14">Västra Götaland</option>
+    <option value="17">Värmland</option>
+    <option value="18">Örebro</option>
+    <option value="19">Västmanland</option>
+    <option value="20">Dalarna</option>
+    <option value="21">Gävleborg</option>
+    <option value="22">Västernorrland</option>
+    <option value="23">Jämtland</option>
+    <option value="24" selected>Västerbotten</option>
+    <option value="25">Norrbotten</option>
+  </select>
+
+  <br />
+  <button id="fetchBtn">🔄 Hämta Trafikdata</button>
   <ul id="results"></ul>
 
   <script>
-    const API_KEY = "f7c45907919840f7b1913e1bd686977e";
-
-    const xmlRequest = `
-      <REQUEST>
-        <LOGIN authenticationkey="${API_KEY}" />
-        <QUERY objecttype="Situation" namespace="road.trafficinfo" schemaversion="1.5" limit="50">
-          <INCLUDE>Deviation</INCLUDE>
-        </QUERY>
-      </REQUEST>
-    `.trim();
+    const countyMap = {
+      "1": "Stockholm", "3": "Uppsala", "4": "Södermanland", "5": "Östergötland",
+      "6": "Jönköping", "7": "Kronoberg", "8": "Kalmar", "9": "Gotland",
+      "10": "Blekinge", "12": "Skåne", "13": "Halland", "14": "Västra Götaland",
+      "17": "Värmland", "18": "Örebro", "19": "Västmanland", "20": "Dalarna",
+      "21": "Gävleborg", "22": "Västernorrland", "23": "Jämtland",
+      "24": "Västerbotten", "25": "Norrbotten"
+    };
 
     document.getElementById("fetchBtn").addEventListener("click", async () => {
+      const countyNo = document.getElementById("countySelect").value;
+      const regionName = countyMap[countyNo];
       const results = document.getElementById("results");
-      results.innerHTML = "<li>Hämtar data...</li>";
+      results.innerHTML = "<li>🔄 Hämtar data...</li>";
 
       try {
-        const res = await fetch("https://api.trafikinfo.trafikverket.se/v2/data.json", {
-          method: "POST",
-          headers: { "Content-Type": "text/xml" },
-          body: xmlRequest
-        });
-
-        if (!res.ok) throw new Error("Nätverksfel");
-
+        const res = await fetch(`http://localhost:5000/trafikinfo?county=${countyNo}`);
         const data = await res.json();
-        const situations = data.RESPONSE.RESULT[0]?.Situation || [];
+        results.innerHTML = "";
 
-        // Manuell filtrering: län 24 och typerna vi vill ha
-        const filtered = situations.filter(item => {
-          const dev = item.Deviation?.[0];
-          return dev?.CountyNo?.includes(24) &&
-                 ["ACCIDENT", "ROADWORKS"].includes(dev.DeviationType);
-        });
+        if (data.length === 0) {
+          results.innerHTML = "<li>Inga händelser just nu.</li>";
+          return;
+        }
 
-        results.innerHTML = filtered.length === 0
-          ? "<li>Inga relevanta händelser i län 24.</li>"
-          : "";
-
-        filtered.forEach(item => {
-          const dev = item.Deviation?.[0];
+        data.forEach(dev => {
           const li = document.createElement("li");
           li.innerHTML = `
-            <strong>${dev.Message || "Ingen titel"}</strong><br>
-            Plats: ${dev.LocationDescriptor || "Okänd"}<br>
-            Typ: ${dev.DeviationType}, Påverkan: ${dev.SeverityText || "?"}<br>
-            Start: ${new Date(dev.StartTime).toLocaleString()}
+            <strong>${dev.Header || "Ingen rubrik"}</strong><br>
+            ${dev.Message || "Ingen beskrivning"}<br>
+            <em>${dev.MessageTypeValue || "Okänd typ"} på ${dev.RoadNumber || "okänd väg"}</em><br>
+            <button>📲 Skicka SMS</button>
           `;
+
+          const button = li.querySelector("button");
+          button.addEventListener("click", async () => {
+            button.disabled = true;
+            button.innerText = "⏳ Skickar...";
+            try {
+              const smsRes = await fetch("http://localhost:5000/api/send_sms_for_deviation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  devId: dev.Id,
+                  region: regionName
+                })
+              });
+              const result = await smsRes.json();
+              li.classList.add("sent");
+              button.innerText = `✅ Skickade till ${result.count || 0}`;
+            } catch (e) {
+              console.error(e);
+              button.innerText = "⚠️ Fel vid SMS";
+            }
+          });
+
           results.appendChild(li);
         });
 
       } catch (err) {
         console.error(err);
-        results.innerHTML = "<li>Fel vid hämtning av data.</li>";
+        results.innerHTML = "<li>❌ Fel vid hämtning av data.</li>";
       }
     });
   </script>
