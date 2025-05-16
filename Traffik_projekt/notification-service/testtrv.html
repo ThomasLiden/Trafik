@@ -43,18 +43,8 @@
   <ul id="results"></ul>
 
   <script>
-    const countyMap = {
-      "1": "Stockholm", "3": "Uppsala", "4": "Södermanland", "5": "Östergötland",
-      "6": "Jönköping", "7": "Kronoberg", "8": "Kalmar", "9": "Gotland",
-      "10": "Blekinge", "12": "Skåne", "13": "Halland", "14": "Västra Götaland",
-      "17": "Värmland", "18": "Örebro", "19": "Västmanland", "20": "Dalarna",
-      "21": "Gävleborg", "22": "Västernorrland", "23": "Jämtland",
-      "24": "Västerbotten", "25": "Norrbotten"
-    };
-
     document.getElementById("fetchBtn").addEventListener("click", async () => {
       const countyNo = document.getElementById("countySelect").value;
-      const regionName = countyMap[countyNo];
       const results = document.getElementById("results");
       results.innerHTML = "<li>🔄 Hämtar data...</li>";
 
@@ -87,7 +77,7 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   devId: dev.Id,
-                  region: regionName
+                  countyNo: parseInt(countyNo, 10) 
                 })
               });
               const result = await smsRes.json();

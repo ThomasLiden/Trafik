@@ -3,87 +3,55 @@ from supabase import create_client
 import requests
 import os
 
-notification_api = Blueprint("notification_api", __name__)
+notification_api = Blueprint("notification_api", __name__, url_prefix="/api")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Din proxy till Trafikverket, eller direkt om ni kör mot det publika API:et
 TRAFIKVERKET_API = os.getenv("TRAFIKVERKET_PROXY_URL", "http://localhost:5000/trafikinfo")
-SMS_SERVER_URL = os.getenv("SMS_SERVER_URL", "http://localhost:3000/send-sms")
+SMS_SERVER_URL = os.getenv("RENDER_SMS_URL", "http://localhost:3000/send-sms")
 
-# County-name → Trafikverket-kod
-COUNTY_NAME_TO_NUMBER = {
-    "Stockholm": 1,
-    "Uppsala": 3,
-    "Södermanland": 4,
-    "Östergötland": 5,
-    "Jönköping": 6,
-    "Kronoberg": 7,
-    "Kalmar": 8,
-    "Gotland": 9,
-    "Blekinge": 10,
-    "Skåne": 12,
-    "Halland": 13,
-    "Västra Götaland": 14,
-    "Värmland": 17,
-    "Örebro": 18,
-    "Västmanland": 19,
-    "Dalarna": 20,
-    "Gävleborg": 21,
-    "Västernorrland": 22,
-    "Jämtland": 23,
-    "Västerbotten": 24,
-    "Norrbotten": 25,
-}
-
-
-@notification_api.route("/api/deviations")
-def get_deviations():
-    region = request.args.get("region")
-    county_number = COUNTY_NAME_TO_NUMBER.get(region)
-
-    if not county_number:
-        return jsonify({"error": "Invalid region"}), 400
-
-    try:
-        url = f"{TRAFIKVERKET_API}?county={county_number}&messageTypeValue=Accident,Roadwork"
-        response = requests.get(url)
-        response.raise_for_status()
-        result = response.json()
-
-        # För enkelhet: skicka vidare deviation-objekt
-        deviations = []
-        for s in result.get("RESPONSE", {}).get("RESULT", []):
-            for situation in s.get("Situation", []):
-                deviations.extend(situation.get("Deviation", []))
-
-        return jsonify(deviations[:5])  # Begränsa till 5 för test
-
-    except Exception as e:
-        print("❌ Fel vid hämtning:", e)
-        return jsonify({"error": "Kunde inte hämta data"}), 500
-
-
-@notification_api.route("/api/send_sms_for_deviation", methods=["POST"])
+@notification_api.route("/send_sms_for_deviation", methods=["POST", "OPTIONS"])
 def send_sms_for_deviation():
-    data = request.get_json()
-    dev_id = data.get("devId")
-    region = data.get("region")
+    print("✅ Route: /api/send_sms_for_deviation REACHED")
 
-    if not dev_id or not region:
-        return jsonify({"error": "devId and region required"}), 400
+    if request.method == "OPTIONS":
+        return jsonify({"ok": True}), 200
 
     try:
-        # 1. Hämta prenumeranter för region
-        location_resp = supabase.table("location").select("location_id").eq("region", region).execute()
-        if not location_resp.data:
-            return jsonify({"error": f"Ingen plats hittad för region {region}"}), 404
+        data = request.get_json()
+        dev_id = data.get("devId")
+        county_no = data.get("countyNo")
+        print("➡️ county_no från frontend:", county_no)
 
-        location_id = location_resp.data[0]["location_id"]
+        if not dev_id or not county_no:
+            return jsonify({"error": "devId och countyNo krävs"}), 400
 
+        # Hämta plats-ID från Supabase (matcha county_no som sträng)
+        location_resp = supabase.table("location") \
+            .select("*") \
+            .execute()
+
+        print("🧪 Hela location_resp från Supabase:", location_resp)
+
+        print("🧪 Alla län i location-tabellen:")
+        location_id = None
+        for row in location_resp.data:
+            print(f"🔎 county_no={row['county_no']} (type: {type(row['county_no'])}), matchar mot {county_no} ({type(county_no)})")
+            if str(row["county_no"]) == str(county_no):
+                location_id = row["location_id"]
+                break
+
+        if not location_id:
+            return jsonify({"error": f"Inget län hittat med county_no = {county_no}"}), 404
+
+        print("✅ Hittad plats:", location_id)
+
+
+        # Hämta aktiva prenumeranter
         subs_resp = supabase.table("subscriptions").select("user_id").eq("location_id", location_id).eq("active", True).execute()
+        print("📋 subscriptions:", subs_resp.data)
         if not subs_resp.data:
             return jsonify({"message": "Inga aktiva prenumeranter"}), 200
 
@@ -91,8 +59,8 @@ def send_sms_for_deviation():
         for sub in subs_resp.data:
             user_id = sub["user_id"]
 
-            # Kolla om sms redan skickats
-            sms_check = supabase.table("sms").select("id").eq("user_id", user_id).eq("sms_id", dev_id).execute()
+            # Undvik dubblett
+            sms_check = supabase.table("sms").select("sms_id").eq("user_id", user_id).eq("sms_id", dev_id).execute()
             if sms_check.data:
                 continue
 
@@ -101,17 +69,21 @@ def send_sms_for_deviation():
             if not user_resp.data:
                 continue
 
-            recipients.append({
-                "user_id": user_id,
-                "phone": user_resp.data[0]["phone"]
-            })
+            phone = user_resp.data[0].get("phone")
+            if phone:
+                recipients.append({
+                    "user_id": user_id,
+                    "phone": phone
+                })
+
+        print("📲 Mottagare:", recipients)
 
         if not recipients:
-            return jsonify({"message": "Alla har redan fått detta sms"}), 200
+            return jsonify({"message": "Alla har redan fått detta sms eller saknar telefonnummer"}), 200
 
-        # 2. Skicka SMS via server.js
+        # Skicka SMS
         numbers = [r["phone"] for r in recipients]
-        message = f"🚨 Ny trafikstörning i {region}. Se mer på trafikinfo."
+        message = f"🚨 Ny trafikstörning i län {county_no}. Se mer på trafikinfo."
 
         sms_res = requests.post(SMS_SERVER_URL, json={
             "to": numbers,
@@ -120,7 +92,7 @@ def send_sms_for_deviation():
         })
         sms_res.raise_for_status()
 
-        # 3. Logga SMS i supabase
+        # Logga SMS
         for r in recipients:
             supabase.table("sms").insert({
                 "user_id": r["user_id"],
@@ -131,7 +103,7 @@ def send_sms_for_deviation():
         return jsonify({
             "message": f"Skickade till {len(recipients)} mottagare",
             "count": len(recipients)
-        })
+        }), 200
 
     except Exception as e:
         print("❌ Fel i utskick:", e)

@@ -12,7 +12,11 @@ from routes.trafikverket_proxy import trafikverket_proxy
 
 
 app = Flask(__name__)
-CORS(app,supports_credentials=True)
+CORS(app,
+     supports_credentials=True,
+     resources={r"/*": {"origins": "*"}},
+     allow_headers=["Content-Type"],
+     methods=["GET", "POST", "OPTIONS"])
 
 app.register_blueprint(member_blueprint)
 #app.register_blueprint(signup_blueprint)
@@ -23,6 +27,10 @@ app.register_blueprint(member_blueprint)
 app.register_blueprint(notification_api)
 app.register_blueprint(trafikverket_proxy)
 
+@app.before_request
+def debug():
+    from flask import request
+    print(f"➡️ {request.method} {request.path}")
 
 if __name__ == '__main__':
     app.run(debug=True, host="127.0.0.1", port=5000)
