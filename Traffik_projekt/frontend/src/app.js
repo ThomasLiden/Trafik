@@ -11,13 +11,11 @@ import ResetPasswordForm from "./components/ResetPasswordForm.js";
 
 const app = Vue.createApp({
   components: {
-    // Dessa är globala komponenter eller de som används direkt av app.js template/logik
-    Modal, // Generisk modal-wrapper
-    // Följande är komponenter som laddas inuti Modal via modalComponent-variabeln, så de behöver inte listas här om de inte är globala
-    // SubscriptionModal, // Detta är nu en route
-    // SignupForm, // Detta är en del av SubscriptionModal eller en egen route-komponent
-    // LoggedInUser,
-    // ResetPasswordForm
+    Modal, 
+    SubscriptionModal, 
+    SignupForm, 
+    LoggedInUser,
+    ResetPasswordForm
   },
 
   template: `
