@@ -11,9 +11,9 @@ import ResetPasswordForm from "./components/ResetPasswordForm.js";
 
 const app = Vue.createApp({
   components: {
-    Modal, 
-    SubscriptionModal, 
-    SignupForm, 
+    Modal,
+    SubscriptionModal,
+    SignupForm,
     LoggedInUser,
     ResetPasswordForm
   },
@@ -23,7 +23,8 @@ const app = Vue.createApp({
                  @open-login="openLogin"
                  @open-signup="openSignup"
                  @open-account="openAccount"
-                 @back-to-map="closeModal"> <component :is="Component" :is-logged-in="isLoggedIn" />
+                 @back-to-map="closeModal"> 
+            <component :is="Component" :is-logged-in="isLoggedIn" />
     </router-view>
 
     <router-view name="modal" v-slot="{ Component: ModalRouteComponent }">
@@ -51,8 +52,10 @@ const app = Vue.createApp({
   },
 
   computed: {
-    // Inget behov av 'loggedIn' computed här, 'isLoggedIn' data property räcker.
-  },
+    loggedIn() {
+        return this.isLoggedIn;
+      }
+     },
 
   methods: {
     // Alla metoder från main's app.js för att hantera login, modals etc. behålls.
@@ -90,16 +93,11 @@ const app = Vue.createApp({
       this.$router.push({ name: "signup" });
     },
     openAccount() {
-      // Använder nu modalComponent för att visa LoggedInUser i den generiska modalen
-      // istället för en separat route, om det inte redan är en route.
-      // Om LoggedInUser ska vara en full sida, hanteras det av routern.
-      // Här antar vi att det är en modal som öppnas ovanpå kartan.
-      this.modalComponent = "LoggedInUser"; // Namnet på komponenten som registrerats
-      // Ingen router.push behövs om det är en dynamisk modal via modalComponent
+        this.modalComponent = "LoggedInUser";
     },
-    // openResetPassword() { // Hanteras nu av routern direkt till ResetPasswordForm i modal view
-    //   this.modalComponent = "ResetPasswordForm";
-    // },
+    openResetPassword() {
+      this.modalComponent = "ResetPasswordForm";
+    },
     closeModal() {
       if (this.$route.meta.isModal) { // Om vi är på en modal route
         this.$router.push({ name: "home" }); // Gå tillbaka till hemskärmen
