@@ -21,8 +21,8 @@ createApp({
         const trafficStatusMessage = ref('');
 
         // Uppdaterade filterstatus (default till att visa allt)
-        const filterShowAccidents = ref(true); // Nytt
-        const filterShowRoadworks = ref(true); // Nytt
+        const filterShowAccidents = ref(true); 
+        const filterShowRoadworks = ref(true); 
         const filterShowCameras = ref(true);
 
         const lastBackendResponse = ref(null);
@@ -65,7 +65,7 @@ createApp({
             fetchTrafficDataFromServer,
             renderMarkersOnMap
         } = useTrafficMap(
-            "http://127.0.0.1:5000/api/traffic-info",
+            "http://127.0.0.1:5000/api/traffic-info", //tänk på måste ändras om vi deployar via .site
             counties.value,
             countyNumberToName
         );
