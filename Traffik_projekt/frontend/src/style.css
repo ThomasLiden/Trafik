@@ -1,17 +1,17 @@
 body {
-  font-family: 'Poppins', sans-serif; /* Behållen från main för ett modernt utseende */
-  background: #f0f4f8;
-  font-size: 16px; /* Standardiserad från main */
-  margin: 0;
-  padding: 0;
-}
-
-.map-section {
-  position: relative;
-  text-align: center;
-  margin-bottom: 20px; /* Kan behövas för layout, från KartaTrafik */
-}
-
+    font-family: 'Poppins', sans-serif;
+    background: #f0f4f8;
+    font-size: 16px;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .map-section {
+    position: relative;
+    text-align: center;
+    margin-bottom: 20px; /* Kan behövas för layout, från KartaTrafik */
+  }
+  
 /* Kart-specifika stilar från KartaTrafik */
 #map {
   height: 450px; /* Justera efter behov, kan också sättas dynamiskt */
@@ -59,191 +59,209 @@ body {
 }
 
 /* Knappstilar från main (mer strukturerade) */
-.button-primary, button.primary /* Lägg till .primary för enkelhet om KartaTrafiks 'button' används direkt */ {
-  background-color: black;
-  color: white;
-  padding: 10px 20px;
-  margin: 10px;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-  font-weight: bold;
-  transition: background-color 0.3s;
-}
+  .button-primary {
+    background-color: black;
+    color: white;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  
+  .button-primary:hover {
+    background-color: gray;
+  }
+  
+  /* Sekundär knapp – grå bakgrund */
+  .button-secondary {
+    background-color: lightgray;
+    color: black;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+    margin: 10px;
+  }
+  
+  .button-secondary:hover {
+    background-color: darkgray;
+  }
+  
+  /* Tertiär knapp – som en blå länk */
+  .button-tertiary {
+    background: none;
+    border: none;
+    color: #3A86FF; /* Ljusblå färg */
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: normal;
+    padding: 5px;
+  }
+  
+  .button-tertiary:hover {
+    color: #023E8A; /* Lite mörkare blå vid hover */
+  }
 
-.button-primary:hover, button.primary:hover {
-  background-color: #333; /* Mörkare grå istället för 'gray' */
-}
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;           /* Se till att den ligger ovanför kartan */
+  }
+  
+  .modal-container {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    position: relative;      /* Behövs för close-knappen */
+  }
+  
+  .modal-close-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+  }
+  
 
-.button-secondary, button.secondary {
-  background-color: lightgray;
-  color: black;
-  padding: 10px 20px;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-  font-weight: bold;
-  margin: 10px;
-  transition: background-color 0.3s;
-}
+/* gamla modal-klasser */
+  
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+  }
+  
+  .modal-content {
+      position: relative;
+      background: white;
+      padding: 2rem;
+      border-radius: 0.75rem;
+      max-width: 700px;
+      width: 90%;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+  
+  .close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: black;
+  }
 
-.button-secondary:hover, button.secondary:hover {
-  background-color: darkgray;
-}
+  .close:hover{
+    background: none;
+  }
 
-.button-tertiary, button.tertiary {
-  background: none;
-  border: none;
-  color: #3A86FF; /* Ljusblå färg */
-  text-decoration: underline;
-  cursor: pointer;
-  font-weight: normal;
-  padding: 5px;
-  transition: color 0.3s;
-}
+  .form-field {
+    padding: 10px;
+    margin: 5px;
+    border-radius: 10px;
+  }
 
-.button-tertiary:hover, button.tertiary:hover {
-  color: #023E8A; /* Lite mörkare blå vid hover */
-}
+  .option {
+    padding: 10px;
+    margin: 5px;
+    border-radius: 10px;
+  }
+  
+  .signup-container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
 
-/* Nyare modal-stilar från main (används av routerns modaler) */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.6); /* Lite mörkare overlay */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
+  .logged-in-user{
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 2rem;
+  }
+  
+  .form-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .back-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #007BFF;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  .signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
 
-.modal-container {
-  background: #fff;
-  border-radius: 8px;
-  padding: 1.5rem 2rem; /* Lite mer padding */
-  max-width: 450px;
-  width: 90%;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2); /* Tydligare skugga */
-  position: relative;
-}
-
-.modal-close-btn { /* Denna är för modal-container */
-  position: absolute;
-  top: 0.75rem; /* Justerad position */
-  right: 0.75rem; /* Justerad position */
-  background: transparent;
-  border: none;
-  font-size: 1.5rem; /* Lite större */
-  line-height: 1;
-  cursor: pointer;
-  color: #555; /* Mörkare färg för bättre synlighet */
-}
-.modal-close-btn:hover {
-  color: #000;
-}
-
-
-/* Form-fält och container-stilar från main (används i SignupForm, LoginForm etc.) */
-.form-field {
-  padding: 10px;
-  margin-bottom: 10px; /* Standardiserat mellanrum */
-  border-radius: 6px; /* Matchar signup-form input */
-  border: 1px solid #ccc;
-  width: calc(100% - 22px); /* Justera för padding och border */
-  font-size: 1rem;
-}
-
-.option { /* För select-element om de ska ha specifik styling */
-  padding: 10px;
-  margin: 5px;
-  border-radius: 10px;
-}
-
-.signup-container { /* Behålls om det finns sidor som använder detta direkt */
-  max-width: 600px;
-  margin: auto;
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.logged-in-user {
-  max-width: 600px;
-  margin: auto;
-  background: white;
-  padding: 2rem;
-  border-radius: 8px; /* Matchar modal-container */
-}
-
-.form-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.signup-form { /* Används av SignupForm.js */
-  display: flex;
-  flex-direction: column;
-  gap: 1rem; /* Lite mindre gap */
-}
-
-.form-row {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap; /* För mindre skärmar */
-}
-
-.signup-form input[type="text"],
-.signup-form input[type="email"],
-.signup-form input[type="password"] {
-  padding: 0.75rem; /* Lite mer padding */
-  font-size: 1rem;
-  border: 1px solid #ccc; /* Tunnare border */
-  border-radius: 6px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.form-group {
-  flex: 1;
-  min-width: 180px; /* Förhindra att de blir för smala på små skärmar */
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem; /* Lite mellanrum mellan label och input */
-}
-.form-group label {
-  font-weight: bold;
-  font-size: 0.9rem;
-  color: #333;
-}
-
-.form-group small {
-  font-size: 0.8rem;
-  color: #666;
-  margin-top: 0.25rem;
-}
-
-.required {
-  color: red;
-  margin-left: 2px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 1.5rem;
-  gap: 10px; /* Mellanrum mellan knappar i form-actions */
-}
-
-.error-message {
-  color: red;
-  font-size: 0.9rem;
-  margin-top: 10px;
-  text-align: center;
-}
-
-
+  .form-row {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .signup-form input {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+  }
+  
+  .form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-group small {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.25rem;
+  }
+  
+  .required {
+    color: red;
+  }
+  
+  .form-actions {
+    grid-column: span 2;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+  }
 /* Leaflet popup-stilar från KartaTrafik */
 .leaflet-popup-content-wrapper {
   border-radius: 5px;
