@@ -146,17 +146,6 @@ def update_user_profile():
     return jsonify({"message": "Profil uppdaterad!"})
 
 
-""" # Hämta prenumerationer för inloggad medlem
-@member_blueprint.route('/api/subscriptions', methods=['GET', 'OPTIONS'])
-def get_subscriptions():
-    if request.method == 'OPTIONS':
-        return {}, 200
-
-    user_id = request.args.get("user_id")
-    print("Hämtar prenumerationer för användare:", user_id)
-    resp = supabase.table("subscriptions").select("*").eq("user_id", user_id).execute()
-    return jsonify(resp.data), 200 """
-
 @member_blueprint.route('/api/subscriptions', methods=['GET'])
 def get_subscriptions():
     user_id = request.args.get("user_id")
