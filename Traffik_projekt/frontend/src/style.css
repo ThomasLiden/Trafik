@@ -9,9 +9,56 @@ body {
   .map-section {
     position: relative;
     text-align: center;
+    margin-bottom: 20px; /* Kan behövas för layout, från KartaTrafik */
   }
   
+/* Kart-specifika stilar från KartaTrafik */
+#map {
+  height: 450px; /* Justera efter behov, kan också sättas dynamiskt */
+  width: 80%; /* Gör den responsiv, eller sätt fast bredd om det föredras */
+  max-width: 1000px; /* Maxbredd för större skärmar */
+  margin: 20px auto; /* Centrera och ge lite marginal */
+  border: 1px solid #ccc;
+  border-radius: 4px; /* Lite mjukare kanter */
+}
 
+.controls {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.controls label {
+  margin-right: 10px;
+  font-size: 16px; /* Anpassad till generell font-size */
+}
+
+.controls select {
+  padding: 8px;
+  font-size: 14px; /* Anpassad */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.filter-controls { /* Styling för filter-checkboxar (om det behövs från app-content.html) */
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.filter-controls label {
+  font-size: 14px;
+}
+
+.traffic-status-message {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Knappstilar från main (mer strukturerade) */
   .button-primary {
     background-color: black;
     color: white;
@@ -215,4 +262,18 @@ body {
     justify-content: flex-end;
     margin-top: 1.5rem;
   }
-  
+/* Leaflet popup-stilar från KartaTrafik */
+.leaflet-popup-content-wrapper {
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* Lite mer skugga */
+}
+.leaflet-popup-content {
+  font-size: 14px;
+  line-height: 1.5; /* Lite mer radavstånd */
+}
+.leaflet-popup-content h3 {
+  margin-top: 0;
+  margin-bottom: 8px; /* Lite mer marginal */
+  font-size: 16px;
+  color: #333;
+}
