@@ -12,72 +12,77 @@
             flex-direction: column;
             align-items: center;
         }
-        .controls {
+        .page-controls { /* Ny klass för alla sidkontroller */
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Mellanrum mellan grupperna av knappar */
             margin-bottom: 20px;
         }
-        .controls button {
+        .iframe-size-controls button,
+        .user-actions button { /* Gemensam stil för knappar utanför iframe */
             padding: 8px 15px;
             margin: 0 5px;
             cursor: pointer;
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        .controls button:hover {
+        .iframe-size-controls button:hover,
+        .user-actions button:hover {
             background-color: #f0f0f0;
         }
+        /* Specifika stilar för användarknapparna om du vill matcha din apps utseende */
+        .user-actions .button-primary-static {
+            background-color: black; color: white; font-weight: bold;
+        }
+        .user-actions .button-secondary-static {
+            background-color: lightgray; color: black; font-weight: bold;
+        }
+
         .iframe-wrapper {
             border: 2px solid #333;
-            /* Övergång för en mjukare storleksändring */
             transition: width 0.3s ease-in-out, height 0.3s ease-in-out;
         }
         iframe {
-            display: block; /* För att undvika extra utrymme under iframen */
-            border: none;   /* Ta bort standardkantlinjen på iframen */
+            display: block;
+            border: none;
         }
     </style>
 </head>
 <body>
 
-    <h1>Min Frontend Applikation</h1>
+    <h1>Tidning</h1>
 
-    <div class="controls">
-        <button id="sizeButtonTall">Utvigdna</button>
-        <button id="sizeButtonWide">Minska</button>
+    <div class="page-controls">
+        <div class="iframe-size-controls">
+            <button id="sizeButtonTall">Utvidgad (1000x400)</button>
+            <button id="sizeButtonWide">Banderoll (1000x200)</button>
+        </div>
     </div>
 
     <div class="iframe-wrapper">
-        <iframe id="appIframe" src="http://127.0.0.1:5500/Traffik_projekt/frontend/src/index.html#/" width="375" height="667">
+        <iframe id="appIframe" src="http://127.0.0.1:5500/Traffik_projekt/frontend/src/index.html#/" width="1000" height="400">
             Din webbläsare stödjer inte iframes.
         </iframe>
     </div>
 
     <script>
         const iframe = document.getElementById('appIframe');
-        const iframeWrapper = document.querySelector('.iframe-wrapper'); // För att styla containern
+        const iframeWrapper = document.querySelector('.iframe-wrapper');
         const sizeButtonTall = document.getElementById('sizeButtonTall');
         const sizeButtonWide = document.getElementById('sizeButtonWide');
 
-        // Definiera dina två avlånga storlekar
-        // Storlek 1: En bred men låg "banner" eller "avlång liggande"
-        const wideSize = { width: 1000, height: 200 };
+        const tallSize = { width: 1000, height: 400 }; // Utvidgad/Desktop
+        const wideSize = { width: 1000, height: 200 }; // Banderoll/Minskad
 
-        // Storlek 2: stor
-        const tallSize = { width: 1000, height: 400 };
-
-        // Funktion för att sätta storlek
         function setIframeSize(width, height) {
-            iframe.setAttribute('width', width);
-            iframe.setAttribute('height', height);
-
-            // Om du vill att wrappern också ska anpassa sig (kan vara bra för kantlinjer etc.)
+            iframe.setAttribute('width', String(width));
+            iframe.setAttribute('height', String(height));
             iframeWrapper.style.width = width + 'px';
             iframeWrapper.style.height = height + 'px';
         }
 
-        // Sätt initial storlek
-        setIframeSize(tallSize.width, tallSize.height);
+        setIframeSize(tallSize.width, tallSize.height); // Initial storlek
 
-        // Event listeners för knapparna
         sizeButtonTall.addEventListener('click', () => {
             setIframeSize(tallSize.width, tallSize.height);
         });

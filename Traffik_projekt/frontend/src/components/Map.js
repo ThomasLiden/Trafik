@@ -1,8 +1,4 @@
 // frontend/src/components/map.js
-// Se till att denna fil finns och innehåller din `useTrafficMap`-funktion.
-// En liten justering föreslås:
-// I renderMarkersOnMap, se till att du använder countyNumberToName som skickas med som argument
-// istället för att förlita dig på en closure om den definieras utanför.
 
 export function useTrafficMap(apiUrl, countyListSource, initialCountyNumberToName) {
     let mapInstance = null;

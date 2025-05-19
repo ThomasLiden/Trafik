@@ -1,61 +1,158 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
     font-family: 'Poppins', sans-serif;
-    background: #f0f4f8;
+    background: #f0f4f8; /* Syns endast om #app inte täcker allt */
     font-size: 16px;
-    margin: 0;
-    padding: 0;
-  }
-  
-  .map-section {
-    position: relative;
-    text-align: center;
-    margin-bottom: 20px; /* Kan behövas för layout, från KartaTrafik */
-  }
-  
-/* Kart-specifika stilar från KartaTrafik */
+    display: flex;
+    flex-direction: column;
+}
+
+#app { /* Ditt rot-Vue-element från index.html (inuti iframen) */
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: white; /* Ge en bakgrundsfärg till Vue-appen */
+}
+
+.map-section {
+    flex-grow: 1; /* Gör att .map-section fyller #app */
+    display: flex;
+    flex-direction: column; /* Stackar #map och .controls vertikalt som standard */
+    position: relative; /* Viktigt för absolut positionering av .controls i banderoll-läge */
+    text-align: center; /* Behålls från din ursprungliga CSS */
+    /* margin-bottom: 20px; -- Kan tas bort om den fyller sin förälder */
+    overflow: hidden; /* Förhindra att absolut positionerade barn skapar scrollbars på .map-section */
+}
+
+/* === GRUNDLÄGGANDE DESKTOP-LÄGE (Utvidgad 1000x400 i iframe) === */
 #map {
-  height: 450px; /* Justera efter behov, kan också sättas dynamiskt */
-  width: 80%; /* Gör den responsiv, eller sätt fast bredd om det föredras */
-  max-width: 1000px; /* Maxbredd för större skärmar */
-  margin: 20px auto; /* Centrera och ge lite marginal */
-  border: 1px solid #ccc;
-  border-radius: 4px; /* Lite mjukare kanter */
+  flex-grow: 1; /* Kartan tar upp det mesta av utrymmet i .map-section */
+  width: 100%;   /* Ta hela bredden av .map-section */
+  /* height: auto; -- Höjden styrs av flex-grow */
+  border-bottom: 1px solid #ccc; /* Linje mellan karta och kontroller */
+  background-color: #e0e0e0; /* Placeholder för kartan */
+  position: relative; /* För att z-index ska fungera korrekt med overlay */
+  z-index: 1; /* Se till att kartan är under kontrollerna i banderoll-läge */
 }
 
-.controls {
-  margin-top: 10px;
-  margin-bottom: 10px;
-  text-align: center;
+.controls { /* Wrapper för Välj län, filter, och statusmeddelande */
+  padding: 10px;
+  background-color: #f8f8f8;
+  /* height: auto; -- Höjden anpassas efter innehållet */
+  /* text-align: center; -- Är redan satt på .map-section */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: static; /* Standardpositionering under kartan */
+  z-index: 5; /* Högre än kartan men lägre än banderollens overlay */
 }
 
+/* Behåll dina befintliga .controls label, select, .filter-controls etc. stilar här */
 .controls label {
   margin-right: 10px;
-  font-size: 16px; /* Anpassad till generell font-size */
+  font-size: 16px;
 }
-
 .controls select {
   padding: 8px;
-  font-size: 14px; /* Anpassad */
+  font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
-
-.filter-controls { /* Styling för filter-checkboxar (om det behövs från app-content.html) */
-  margin-top: 10px;
+.filter-controls {
+  margin-top: 0; /* Justerad från 10px om .controls har gap */
   display: flex;
   justify-content: center;
   gap: 15px;
   flex-wrap: wrap;
 }
-
 .filter-controls label {
   font-size: 14px;
 }
-
 .traffic-status-message {
-  margin-top: 10px;
+  margin-top: 5px; /* Justerad från 10px om .controls har gap */
   font-size: 14px;
   color: #333;
+}
+
+/* === BANDEROLL-LÄGE (Minskad 1000x200 i iframe) === */
+/* Iframe-storlekar från iframe_host.html: Utvidgad 1000x400, Banderoll 1000x200 */
+@media (max-width: 1000px) and (max-height: 200px) { /* Matchar din "wideSize" (banderoll) */
+
+  .map-section {
+    /* Behåller sin flex-column och position: relative */
+  }
+
+  #map {
+    height: 100% !important; /* Kartan tar hela .map-sections höjd (som nu är 200px i iframe) */
+    flex-grow: 0 !important; /* Stäng av flex-grow */
+    border-bottom: none !important; /* Ta bort linjen i banderoll-läge */
+  }
+
+  .controls { /* Välj län, filter och statusmeddelande */
+    position: absolute !important; /* Läggs ovanpå kartan */
+    top: 8px;      /* Avstånd från toppen av .map-section */
+    left: 50%;     /* Starta från mitten */
+    transform: translateX(-50%); /* Centrera horisontellt */
+    width: auto;   /* Låt bredden anpassas efter innehållet */
+    max-width: calc(100% - 16px); /* Max bredd med lite marginal på sidorna */
+    z-index: 1000 !important; /* Säkerställ att de ligger överst */
+    background-color: rgba(255, 255, 255, 0.9) !important; /* Synlig bakgrund */
+    padding: 6px !important;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    display: flex !important;
+    flex-direction: row !important; /* Lägg Välj län-diven och filter-controls-diven sida vid sida */
+    align-items: center !important; /* Centrera dem vertikalt i .controls-panelen */
+    gap: 10px !important; /* Mellanrum mellan "Välj län"-delen och filter-delen */
+    pointer-events: auto; /* Se till att den är klickbar */
+  }
+
+  /* Styla "Välj län"-delen (första diven inuti .controls) */
+  .controls > div:first-child {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+  }
+
+  /* Styla filter-controls-delen */
+  .controls .filter-controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important; /* Mindre gap mellan filter */
+    margin-top: 0 !important;
+    flex-wrap: nowrap; /* Försök hålla filter på en rad */
+  }
+
+  /* Mindre text och element för .controls och .filter-controls i banderoll */
+  .controls label,
+  .controls .filter-controls label {
+    font-size: 10px !important;
+    margin: 0 !important;
+    white-space: nowrap;
+    color: #222 !important;
+  }
+
+  .controls input[type="checkbox"] {
+    transform: scale(0.8);
+    margin-right: 2px;
+  }
+
+  .controls select {
+    padding: 2px 4px !important;
+    font-size: 10px !important;
+  }
+
+  /* Dölj statusmeddelandet i banderoll-läget */
+  .traffic-status-message {
+    display: none !important;
+  }
 }
 
 /* Knappstilar från main (mer strukturerade) */
