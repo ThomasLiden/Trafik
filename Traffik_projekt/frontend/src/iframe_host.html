@@ -26,41 +26,55 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        .iframe-size-controls button:hover,
-        .user-actions button:hover {
+        .iframe-size-controls button:hover {
             background-color: #f0f0f0;
-        }
-        /* Specifika stilar för användarknapparna om du vill matcha din apps utseende */
-        .user-actions .button-primary-static {
-            background-color: black; color: white; font-weight: bold;
-        }
-        .user-actions .button-secondary-static {
-            background-color: lightgray; color: black; font-weight: bold;
         }
 
         .iframe-wrapper {
             border: 2px solid #333;
             transition: width 0.3s ease-in-out, height 0.3s ease-in-out;
+           /* NYTT: För att säkerställa att wrapper anpassar sig snyggt */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         iframe {
             display: block;
             border: none;
+        }
+        /* NYTT: För en bättre "modal"-känsla i utvidgat läge (valfritt) */
+        .iframe-wrapper.expanded-mode {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background-color: white; /* För att dölja sidans innehåll bakom */
+        }
+        #pageOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
         }
     </style>
 </head>
 <body>
 
     <h1>Tidning</h1>
+    <div id="pageOverlay"></div>
 
     <div class="page-controls">
         <div class="iframe-size-controls">
-            <button id="sizeButtonTall">Utöka</button>
-            <button id="sizeButtonWide">Minska</button>
+            <button id="expandButton">Utöka Karta</button>
+            <button id="bannerButton">Minska till Banner</button>
         </div>
     </div>
 
     <div class="iframe-wrapper">
-        <iframe id="appIframe" src="http://127.0.0.1:5500/Traffik_projekt/frontend/src/index.html#/" width="1000" height="400">
+        <iframe id="appIframe" src="./index.html#/" width="1000" height="400">
             Din webbläsare stödjer inte iframes.
         </iframe>
     </div>
@@ -68,28 +82,70 @@
     <script>
         const iframe = document.getElementById('appIframe');
         const iframeWrapper = document.querySelector('.iframe-wrapper');
-        const sizeButtonTall = document.getElementById('sizeButtonTall');
-        const sizeButtonWide = document.getElementById('sizeButtonWide');
+        const expandButton = document.getElementById('expandButton');
+        const bannerButton = document.getElementById('bannerButton');
+        const pageOverlay = document.getElementById('pageOverlay'); // NYTT
 
-        const tallSize = { width: 1000, height: 400 }; // Utvidgad/Desktop
-        const wideSize = { width: 1000, height: 200 }; // Banderoll/Minskad
+        // NYTT: Definiera storlekar - gör "expanded" större
+        const expandedSize = { width: 1200, height: 700 }; // Ännu större utvidgat läge
+        const bannerSize = { width: 1000, height: 200 };   // Banner/Minskad
 
-        function setIframeSize(width, height) {
-            iframe.setAttribute('width', String(width));
-            iframe.setAttribute('height', String(height));
-            iframeWrapper.style.width = width + 'px';
-            iframeWrapper.style.height = height + 'px';
+        let currentMode = 'expanded'; // Startar i utökat läge som matchar initiala dimensioner
+
+        function setIframeView(mode) {
+            const newSize = (mode === 'expanded') ? expandedSize : bannerSize;
+            currentMode = mode;
+
+            iframe.setAttribute('width', String(newSize.width));
+            iframe.setAttribute('height', String(newSize.height));
+            iframeWrapper.style.width = newSize.width + 'px';
+            iframeWrapper.style.height = newSize.height + 'px';
+
+            if (mode === 'expanded') {
+                iframeWrapper.classList.add('expanded-mode');
+                pageOverlay.style.display = 'block';
+                expandButton.textContent = 'Stäng Utökad Karta'; // Ändra knapptext
+            } else {
+                iframeWrapper.classList.remove('expanded-mode');
+                pageOverlay.style.display = 'none';
+                expandButton.textContent = 'Utöka Karta'; // Återställ knapptext
+            }
+
+            // Skicka meddelande till iframen om det nya läget
+            if (iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ action: 'setViewMode', mode: mode }, '*'); // Använd specifik origin i produktion
+            }
+            console.log(`Switched to ${mode} mode. Size: ${newSize.width}x${newSize.height}`);
         }
 
-        setIframeSize(tallSize.width, tallSize.height); // Initial storlek
-
-        sizeButtonTall.addEventListener('click', () => {
-            setIframeSize(tallSize.width, tallSize.height);
+        // Sätt initial storlek och meddela iframe när den har laddat
+        iframe.addEventListener('load', () => {
+            console.log("Iframe loaded. Setting initial mode to 'expanded'.");
+             // Initialt läge är 'expanded' (1000x400), men vi kan direkt sätta den till nya "expandedSize"
+            setIframeView('expanded'); // Eller behåll 'expanded' och låt användaren klicka för "ännu större"
+                                     // För nu sätter vi den till den nya stora direkt.
         });
 
-        sizeButtonWide.addEventListener('click', () => {
-            setIframeSize(wideSize.width, wideSize.height);
+        expandButton.addEventListener('click', () => {
+            // Om den redan är i expanded mode och knappen säger "Stäng", gå till banner
+            if (currentMode === 'expanded' && expandButton.textContent === 'Stäng Utökad Karta') {
+                 setIframeView('banner');
+            } else { // Annars, gå till (eller bekräfta) expanded
+                 setIframeView('expanded');
+            }
         });
+
+        bannerButton.addEventListener('click', () => {
+            setIframeView('banner');
+        });
+        
+        // NYTT: Klicka på overlay för att stänga (gå till banner)
+        pageOverlay.addEventListener('click', () => {
+            if (currentMode === 'expanded') {
+                setIframeView('banner');
+            }
+        });
+
     </script>
 
 </body>

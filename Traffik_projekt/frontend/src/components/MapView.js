@@ -6,7 +6,7 @@ export default {
     props: ['isLoggedIn'], // Behålls från main
     emits: ['open-login', 'open-signup', 'open-account'], // Behålls från main
     setup(props, { emit }) { // emit behövs för att skicka events
-        const { ref, onMounted, watch, computed } = Vue;
+        const { ref, onMounted, watch, computed, onUnmounted } = Vue;
 
         const selectedCounty = ref('');
         const trafficStatusMessage = ref('Laddar karta...');
@@ -14,6 +14,10 @@ export default {
         const filterShowRoadworks = ref(true);
         const filterShowCameras = ref(true);
         const lastBackendResponse = ref(null);
+
+        // NYTT: State för iframe-läge
+        const currentIframeMode = ref('expanded'); // Startvärde, iframe_host skickar det korrekta snart
+
 
         const counties = ref([ // Från KartaTrafiks app.js
             { name: 'Alla län', value: '', number: null, coords: [62.0, 15.0], zoom: 4 }, // Justerad zoom för "Alla län"
@@ -53,11 +57,13 @@ export default {
             initMap,
             centerMapOnCounty,
             fetchTrafficDataFromServer,
-            renderMarkersOnMap
+            renderMarkersOnMap,
+            getMapInstance // NYTT: Funktion för att hämta kartinstansen
         } = useTrafficMap(
             "http://127.0.0.1:5000/api/traffic-info", // Backend URL
             counties.value, // Skicka reaktiv counties-lista
-            countyNumberToName.value // Skicka computed countyNumberToName
+            countyNumberToName.value, // Skicka computed countyNumberToName
+            currentIframeMode // NYTT: Skicka med refen
         );
 
         const fetchAndRenderNewData = async (countyValue) => {
@@ -96,6 +102,27 @@ export default {
             }
         };
 
+         // NYTT: Lyssnare för meddelanden från iframe_host
+         const handleHostMessage = (event) => {
+          // Validera origin i produktion: if (event.origin !== 'expected_origin') return;
+          if (event.data && event.data.action === 'setViewMode') {
+              console.log('MapView received setViewMode:', event.data.mode);
+              if (currentIframeMode.value !== event.data.mode) {
+                  currentIframeMode.value = event.data.mode;
+                  // Kartan kan behöva ritas om eller popups uppdateras
+                  const map = getMapInstance();
+                  if (map) {
+                      map.invalidateSize(); // Justera kartans storlek
+                  }
+                  // Eftersom popup-innehållet nu genereras dynamiskt baserat på currentIframeMode,
+                  // behöver vi inte explicit rendera om alla markörer här.
+                  // Öppna popups kommer dock inte att uppdateras automatiskt om de redan är öppna.
+                  // Detta hanteras genom att popup-innehållet genereras när det öppnas.
+              }
+          }
+      };
+
+
         watch(selectedCounty, (newValue) => {
             centerMapOnCounty(newValue);
             fetchAndRenderNewData(newValue);
@@ -106,65 +133,71 @@ export default {
         });
 
         onMounted(() => {
-            initMap('map'); // Kart-elementets ID
-            fetchAndRenderNewData(selectedCounty.value); // Hämta data för "Alla län" initialt
+          initMap('map');
+          fetchAndRenderNewData(selectedCounty.value);
 
-            // Automatisk uppdatering (valfritt)
-            setInterval(() => {
-                console.log("Automatisk uppdatering av trafikdata...");
-                fetchAndRenderNewData(selectedCounty.value);
-            }, 5 * 60 * 1000); // Var 5:e minut
-        });
+          window.addEventListener('message', handleHostMessage); // NYTT
 
-        // Metoder för att emittera events till föräldern (app.js)
-        const handleOpenLogin = () => emit('open-login');
-        const handleOpenSignup = () => emit('open-signup');
-        const handleOpenAccount = () => emit('open-account');
+          setInterval(() => {
+              console.log("Automatisk uppdatering av trafikdata...");
+              fetchAndRenderNewData(selectedCounty.value);
+          }, 5 * 60 * 1000);
+      });
 
-        return {
-            selectedCounty,
-            counties,
-            trafficStatusMessage,
-            filterShowAccidents,
-            filterShowRoadworks,
-            filterShowCameras,
-            // Exponera metoderna till templaten
-            handleOpenLogin,
-            handleOpenSignup,
-            handleOpenAccount,
-            isLoggedIn: computed(() => props.isLoggedIn) // Gör isLoggedIn tillgänglig i template
-        };
-    },
-    template: `
-      <div class="map-section">
-        <div id="map"></div> <div class="controls">
-          <div>
-            <label for="county-select">Välj län:</label>
-            <select id="county-select" v-model="selectedCounty">
-              <option v-for="county in counties" :key="county.value" :value="county.value">{{ county.name }}</option>
-            </select>
-          </div>
-          <div class="filter-controls">
-            <label>
-              <input type="checkbox" v-model="filterShowAccidents" /> Visa olyckor
-            </label>
-            <label>
-              <input type="checkbox" v-model="filterShowRoadworks" /> Visa vägarbeten
-            </label>
-            <label>
-              <input type="checkbox" v-model="filterShowCameras" /> Visa fartkameror
-            </label>
-          </div>
-          <div class="traffic-status-message" v-if="trafficStatusMessage">{{ trafficStatusMessage }}</div>
+      // NYTT: Ta bort lyssnaren när komponenten förstörs
+      onUnmounted(() => {
+          window.removeEventListener('message', handleHostMessage);
+      });
+
+      const handleOpenLogin = () => emit('open-login');
+      const handleOpenSignup = () => emit('open-signup');
+      const handleOpenAccount = () => emit('open-account');
+
+      return {
+          selectedCounty,
+          counties,
+          trafficStatusMessage,
+          filterShowAccidents,
+          filterShowRoadworks,
+          filterShowCameras,
+          handleOpenLogin,
+          handleOpenSignup,
+          handleOpenAccount,
+          isLoggedIn: computed(() => props.isLoggedIn),
+          currentIframeMode // Exponera för template om det skulle behövas (inte just nu)
+      };
+  },
+  template: `
+    <div class="map-section">
+      <div id="map"></div>
+      <div class="controls">
+        <div>
+          <label for="county-select">Välj län:</label>
+          <select id="county-select" v-model="selectedCounty">
+            <option v-for="county in counties" :key="county.value" :value="county.value">{{ county.name }}</option>
+          </select>
         </div>
-        <div class="buttons">
-          <button @click="isLoggedIn ? handleOpenAccount() : handleOpenLogin()" class="button-secondary">
-            {{ isLoggedIn ? 'Till min sida' : 'Logga in' }}
-          </button>
-          <button @click="handleOpenSignup()" class="button-primary">
-            Prenumerera
-          </button>
+        <div class="filter-controls">
+          <label>
+            <input type="checkbox" v-model="filterShowAccidents" /> Visa olyckor
+          </label>
+          <label>
+            <input type="checkbox" v-model="filterShowRoadworks" /> Visa vägarbeten
+          </label>
+          <label>
+            <input type="checkbox" v-model="filterShowCameras" /> Visa fartkameror
+          </label>
         </div>
+        <div class="traffic-status-message" v-if="trafficStatusMessage">{{ trafficStatusMessage }}</div>
       </div>
-    `
+      <div class="buttons" style="position: absolute; top: 10px; right: 10px; z-index: 1001; background: white; padding: 5px; border-radius: 4px; box-shadow: 0 0 5px rgba(0,0,0,0.2);">
+        <button @click="isLoggedIn ? handleOpenAccount() : handleOpenLogin()" class="button-secondary">
+          {{ isLoggedIn ? 'Min Sida' : 'Logga In' }}
+        </button>
+        <button @click="handleOpenSignup()" class="button-primary" v-if="!isLoggedIn">
+          Prenumerera
+        </button>
+      </div>
+    </div>
+  `
 };
