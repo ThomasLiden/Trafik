@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frontend i Justerbar Iframe</title>
     <style>
+        /* ... (befintliga stilar oförändrade) ... */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -12,18 +13,15 @@
             flex-direction: column;
             align-items: center;
         }
-        /* NYTT: .page-controls tas bort eller rensas om inga andra knappar behövs där */
         .page-controls {
-            margin-bottom: 10px; /* Mindre marginal om den är kvar för annat */
-            /* display: none; */ /* Om du vill dölja den helt */
+            margin-bottom: 10px;
         }
-
         .iframe-wrapper {
             border: 2px solid #333;
             transition: width 0.3s ease-in-out, height 0.3s ease-in-out, transform 0.3s ease-in-out;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            position: relative; /* Viktigt för positionering av interna knappar */
-            background-color: #f0f0f0; /* Bakgrund för banner-läget så ikon syns bra */
+            position: relative; 
+            background-color: #f0f0f0; 
         }
         iframe {
             display: block;
@@ -47,7 +45,6 @@
             background-color: rgba(0,0,0,0.5);
             z-index: 999;
         }
-
         #closeExpandedViewBtn {
             display: none;
             position: absolute;
@@ -70,24 +67,22 @@
             background-color: #f0f0f0;
             color: red;
         }
-
-        /* NYTT: Stilar för "Utöka"-ikonen på bannern */
         #expandIconBtn {
-            display: none; /* Dold som standard, visas endast i banner-läge */
+            display: none; 
             position: absolute;
-            bottom: 8px;    /* Positionera nere till höger på bannern */
+            bottom: 8px;   
             right: 8px;
             background-color: rgba(0, 0, 0, 0.6);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 36px;    /* Lite större för att vara lättare att klicka på */
+            width: 36px;   
             height: 36px;
-            font-size: 20px; /* Storlek på ikonen (t.ex. "+") */
-            line-height: 36px; /* Centrera ikonen vertikalt */
+            font-size: 20px; 
+            line-height: 36px; 
             text-align: center;
             cursor: pointer;
-            z-index: 10;   /* Över iframe i banner-läge, men under expanded-mode overlay */
+            z-index: 10;  
             box-shadow: 0 1px 4px rgba(0,0,0,0.3);
             transition: background-color 0.2s ease;
         }
@@ -106,7 +101,9 @@
 
     <div class="iframe-wrapper">
         <button id="closeExpandedViewBtn" title="Stäng utökad vy">&times;</button>
-        <button id="expandIconBtn" title="Utöka kartan">&#x2197;</button> <iframe id="appIframe" src="./index.html#/" width="1000" height="400">
+        <button id="expandIconBtn" title="Utöka kartan">&#x2197;</button>
+        
+        <iframe id="appIframe" src="./index.html#/" width="1000" height="400">
             Din webbläsare stödjer inte iframes.
         </iframe>
     </div>
@@ -116,19 +113,17 @@
         const iframeWrapper = document.querySelector('.iframe-wrapper');
         const pageOverlay = document.getElementById('pageOverlay');
         const closeExpandedViewBtn = document.getElementById('closeExpandedViewBtn');
-        const expandIconBtn = document.getElementById('expandIconBtn'); // NYTT
+        const expandIconBtn = document.getElementById('expandIconBtn');
 
         const expandedSize = { width: 1200, height: 700 };
         const bannerSize = { width: 1000, height: 200 };
-
-        // Sätt initialt läge baserat på iframens startstorlek i HTML (1000x400)
-        // Vi kan kalla detta 'defaultExpanded' eller helt enkelt 'banner' om vi vill att den alltid ska starta minimerad
-        // och att första klicket på ikonen tar den till 1200x700.
-        // För att starta i banner-läge:
         let currentMode = 'banner'; 
 
         function setIframeView(mode) {
+            // ... (befintlig setIframeView-logik är oförändrad här) ...
             const newSize = (mode === 'expanded') ? expandedSize : bannerSize;
+            // Kontrollera om läget faktiskt ändras för att undvika onödiga operationer
+            const previousMode = currentMode;
             currentMode = mode;
 
             iframe.setAttribute('width', String(newSize.width));
@@ -140,26 +135,32 @@
                 iframeWrapper.classList.add('expanded-mode');
                 pageOverlay.style.display = 'block';
                 closeExpandedViewBtn.style.display = 'block';
-                expandIconBtn.style.display = 'none'; // Dölj "utöka"-ikonen
+                expandIconBtn.style.display = 'none';
             } else { // Banner mode
                 iframeWrapper.classList.remove('expanded-mode');
                 pageOverlay.style.display = 'none';
                 closeExpandedViewBtn.style.display = 'none';
-                expandIconBtn.style.display = 'block'; // Visa "utöka"-ikonen
+                expandIconBtn.style.display = 'block';
             }
 
-            if (iframe.contentWindow) {
-                iframe.contentWindow.postMessage({ action: 'setViewMode', mode: mode }, '*');
+            // Skicka bara meddelande om läget faktiskt har ändrats,
+            // eller om det är första gången (för att säkerställa att iframen får det)
+            // Denna kontroll är mest för att undvika eventuella oändliga loopar om iframen skulle skicka tillbaka setViewMode.
+            if (previousMode !== currentMode || !iframe.dataset.initialModeSent) {
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({ action: 'setViewMode', mode: mode }, '*');
+                    iframe.dataset.initialModeSent = true; // Markera att initialt läge har skickats
+                }
             }
-            console.log(`Switched to ${mode} mode. Size: ${newSize.width}x${newSize.height}`);
+            console.log(`Host: Switched to ${mode} mode. Size: ${newSize.width}x${newSize.height}`);
         }
 
         iframe.addEventListener('load', () => {
-            console.log("Iframe loaded. Setting initial view to banner mode.");
-            setIframeView('banner'); // Starta alltid i banner-läge
+            console.log("Iframe loaded. Setting initial view to banner mode via setIframeView.");
+            iframe.dataset.initialModeSent = false; // Återställ flagga ifall iframe laddas om
+            setIframeView('banner');
         });
         
-        // NYTT: Event listener för "Utöka"-ikonen
         expandIconBtn.addEventListener('click', () => {
             setIframeView('expanded');
         });
@@ -172,6 +173,24 @@
             if (currentMode === 'expanded') {
                 setIframeView('banner');
             }
+        });
+
+        // NYTT: Lyssnare för meddelanden från iframen
+        window.addEventListener('message', (event) => {
+            // Viktigt: Validera event.origin i produktion för säkerhetsskäl
+            // if (event.origin !== "http://127.0.0.1:5500") { // Eller din iframes faktiska origin
+            //     console.warn("Message received from unexpected origin:", event.origin);
+            //     return;
+            // }
+
+            if (event.data && event.data.action === 'requestExpandFromIframe') {
+                console.log("Host received requestExpandFromIframe from iframe.");
+                if (currentMode === 'banner') {
+                    setIframeView('expanded');
+                }
+            }
+            // Här kan du också lyssna efter `setViewMode` från iframe om det skulle behövas,
+            // men just nu skickar bara hosten det till iframen.
         });
 
     </script>
