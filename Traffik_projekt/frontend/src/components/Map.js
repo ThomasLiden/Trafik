@@ -144,7 +144,7 @@ export function useTrafficMap(apiUrl, countyListSource, initialCountyNumberToNam
 
         // Kolla currentIframeModeRef.value (det är en Vue ref)
         if (currentIframeModeRef.value === 'banner') {
-            content += `<p style="font-style: italic; color: #333; margin-top: 5px;">Klicka på 'Utöka Karta' för att se specifik information om trafikhändelse.</p>`;
+            content += `<p style="font-style: italic; color: #333; margin-top: 5px;">Utöka Kartan (⬈) för att se specifik information om trafikhändelse.</p>`;
         } else { // 'expanded' mode
             if (deviation.Message) content += `<strong>Info:</strong> ${deviation.Message}<br>`;
             if (deviation.SeverityText) content += `<strong>Allvarlighetsgrad:</strong> ${deviation.SeverityText}<br>`;
@@ -181,7 +181,7 @@ export function useTrafficMap(apiUrl, countyListSource, initialCountyNumberToNam
             if (camera.SpeedLimit) content += `<strong>Hastighet:</strong> ${camera.SpeedLimit} km/h<br>`;
         } else {
              if (camera.SpeedLimit) content += `<strong>Hastighet:</strong> ${camera.SpeedLimit} km/h<br>`;
-             content += `<p style="font-style: italic; color: #333; margin-top: 5px;">Utöka kartan för fler detaljer.</p>`;
+             content += `<p style="font-style: italic; color: #333; margin-top: 5px;">Utöka Kartan (⬈) för fler detaljer.</p>`;
         }
         content += `<strong>Län:</strong> ${countyName}`;
         return content;
@@ -351,7 +351,7 @@ export function useTrafficMap(apiUrl, countyListSource, initialCountyNumberToNam
         if (safetyCameraMarkersOnMap > 0) messageParts.push(`${safetyCameraMarkersOnMap} ${safetyCameraMarkersOnMap === 1 ? "fartkamera" : "fartkameror"}`);
 
         if (messageParts.length > 0) {
-            message = `Visar ${messageParts.join(' och ')} för ${countyDisplayName}.`;
+            message = `Visar ${messageParts.join(' och ')} för ${countyDisplayName} län.`;
             if (markerClusterGroup.getLayers().length > 0 && mapInstance.getBounds().isValid()) {
                  try {
                     setTimeout(() => { 

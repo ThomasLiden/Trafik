@@ -14,7 +14,10 @@ export default {
         const filterShowRoadworks = ref(true);
         const filterShowCameras = ref(true);
         const lastBackendResponse = ref(null);
-        const currentIframeMode = ref('banner'); // Startvärde, iframe_host skickar det korrekta
+        const currentIframeMode = ref('banner');
+
+        // NYTT: Ref för att styra synligheten av filter-dropdown
+        const showFilterDropdown = ref(false);
 
         const counties = ref([
             // ... (din counties-lista oförändrad) ...
@@ -52,6 +55,7 @@ export default {
         });
 
         const {
+            // ... (useTrafficMap oförändrad) ...
             initMap,
             centerMapOnCounty,
             fetchTrafficDataFromServer,
@@ -82,7 +86,6 @@ export default {
                 trafficStatusMessage.value = fetchMessage || "Kunde inte hämta trafikinformation.";
             }
         };
-
         const applyFiltersAndReRender = () => { /* ... (oförändrad) ... */
             if (lastBackendResponse.value) {
                 const renderStatus = renderMarkersOnMap(
@@ -97,17 +100,12 @@ export default {
                 fetchAndRenderNewData(selectedCounty.value);
             }
         };
-
         const handleHostMessage = (event) => { /* ... (oförändrad) ... */
-            // Validera origin i produktion: if (event.origin !== 'expected_origin') return;
             if (event.data && event.data.action === 'setViewMode') {
-                console.log('MapView received setViewMode:', event.data.mode);
                 if (currentIframeMode.value !== event.data.mode) {
                     currentIframeMode.value = event.data.mode;
                     const map = getMapInstance();
-                    if (map) {
-                        map.invalidateSize(); 
-                    }
+                    if (map) map.invalidateSize();
                 }
             }
         };
@@ -116,51 +114,50 @@ export default {
             centerMapOnCounty(newValue);
             fetchAndRenderNewData(newValue);
         });
-
         watch([filterShowAccidents, filterShowRoadworks, filterShowCameras], () => { /* ... (oförändrad) ... */
             applyFiltersAndReRender();
         });
 
-        onMounted(() => { /* ... (oförändrad, förutom att currentIframeMode.value kan starta som 'banner') ... */
+        onMounted(() => { /* ... (oförändrad) ... */
             initMap('map');
-            // fetchAndRenderNewData anropas via iframe_host's initiala setIframeView('banner') -> postMessage -> handleHostMessage -> currentIframeMode change.
-            // Eller, om det behövs en explicit initial hämtning:
-             fetchAndRenderNewData(selectedCounty.value);
-
-
+            fetchAndRenderNewData(selectedCounty.value);
             window.addEventListener('message', handleHostMessage);
-
-            setInterval(() => {
-                console.log("Automatisk uppdatering av trafikdata...");
-                fetchAndRenderNewData(selectedCounty.value);
-            }, 5 * 60 * 1000);
+            // NYTT: Lägg till eventlyssnare för att stänga filter-dropdown vid klick utanför
+            document.addEventListener('click', handleClickOutsideFilterDropdown);
+            setInterval(() => fetchAndRenderNewData(selectedCounty.value), 5 * 60 * 1000);
         });
-
         onUnmounted(() => { /* ... (oförändrad) ... */
             window.removeEventListener('message', handleHostMessage);
+            // NYTT: Ta bort eventlyssnare
+            document.removeEventListener('click', handleClickOutsideFilterDropdown);
         });
 
-        // NYTT: Funktion för att begära expansion från föräldern
-        const requestExpansionIfNeeded = () => {
+        const requestExpansionIfNeeded = () => { /* ... (oförändrad) ... */
             if (currentIframeMode.value === 'banner') {
-                console.log('Requesting expansion from banner mode...');
-                window.parent.postMessage({ action: 'requestExpandFromIframe' }, '*'); // Använd specifik origin i produktion
+                window.parent.postMessage({ action: 'requestExpandFromIframe' }, '*');
             }
         };
-
-        const handleOpenLogin = () => {
-            requestExpansionIfNeeded(); // NYTT ANROP
+        const handleOpenLogin = () => { /* ... (oförändrad) ... */
+            requestExpansionIfNeeded();
             emit('open-login');
         };
-        const handleOpenSignup = () => {
-            requestExpansionIfNeeded(); // NYTT ANROP
+        const handleOpenSignup = () => { /* ... (oförändrad) ... */
+            requestExpansionIfNeeded();
             emit('open-signup');
         };
-        const handleOpenAccount = () => {
-            // För kontosidan är det troligt att man redan vill vara i expanded,
-            // men om den kan nås från banner, lägg till requestExpansionIfNeeded() här också.
-            // requestExpansionIfNeeded(); 
-            emit('open-account');
+        const handleOpenAccount = () => emit('open-account');
+
+        // NYTT: Metod för att växla filter-dropdown
+        const toggleFilterDropdown = () => {
+            showFilterDropdown.value = !showFilterDropdown.value;
+        };
+
+        // NYTT: Metod för att stänga dropdown om man klickar utanför
+        const handleClickOutsideFilterDropdown = (event) => {
+            const filterContainer = document.querySelector('.filter-dropdown-container');
+            if (showFilterDropdown.value && filterContainer && !filterContainer.contains(event.target)) {
+                showFilterDropdown.value = false;
+            }
         };
 
         return {
@@ -174,33 +171,44 @@ export default {
             handleOpenSignup,
             handleOpenAccount,
             isLoggedIn: computed(() => props.isLoggedIn),
-            // currentIframeMode // Behövs inte exponeras till template direkt
+            // NYTT: Exponera för template
+            showFilterDropdown,
+            toggleFilterDropdown
         };
     },
     template: `
       <div class="map-section">
         <div id="map"></div>
         <div class="controls">
-          <div>
+          <div class="control-item county-selector">
             <label for="county-select">Välj län:</label>
             <select id="county-select" v-model="selectedCounty">
               <option v-for="county in counties" :key="county.value" :value="county.value">{{ county.name }}</option>
             </select>
           </div>
-          <div class="filter-controls">
-            <label>
-              <input type="checkbox" v-model="filterShowAccidents" /> Visa olyckor
-            </label>
-            <label>
-              <input type="checkbox" v-model="filterShowRoadworks" /> Visa vägarbeten
-            </label>
-            <label>
-              <input type="checkbox" v-model="filterShowCameras" /> Visa fartkameror
-            </label>
+
+          <div class="control-item filter-dropdown-container">
+            <button @click="toggleFilterDropdown" id="filter-button" type="button" class="button-secondary filter-toggle-btn">
+              Filter <span class="filter-arrow">{{ showFilterDropdown ? '&#9650;' : '&#9660;' }}</span>
+            </button>
+            <div v-if="showFilterDropdown" class="filter-dropdown-panel">
+              <label class="filter-dropdown-item">
+                <input type="checkbox" v-model="filterShowAccidents" /> Olyckor
+              </label>
+              <label class="filter-dropdown-item">
+                <input type="checkbox" v-model="filterShowRoadworks" /> Vägarbeten
+              </label>
+              <label class="filter-dropdown-item">
+                <input type="checkbox" v-model="filterShowCameras" /> Fartkameror
+              </label>
+            </div>
           </div>
-          <div class="traffic-status-message" v-if="trafficStatusMessage">{{ trafficStatusMessage }}</div>
+          <div class="control-item traffic-status-message-container" v-if="trafficStatusMessage">
+              <div class="traffic-status-message">{{ trafficStatusMessage }}</div>
+          </div>
         </div>
-        <div class="buttons" style="position: absolute; top: 10px; right: 10px; z-index: 1001; background: white; padding: 5px; border-radius: 4px; box-shadow: 0 0 5px rgba(0,0,0,0.2);">
+
+        <div class="buttons user-actions-buttons">
           <button @click="isLoggedIn ? handleOpenAccount() : handleOpenLogin()" class="button-secondary">
             {{ isLoggedIn ? 'Min Sida' : 'Logga In' }}
           </button>
