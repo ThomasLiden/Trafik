@@ -1,22 +1,38 @@
 // frontend/src/components/MapView.js
+// Denna fil definierar Vue-komponenten MapView, som ansvarar för att visa trafikinformation på en karta.
+
+// Importerar funktionen useTrafficMap från './map.js'.
+// Denna funktion innehåller all logik för att interagera med kartan (Leaflet) och hämta trafikdata.
 import { useTrafficMap } from "./map.js";
 
+// Exporterar Vue-komponentens definition.
 export default {
-    name: 'MapView',
-    props: ['isLoggedIn'],
-    emits: ['open-login', 'open-signup', 'open-account'],
-    setup(props, { emit }) {
+    name: 'MapView', // Namnet på komponenten. Används för debugging och i Vue DevTools.
+    props: ['isLoggedIn'], // Komponentens props (egenskaper). 'isLoggedIn' tas emot från föräldrakomponenten
+                           // för att veta om användaren är inloggad.
+    emits: ['open-login', 'open-signup', 'open-account'], // Deklarerar vilka händelser denna komponent kan "skicka ut" (emit).
+                                                          // Föräldrakomponenter kan lyssna på dessa händelser.
+    setup(props, { emit }) { // `setup` är Composition API:s inträdespunkt. All logik definieras här.
+        // Importerar reaktiva funktioner från Vue för att hantera tillstånd och livscykelhändelser.
         const { ref, onMounted, watch, computed, onUnmounted } = Vue;
 
-        const selectedCounty = ref(''); // Startar tomt, kan uppdateras av geolokalisering
-        const trafficStatusMessage = ref('Laddar karta...');
-        const filterShowAccidents = ref(true);
-        const filterShowRoadworks = ref(true);
-        const filterShowCameras = ref(true);
-        const lastBackendResponse = ref(null);
-        const currentIframeMode = ref('banner'); // Startar i banner som per senaste ändring
-        const showFilterDropdown = ref(false);
+        // --- Reaktiva tillståndsvariabler ---
+        // Dessa variabler är reaktiva, vilket innebär att Vue automatiskt uppdaterar DOM när deras värden ändras.
 
+        const selectedCounty = ref(''); // Lagrar det aktuellt valda länet. Startar tomt (representerar "Alla län").
+                                      // Kan uppdateras av geolokalisering.
+        const trafficStatusMessage = ref('Laddar karta...'); // Visar meddelanden om kartans laddnings- och trafikstatus.
+        const filterShowAccidents = ref(true); // Filter för att visa olyckor på kartan. Standard: true (visa).
+        const filterShowRoadworks = ref(true); // Filter för att visa vägarbeten på kartan. Standard: true (visa).
+        const filterShowCameras = ref(true); // Filter för att visa fartkameror på kartan. Standard: true (visa).
+        const lastBackendResponse = ref(null); // Lagrar den senast hämtade trafikdatan från backend.
+                                              // Används för att rendera om markörer när filter ändras.
+        const currentIframeMode = ref('banner'); // Håller reda på iframe-läget ('banner' eller 'expanded').
+                                                // Startar i 'banner' som per senaste ändring (värdsidan sätter initialt läge).
+        const showFilterDropdown = ref(false); // Styr synligheten för filter-dropdown-menyn.
+
+        // Definierar en lista över alla län i Sverige med deras nummer, koordinater och zoomnivå.
+        // Dessa används för att centrera kartan och hämta länsspecifik data.
         const counties = ref([
             { name: 'Alla län', value: '', number: null, coords: [62.0, 15.0], zoom: 5 }, // Zoom 5 för "Alla län"
             { name: 'Blekinge län', value: 'Blekinge', number: 10, coords: [56.16, 15.0], zoom: 9 },
@@ -42,6 +58,8 @@ export default {
             { name: 'Östergötlands län', value: 'Östergötland', number: 5, coords: [58.4, 15.7], zoom: 8 }
         ]);
 
+        // En computed property som skapar en mappning från länsnummer till länsnamn (utan " län").
+        // Detta underlättar uppslagningar och visning av namn baserat på nummer.
         const countyNumberToName = computed(() => {
             return counties.value.reduce((map, county) => {
                 if (county.number !== null) {
@@ -51,94 +69,110 @@ export default {
             }, {});
         });
 
+        // Hämtar funktioner från `useTrafficMap` som hanterar kartans interaktioner och datahämtning.
         const {
-            initMap,
-            centerMapOnCounty,
-            fetchTrafficDataFromServer,
-            renderMarkersOnMap,
-            getMapInstance
+            initMap, // Funktion för att initiera kartan.
+            centerMapOnCounty, // Funktion för att centrera kartan på ett specifikt län.
+            fetchTrafficDataFromServer, // Funktion för att hämta trafikdata från backend.
+            renderMarkersOnMap, // Funktion för att rendera markörer på kartan.
+            getMapInstance // Funktion för att få tillgång till Leaflet-kartinstansen.
         } = useTrafficMap(
-            "http://127.0.0.1:5000/api/traffic-info", // Se till att detta är din korrekta backend URL
-            counties.value,
-            countyNumberToName.value, // Skickar den computeade mappen som den är
-            currentIframeMode // Skickar ref:en direkt
+            "http://127.0.0.1:5000/api/traffic-info", // Backend-URL för trafikdata. Viktigt att den är korrekt.
+            counties.value, // Skickar med listan över län.
+            countyNumberToName.value, // Skickar med den computeade mappningen.
+            currentIframeMode // Skickar ref:en direkt så useTrafficMap kan reagera på lägesändringar.
         );
 
+        /**
+         * Hämtar ny trafikdata och renderar om markörerna på kartan.
+         * @param {string} countyValue - Värdet för det valda länet (t.ex. 'Stockholm' eller tomt för 'Alla län').
+         */
         const fetchAndRenderNewData = async (countyValue) => {
-            trafficStatusMessage.value = "Hämtar trafikinformation...";
-            const { success, data, message: fetchMessage } = await fetchTrafficDataFromServer(countyValue);
-            if (success && data) {
-                lastBackendResponse.value = data;
-                const renderStatus = renderMarkersOnMap(
+            trafficStatusMessage.value = "Hämtar trafikinformation..."; // Uppdaterar statusmeddelandet.
+            const { success, data, message: fetchMessage } = await fetchTrafficDataFromServer(countyValue); // Anropar backend.
+            if (success && data) { // Om hämtningen lyckades och data returnerades.
+                lastBackendResponse.value = data; // Sparar den råa datan.
+                const renderStatus = renderMarkersOnMap( // Renderar markörerna med de aktuella filtren.
                     data,
                     filterShowAccidents.value,
                     filterShowRoadworks.value,
                     filterShowCameras.value,
-                    countyNumberToName.value // Använder den computeade mappen
+                    countyNumberToName.value // Använder den computeade mappen.
                 );
-                trafficStatusMessage.value = renderStatus.message;
-            } else {
-                lastBackendResponse.value = null;
-                trafficStatusMessage.value = fetchMessage || "Kunde inte hämta trafikinformation.";
+                trafficStatusMessage.value = renderStatus.message; // Uppdaterar statusmeddelandet baserat på render-resultatet.
+            } else { // Om hämtningen misslyckades.
+                lastBackendResponse.value = null; // Nollställer den sparade datan.
+                trafficStatusMessage.value = fetchMessage || "Kunde inte hämta trafikinformation."; // Visar felmeddelande.
                  // Om data inte kunde hämtas, och ett län är valt, försök centrera på det länet ändå.
                 // Om inget län är valt (t.ex. "Alla län"), centrera på "Alla län".
-                centerMapOnCounty(countyValue || '');
+                centerMapOnCounty(countyValue || ''); // Försöker centrera kartan även vid fel.
             }
         };
         
+        /**
+         * Tillämpar de aktuella filtren och renderar om markörerna med den senast hämtade datan.
+         * Anropas när filter-checkboxar ändras.
+         */
         const applyFiltersAndReRender = () => {
-            if (lastBackendResponse.value) {
-                const renderStatus = renderMarkersOnMap(
+            if (lastBackendResponse.value) { // Om vi har data från en tidigare backend-anrop.
+                const renderStatus = renderMarkersOnMap( // Renderar om markörerna.
                     lastBackendResponse.value,
                     filterShowAccidents.value,
                     filterShowRoadworks.value,
                     filterShowCameras.value,
                     countyNumberToName.value
                 );
-                trafficStatusMessage.value = renderStatus.message;
+                trafficStatusMessage.value = renderStatus.message; // Uppdaterar status.
             } else {
+                // Om ingen data finns sedan tidigare (t.ex. vid första laddning eller efter ett fel),
+                // försök hämta och rendera ny data baserat på det aktuella länet.
                 fetchAndRenderNewData(selectedCounty.value);
             }
         };
 
         // --- Start: Geolocation och Reverse Geocoding Logik ---
+        /**
+         * Använder Nominatim (OpenStreetMap) för att omvandla koordinater till ett länsnamn.
+         * @param {number} latitude - Latitud för positionen.
+         * @param {number} longitude - Longitud för positionen.
+         * @returns {string|null} Länsvärdet (t.ex. 'Stockholm') om det hittas, annars null.
+         */
         const getCountyFromCoordinates = async (latitude, longitude) => {
-            const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&accept-language=sv&addressdetails=1`; // addressdetails=1 för mer detaljer
+            const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&accept-language=sv&addressdetails=1`; // URL för Nominatim API
             
             try {
                 console.log("Försöker reverse geocoding med URL:", nominatimUrl);
                 const response = await fetch(nominatimUrl, {
                     headers: {
-                        'User-Agent': 'TrafikkartanWebApp/1.0 (matilda.ryd@gmail.com)' // VIKTIGT: ERSÄTT MED DIN EMAIL
+                        'User-Agent': 'TrafikkartanWebApp/1.0 (matilda.ryd@gmail.com)' // VIKTIGT: Ange en unik User-Agent för Nominatim
                     }
                 });
-                if (!response.ok) {
+                if (!response.ok) { // Kontrollerar om API-anropet var framgångsrikt.
                     console.error("Nominatim API fel:", response.status, await response.text());
                     return null;
                 }
-                const data = await response.json();
+                const data = await response.json(); // Parsar svaret som JSON.
                 console.log("Nominatim svar:", data);
 
-                if (data && data.address) {
-                    // Försök först med 'state' (oftast bäst för län i Sverige från Nominatim)
-                    // Sedan 'county' som kan vara kommunnamn eller ibland län.
-                    // Fallback till region om inget annat finns.
+                if (data && data.address) { // Om svaret innehåller adressdetaljer.
+                    // Försöker hitta län baserat på olika fält i Nominatim-svaret.
+                    // 'state' är ofta bäst för län i Sverige, 'county' kan vara kommun.
                     let foundRegionName = data.address.state || data.address.county || data.address.region; 
                     
                     if (foundRegionName) {
                         console.log("Hittat regionnamn från Nominatim:", foundRegionName);
 
+                        // Matchar det funna regionnamnet mot vår egen lista över län.
                         const matchedCounty = counties.value.find(c => {
                             const cNameNormalized = c.name.replace(' län', '').toLowerCase();
                             const foundNameNormalized = foundRegionName.replace(' län', '').toLowerCase();
-                            // Ibland kan Nominatim returnera t.ex. "Stockholm" för Stockholms län,
-                            // eller "Västra Götaland" för Västra Götalands län.
+                            // Jämför normaliserade namn för att hantera "Stockholm" vs "Stockholms län".
                             return cNameNormalized === foundNameNormalized || c.value.toLowerCase() === foundNameNormalized;
                         });
 
                         if (matchedCounty) {
                             console.log("Matchat mot lokalt län:", matchedCounty.value);
-                            return matchedCounty.value; 
+                            return matchedCounty.value; // Returnerar det matchande länsvärdet.
                         } else {
                             console.warn("Kunde inte matcha Nominatim region till lokal lista:", foundRegionName);
                         }
@@ -155,18 +189,23 @@ export default {
             }
         };
 
+        /**
+         * Försöker bestämma användarens län med hjälp av geolokalisering.
+         * Om det lyckas, uppdateras `selectedCounty` och kartan laddas om.
+         */
         const trySetCountyByGeolocation = () => {
-            if (navigator.geolocation) {
+            if (navigator.geolocation) { // Kontrollerar om webbläsaren stöder geolokalisering.
                 console.log("Begär geolokalisering...");
-                navigator.geolocation.getCurrentPosition(async (position) => {
+                navigator.geolocation.getCurrentPosition(async (position) => { // Hämtar användarens position.
                     console.log("Geolokalisering lyckades:", position.coords);
+                    // Använder Nominatim för att översätta koordinater till ett län.
                     const userCountyValue = await getCountyFromCoordinates(position.coords.latitude, position.coords.longitude);
                     if (userCountyValue) {
+                        // Uppdatera endast om inget län var förvalt, eller om det geolokaliserade länet är annorlunda.
                         if (selectedCounty.value === '' || selectedCounty.value !== userCountyValue) {
-                             // Uppdatera bara om inget län var förvalt eller om det geolokaliserade är annorlunda
                             console.log("Sätter län baserat på geolokalisering:", userCountyValue);
                             selectedCounty.value = userCountyValue;
-                            // Watchen på selectedCounty kommer att trigga fetchAndRenderNewData
+                            // Watchen på selectedCounty kommer att trigga fetchAndRenderNewData.
                         } else {
                              console.log("Geolokaliserat län är samma som redan valt, ingen ändring.", selectedCounty.value);
                              // Om inget var valt och geolokalisering inte gav resultat, eller om det är samma,
@@ -177,13 +216,13 @@ export default {
                         }
                     } else {
                         console.log("Kunde inte bestämma län från geolokalisering, använder standard ('Alla län' om tomt).");
-                        if (selectedCounty.value === '') { 
-                           fetchAndRenderNewData(''); // Ladda "Alla län"
+                        if (selectedCounty.value === '') { // Ladda "Alla län" om inget är förvalt
+                           fetchAndRenderNewData('');
                         } else {
                            fetchAndRenderNewData(selectedCounty.value); // Ladda redan valt län om något
                         }
                     }
-                }, (error) => {
+                }, (error) => { // Hanterar fel vid geolokalisering (t.ex. användaren nekade åtkomst).
                     console.warn("Geolokaliseringsfel:", error.message);
                     if (selectedCounty.value === '') { // Ladda "Alla län" om inget är förvalt
                         fetchAndRenderNewData('');
@@ -191,14 +230,14 @@ export default {
                         fetchAndRenderNewData(selectedCounty.value);
                     }
                 }, {
-                    enableHighAccuracy: false, 
-                    timeout: 10000,        
+                    enableHighAccuracy: false, // Försöker få en exakt position (kan ta längre tid)
+                    timeout: 10000,         // Max tid för att hämta position (10 sekunder)
                     maximumAge: 300000 // Acceptera cachad position upp till 5 minuter
                 });
             } else {
                 console.warn("Geolokalisering stöds inte av denna webbläsare.");
                 if (selectedCounty.value === '') {
-                    fetchAndRenderNewData(''); // Ladda "Alla län"
+                    fetchAndRenderNewData(''); // Ladda "Alla län" om geolokalisering inte stöds.
                 } else {
                     fetchAndRenderNewData(selectedCounty.value);
                 }
@@ -206,30 +245,46 @@ export default {
         };
         // --- Slut: Geolocation och Reverse Geocoding Logik ---
 
+        /**
+         * Hanterar meddelanden som skickas från "värdsidan" (förälder-fönstret/iframen).
+         * Detta används för att synkronisera iframe-läget.
+         * @param {MessageEvent} event - Meddelandeobjektet.
+         */
         const handleHostMessage = (event) => {
             if (event.data && event.data.action === 'setViewMode') {
+                // Om det mottagna läget är annorlunda än det aktuella, uppdatera och invalidrea kartans storlek.
                 if (currentIframeMode.value !== event.data.mode) {
                     currentIframeMode.value = event.data.mode;
                     const map = getMapInstance();
-                    if (map) map.invalidateSize(true); // true för att animera om möjligt
+                    if (map) map.invalidateSize(true); // invalidateaSize tvingar Leaflet att rita om kartan korrekt
+                                                      // efter en storleksändring av dess behållare.
                 }
             }
         };
 
+        // --- Watchers ---
+        // Watchers är Vue-funktioner som reagerar på ändringar i reaktiva variabler.
+
+        // När `selectedCounty` ändras, hämta och rendera ny data för det länet.
         watch(selectedCounty, (newValue, oldValue) => {
             console.log(`selectedCounty ändrades från "${oldValue}" till "${newValue}"`);
             // Anropa inte centerMapOnCounty direkt här, låt fetchAndRenderNewData och renderMarkersOnMap hantera det
             fetchAndRenderNewData(newValue);
         });
 
+        // När något av filter-checkboxarna ändras, applicera filtren och rendera om markörerna.
         watch([filterShowAccidents, filterShowRoadworks, filterShowCameras], () => {
             applyFiltersAndReRender();
         });
         
+        /**
+         * Funktion för att hantera klick utanför filter-dropdown-menyn för att stänga den.
+         * @param {MouseEvent} event - Klickhändelsen.
+         */
         const handleClickOutsideFilterDropdown = (event) => {
             const filterContainer = document.querySelector('.filter-dropdown-container');
             const filterButton = document.getElementById('filter-button');
-            // Stäng bara om klicket är utanför både panelen OCH knappen
+            // Stäng bara om dropdown är synlig OCH klicket är utanför både panelen OCH knappen.
             if (showFilterDropdown.value && 
                 filterContainer && 
                 !filterContainer.contains(event.target) && 
@@ -239,44 +294,59 @@ export default {
             }
         };
 
+        // --- Livscykel-hooks ---
+        // onMounted körs när komponenten har monterats i DOM (när den är synlig).
         onMounted(() => {
-            initMap('map');
-            trySetCountyByGeolocation(); // Försöker sätta län, som sedan kan trigga fetchAndRenderNewData via watch
+            initMap('map'); // Initierar kartan i div:en med id "map".
+            trySetCountyByGeolocation(); // Försöker sätta län baserat på geolokalisering vid start.
             // Om selectedCounty inte sätts av geo, och är '', kommer "Alla län" att användas.
             // Om selectedCounty är tomt efter geoförsök, laddas "Alla län" från error/timeout callback i trySet...
             
+            // Lägger till en lyssnare för meddelanden från förälder-fönstret (hosten).
             window.addEventListener('message', handleHostMessage);
+            // Lägger till en global klicklyssnare för att stänga filter-dropdown.
             document.addEventListener('click', handleClickOutsideFilterDropdown);
-            // setInterval(() => fetchAndRenderNewData(selectedCounty.value), 5 * 60 * 1000); // Kan återaktiveras senare
+            // setInterval(() => fetchAndRenderNewData(selectedCounty.value), 5 * 60 * 1000); // Kan återaktiveras senare för automatisk uppdatering.
         });
 
+        // onUnmounted körs när komponenten avmonteras från DOM (när den tas bort från sidan).
+        // Det är viktigt att städa upp event-lyssnare för att undvika minnesläckor.
         onUnmounted(() => {
             window.removeEventListener('message', handleHostMessage);
             document.removeEventListener('click', handleClickOutsideFilterDropdown);
         });
 
+        /**
+         * Begär expansion av iframen om den är i "banner"-läge.
+         * Används innan navigeringsåtgärder som logga in/registrera sig.
+         */
         const requestExpansionIfNeeded = () => {
             if (currentIframeMode.value === 'banner') {
+                // Skickar ett meddelande till värdsidan (parent) att iframen vill expandera.
                 window.parent.postMessage({ action: 'requestExpandFromIframe' }, '*');
             }
         };
 
+        // Funktioner för att hantera klick på inloggnings-, registrerings- och min-sida-knappar.
+        // Kallar `requestExpansionIfNeeded` först, och sedan "emittar" motsvarande händelse.
         const handleOpenLogin = () => {
-            requestExpansionIfNeeded();
-            emit('open-login');
+            requestExpansionIfNeeded(); // Utöka iframen om nödvändigt.
+            emit('open-login'); // Skickar 'open-login' händelsen till föräldrakomponenten.
         };
         const handleOpenSignup = () => {
-            requestExpansionIfNeeded();
-            emit('open-signup');
+            requestExpansionIfNeeded(); // Utöka iframen om nödvändigt.
+            emit('open-signup'); // Skickar 'open-signup' händelsen till föräldrakomponenten.
         };
         const handleOpenAccount = () => {
-            emit('open-account');
+            emit('open-account'); // Skickar 'open-account' händelsen. Behöver inte expandera först, då det är en del av appen.
         };
 
+        // Växlar synligheten för filter-dropdown-menyn.
         const toggleFilterDropdown = () => {
             showFilterDropdown.value = !showFilterDropdown.value;
         };
 
+        // Returnerar de variabler och funktioner som ska vara tillgängliga i mallen (template).
         return {
             selectedCounty,
             counties,
@@ -287,11 +357,12 @@ export default {
             handleOpenLogin,
             handleOpenSignup,
             handleOpenAccount,
-            isLoggedIn: computed(() => props.isLoggedIn),
+            isLoggedIn: computed(() => props.isLoggedIn), // Exponerar isLoggedIn som en computed property
             showFilterDropdown,
             toggleFilterDropdown
         };
     },
+    // HTML-mallen för komponenten.
     template: `
       <div class="map-section">
         <div id="map"></div>

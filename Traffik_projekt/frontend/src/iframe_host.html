@@ -4,88 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* ... (befintliga stilar oförändrade) ... */
+        /* Här börjar CSS-stilarna för sidan. Dessa styr hur elementen ser ut och placeras. */
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            font-family: Arial, sans-serif; /* Anger typsnitt för all text på sidan */
+            margin: 20px; /* Lägger till ett yttre avstånd runt hela sidans innehåll */
+            display: flex; /* Aktiverar Flexbox för att enkelt kunna justera elementens placering */
+            flex-direction: column; /* Organiserar Flexbox-objekten i en kolumn (ovanför varandra) */
+            align-items: center; /* Centrerar Flexbox-objekten horisontellt */
         }
         .page-controls {
-            margin-bottom: 10px;
+            margin-bottom: 10px; /* Lägger till ett avstånd nedanför kontroll-sektionen */
         }
         .iframe-wrapper {
-            border: 2px solid #333;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            position: relative; 
-            background-color: #f0f0f0; 
+            border: 2px solid #333; /* Ram runt iframe-behållaren */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* En skugga för att ge djup */
+            position: relative; /* Nödvändigt för att absolutpositionera ikoner inuti */
+            background-color: #f0f0f0; /* Lätt grå bakgrund för iframe-behållaren */
         }
         iframe {
-            display: block;
-            border: none;
+            display: block; /* Tar bort extra utrymme som webbläsare ibland lägger till under iframes */
+            border: none; /* Tar bort standardramen för iframen */
         }
         .iframe-wrapper.expanded-mode {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-            background-color: white; 
+            position: fixed; /* Fixerad positionering för att överlappa allt annat */
+            top: 50%; /* Placerar toppen i mitten av skärmen */
+            left: 50%; /* Placerar vänsterkanten i mitten av skärmen */
+            transform: translate(-50%, -50%); /* Flyttar elementet tillbaka så dess mittpunkt är i mitten av skärmen */
+            z-index: 1000; /* Ser till att den visas ovanpå de flesta andra element */
+            background-color: white; /* Vit bakgrund i utökat läge */
         }
         #pageOverlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 999;
+            display: none; /* Döljer övertäckningen som standard */
+            position: fixed; /* Fixerad positionering så den täcker hela skärmen */
+            top: 0; /* Placerar den högst upp */
+            left: 0; /* Placerar den längst till vänster */
+            width: 100%; /* Full bredd */
+            height: 100%; /* Full höjd */
+            background-color: rgba(0,0,0,0.5); /* Svart, delvis genomskinlig bakgrund */
+            z-index: 999; /* Visas under den utökade iframen men ovanpå resten av innehållet */
         }
         #closeExpandedViewBtn {
-            display: none;
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 20px;
-            font-weight: bold;
-            line-height: 28px;
-            text-align: center;
-            cursor: pointer;
-            z-index: 1001;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none; /* Döljs som standard */
+            position: absolute; /* Absolut positionering i förhållande till .iframe-wrapper */
+            top: -10px; /* Flyttar knappen lite utanför ramen upptill */
+            right: -10px; /* Flyttar knappen lite utanför ramen till höger */
+            background-color: white; /* Vit bakgrund */
+            border: 1px solid #ccc; /* Lätt grå ram */
+            border-radius: 50%; /* Gör knappen rund */
+            width: 30px; /* Fast bredd */
+            height: 30px; /* Fast höjd */
+            font-size: 20px; /* Storlek på texten/symbolen */
+            font-weight: bold; /* Fet text */
+            line-height: 28px; /* Centrerar texten vertikalt */
+            text-align: center; /* Centrerar texten horisontellt */
+            cursor: pointer; /* Ändrar muspekaren till en hand när man hovrar över */
+            z-index: 1001; /* Visas ovanpå den utökade iframen */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Liten skugga */
         }
         #closeExpandedViewBtn:hover {
-            background-color: #f0f0f0;
-            color: red;
+            background-color: #f0f0f0; /* Lätt grå bakgrund vid hovring */
+            color: red; /* Röd text vid hovring */
         }
         #expandIconBtn {
-            display: none; 
-            position: absolute;
-            bottom: 8px;   
-            right: 8px;
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 36px;   
-            height: 36px;
-            font-size: 20px; 
-            line-height: 36px; 
-            text-align: center;
-            cursor: pointer;
-            z-index: 10;  
-            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-            transition: background-color 0.2s ease;
+            display: none; /* Döljs som standard */
+            position: absolute; /* Absolut positionering i förhållande till .iframe-wrapper */
+            bottom: 8px; /* Avstånd från botten av behållaren */
+            right: 8px; /* Avstånd från högerkanten av behållaren */
+            background-color: rgba(0, 0, 0, 0.6); /* Svart, delvis genomskinlig bakgrund */
+            color: white; /* Vit text/symbol */
+            border: none; /* Ingen ram */
+            border-radius: 50%; /* Gör knappen rund */
+            width: 36px; /* Fast bredd */
+            height: 36px; /* Fast höjd */
+            font-size: 20px; /* Storlek på texten/symbolen */
+            line-height: 36px; /* Centrerar texten vertikalt */
+            text-align: center; /* Centrerar texten horisontellt */
+            cursor: pointer; /* Ändrar muspekaren till en hand när man hovrar över */
+            z-index: 10; /* Visas ovanpå iframen */
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3); /* Liten skugga */
+            transition: background-color 0.2s ease; /* Mjuk övergång vid ändring av bakgrundsfärg */
         }
         #expandIconBtn:hover {
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.8); /* Mörkare bakgrund vid hovring */
         }
     </style>
 </head>
@@ -94,7 +94,7 @@
     <div id="pageOverlay"></div>
 
     <div class="page-controls">
-        </div>
+    </div>
 
     <div class="iframe-wrapper">
         <button id="closeExpandedViewBtn" title="Stäng utökad vy">&times;</button>
@@ -106,82 +106,104 @@
     </div>
 
     <script>
+        // Här börjar JavaScript-koden som hanterar iframe-logiken och användarinteraktion.
+
+        // Hämtar referenser till de relevanta HTML-elementen för att kunna manipulera dem.
         const iframe = document.getElementById('appIframe');
         const iframeWrapper = document.querySelector('.iframe-wrapper');
         const pageOverlay = document.getElementById('pageOverlay');
         const closeExpandedViewBtn = document.getElementById('closeExpandedViewBtn');
         const expandIconBtn = document.getElementById('expandIconBtn');
 
-        const expandedSize = { width: 1200, height: 700 };
-        const bannerSize = { width: 1000, height: 200 };
-        let currentMode = 'banner'; 
+        // Definierar storlekarna för de två visningslägena.
+        const expandedSize = { width: 1200, height: 700 }; // Storlek för "utökat" läge
+        const bannerSize = { width: 1000, height: 200 }; // Storlek för "banner" läge (standard)
+        let currentMode = 'banner'; // Håller reda på vilket läge iframen befinner sig i just nu.
 
+        /**
+         * Funktion för att byta visningsläge för iframen mellan 'banner' och 'expanded'.
+         * @param {string} mode - Det önskade läget ('banner' eller 'expanded').
+         */
         function setIframeView(mode) {
             // ... (befintlig setIframeView-logik är oförändrad här) ...
+            // Bestämmer vilken storlek iframen ska ha baserat på det valda läget.
             const newSize = (mode === 'expanded') ? expandedSize : bannerSize;
-            // Kontrollera om läget faktiskt ändras för att undvika onödiga operationer
+            // Kontrollera om läget faktiskt ändras för att undvika onödiga operationer.
             const previousMode = currentMode;
-            currentMode = mode;
+            currentMode = mode; // Uppdaterar det aktuella läget.
 
+            // Sätter iframens bredd och höjd.
             iframe.setAttribute('width', String(newSize.width));
             iframe.setAttribute('height', String(newSize.height));
+            // Sätter omslagselementets bredd och höjd för att det ska matcha iframen.
             iframeWrapper.style.width = newSize.width + 'px';
             iframeWrapper.style.height = newSize.height + 'px';
 
+            // Logik för att växla klasser och visa/dölja knappar och övertäckning beroende på läge.
             if (mode === 'expanded') {
-                iframeWrapper.classList.add('expanded-mode');
-                pageOverlay.style.display = 'block';
-                closeExpandedViewBtn.style.display = 'block';
-                expandIconBtn.style.display = 'none';
+                iframeWrapper.classList.add('expanded-mode'); // Lägger till klass för utökat läge (CSS styr positionering)
+                pageOverlay.style.display = 'block'; // Visar den mörka övertäckningen
+                closeExpandedViewBtn.style.display = 'block'; // Visar stäng-knappen
+                expandIconBtn.style.display = 'none'; // Döljer utöka-knappen
             } else { // Banner mode
-                iframeWrapper.classList.remove('expanded-mode');
-                pageOverlay.style.display = 'none';
-                closeExpandedViewBtn.style.display = 'none';
-                expandIconBtn.style.display = 'block';
+                iframeWrapper.classList.remove('expanded-mode'); // Tar bort klassen för utökat läge
+                pageOverlay.style.display = 'none'; // Döljer den mörka övertäckningen
+                closeExpandedViewBtn.style.display = 'none'; // Döljer stäng-knappen
+                expandIconBtn.style.display = 'block'; // Visar utöka-knappen
             }
 
-            // Skicka bara meddelande om läget faktiskt har ändrats,
-            // eller om det är första gången (för att säkerställa att iframen får det)
-            // Denna kontroll är mest för att undvika eventuella oändliga loopar om iframen skulle skicka tillbaka setViewMode.
+            // Skickar ett meddelande till iframen så den vet vilket visningsläge den ska anta.
+            // Detta är viktigt för att den inbäddade appen ska kunna anpassa sig.
+            // Meddelandet skickas bara om läget faktiskt har ändrats, eller om det är första gången
+            // iframen laddas för att säkerställa att den får sitt initiala läge.
             if (previousMode !== currentMode || !iframe.dataset.initialModeSent) {
-                if (iframe.contentWindow) {
-                    iframe.contentWindow.postMessage({ action: 'setViewMode', mode: mode }, '*');
-                    iframe.dataset.initialModeSent = true; // Markera att initialt läge har skickats
+                if (iframe.contentWindow) { // Kontrollerar att iframen har laddats ordentligt
+                    iframe.contentWindow.postMessage({ action: 'setViewMode', mode: mode }, '*'); // Skickar meddelandet
+                    iframe.dataset.initialModeSent = true; // Markerar att initialt läge har skickats
                 }
             }
             console.log(`Host: Switched to ${mode} mode. Size: ${newSize.width}x${newSize.height}`);
         }
 
+        // Lyssnare för när iframen har laddats. Sätter då det initiala visningsläget.
         iframe.addEventListener('load', () => {
             console.log("Iframe loaded. Setting initial view to banner mode via setIframeView.");
             iframe.dataset.initialModeSent = false; // Återställ flagga ifall iframe laddas om
-            setIframeView('banner');
+            setIframeView('banner'); // Ställer in iframen till "banner"-läge vid laddning
         });
         
+        // Lyssnare för klick på utöka-knappen. Växlar till "expanded"-läge.
         expandIconBtn.addEventListener('click', () => {
             setIframeView('expanded');
         });
 
+        // Lyssnare för klick på stäng-knappen. Växlar tillbaka till "banner"-läge.
         closeExpandedViewBtn.addEventListener('click', () => {
             setIframeView('banner');
         });
 
+        // Lyssnare för klick på övertäckningen (den mörka bakgrunden).
+        // Om iframen är i utökat läge, stängs den när man klickar utanför iframen.
         pageOverlay.addEventListener('click', () => {
             if (currentMode === 'expanded') {
                 setIframeView('banner');
             }
         });
 
-        // NYTT: Lyssnare för meddelanden från iframen
+        // NYTT: Lyssnare för meddelanden från iframen.
+        // Detta gör det möjligt för applikationen inuti iframen att kommunicera tillbaka till "värdsidan".
         window.addEventListener('message', (event) => {
-            // Viktigt: Validera event.origin i produktion för säkerhetsskäl
+            // Viktigt: Validera event.origin i produktion för säkerhetsskäl.
+            // Detta förhindrar att skadliga skript från andra domäner kan skicka meddelanden.
             // if (event.origin !== "http://127.0.0.1:5500") { // Eller din iframes faktiska origin
             //     console.warn("Message received from unexpected origin:", event.origin);
             //     return;
             // }
 
+            // Kontrollerar om meddelandet har en 'action' och att den är 'requestExpandFromIframe'.
             if (event.data && event.data.action === 'requestExpandFromIframe') {
                 console.log("Host received requestExpandFromIframe from iframe.");
+                // Om iframen är i "banner"-läge och ber om att bli utökad, så ändras läget.
                 if (currentMode === 'banner') {
                     setIframeView('expanded');
                 }
