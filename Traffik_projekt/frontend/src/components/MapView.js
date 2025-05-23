@@ -109,7 +109,7 @@ export default {
                 console.log("Försöker reverse geocoding med URL:", nominatimUrl);
                 const response = await fetch(nominatimUrl, {
                     headers: {
-                        'User-Agent': 'TrafikkartanWebApp/1.0 (din.email@example.com)' // VIKTIGT: ERSÄTT MED DIN EMAIL
+                        'User-Agent': 'TrafikkartanWebApp/1.0 (matilda.ryd@gmail.com)' // VIKTIGT: ERSÄTT MED DIN EMAIL
                     }
                 });
                 if (!response.ok) {
