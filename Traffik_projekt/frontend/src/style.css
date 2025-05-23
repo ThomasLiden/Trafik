@@ -134,7 +134,7 @@ body {
 
 .filter-dropdown-panel {
   position: absolute;
-  top: calc(100% + 5px); /* Placera precis under knappen med lite marginal */
+  bottom: calc(100% + 5px); /* Placera precis under knappen med lite marginal */
   left: 50%; /* Starta från mitten av knappen */
   transform: translateX(-50%); /* Centrera panelen under knappen */
   background-color: white;
@@ -229,12 +229,16 @@ body {
 
   /* Dropdown-panelen i banner-läge (kan behöva finjusteras) */
   .filter-dropdown-panel {
-    min-width: 160px; /* Kanske smalare */
-    left: 0; /* Justera för att öppnas åt höger från knappen om det är trångt */
-    transform: none; /* Ta bort centrering om left:0 används */
-    /* Eller om den ska öppnas uppåt: */
-    /* bottom: calc(100% + 5px); */
-    /* top: auto; */
+    min-width: 160px; 
+    /* I banner-läge kanske den fortfarande ska öppnas nedåt om det finns plats,
+       eller så anpassar du även här.
+       Om den ska öppnas nedåt i banner-läge men uppåt i desktop: */
+    top: calc(100% + 5px);    /* Återställ till nedåt för banner */
+    bottom: auto;             /* Ta bort bottom-positionering för banner */
+    left: 0;                  /* Kan öppnas från vänsterkanten av knappen */
+    transform: none;          /* Ta bort horisontell centrering om left:0 */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Skugga nedåt igen */
+
   }
   .filter-dropdown-panel label.filter-dropdown-item {
     font-size: 12px !important;
@@ -247,8 +251,8 @@ body {
 
 /* Knappstilar (dina befintliga) */
 .button-primary {
-  background-color: black;
-  color: white;
+  background-color: rgb(255, 255, 255);
+  color: rgb(0, 0, 0);
   padding: 10px 20px;
   margin: 10px;
   border: none;
@@ -257,10 +261,10 @@ body {
   font-weight: bold;
 }
 .button-primary:hover {
-  background-color: gray;
+  background-color: rgb(168, 167, 167);
 }
 .button-secondary {
-  background-color: lightgray;
+  background-color: rgb(226, 224, 224);
   color: black;
   padding: 10px 20px;
   border: none;
