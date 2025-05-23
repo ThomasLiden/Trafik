@@ -75,20 +75,6 @@ body {
   border-radius: 4px;
 }
 
-/* GAMMALT: .filter-controls tas bort, ersätts av dropdown */
-/*
-.filter-controls {
-  margin-top: 0; 
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-.filter-controls label {
-  font-size: 14px;
-}
-*/
-
 /* Statusmeddelande */
 .traffic-status-message-container { /* NYTT: Wrapper för statusmeddelandet */
   width: 100%; /* Tvinga full bredd av föräldern (.controls) om den wrappar */
