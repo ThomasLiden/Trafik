@@ -8,20 +8,17 @@ export default {
     setup(props, { emit }) {
         const { ref, onMounted, watch, computed, onUnmounted } = Vue;
 
-        const selectedCounty = ref('');
+        const selectedCounty = ref(''); // Startar tomt, kan uppdateras av geolokalisering
         const trafficStatusMessage = ref('Laddar karta...');
         const filterShowAccidents = ref(true);
         const filterShowRoadworks = ref(true);
         const filterShowCameras = ref(true);
         const lastBackendResponse = ref(null);
-        const currentIframeMode = ref('banner');
-
-        // NYTT: Ref för att styra synligheten av filter-dropdown
+        const currentIframeMode = ref('banner'); // Startar i banner som per senaste ändring
         const showFilterDropdown = ref(false);
 
         const counties = ref([
-            // ... (din counties-lista oförändrad) ...
-            { name: 'Alla län', value: '', number: null, coords: [62.0, 15.0], zoom: 4 },
+            { name: 'Alla län', value: '', number: null, coords: [62.0, 15.0], zoom: 5 }, // Zoom 5 för "Alla län"
             { name: 'Blekinge län', value: 'Blekinge', number: 10, coords: [56.16, 15.0], zoom: 9 },
             { name: 'Dalarnas län', value: 'Dalarna', number: 20, coords: [60.8, 14.6], zoom: 7 },
             { name: 'Gotlands län', value: 'Gotland', number: 9, coords: [57.5, 18.55], zoom: 8 },
@@ -45,7 +42,7 @@ export default {
             { name: 'Östergötlands län', value: 'Östergötland', number: 5, coords: [58.4, 15.7], zoom: 8 }
         ]);
 
-        const countyNumberToName = computed(() => { /* ... (oförändrad) ... */
+        const countyNumberToName = computed(() => {
             return counties.value.reduce((map, county) => {
                 if (county.number !== null) {
                     map[county.number] = county.name.replace(' län', '');
@@ -55,20 +52,19 @@ export default {
         });
 
         const {
-            // ... (useTrafficMap oförändrad) ...
             initMap,
             centerMapOnCounty,
             fetchTrafficDataFromServer,
             renderMarkersOnMap,
             getMapInstance
         } = useTrafficMap(
-            "http://127.0.0.1:5000/api/traffic-info",
+            "http://127.0.0.1:5000/api/traffic-info", // Se till att detta är din korrekta backend URL
             counties.value,
-            countyNumberToName.value,
-            currentIframeMode
+            countyNumberToName.value, // Skickar den computeade mappen som den är
+            currentIframeMode // Skickar ref:en direkt
         );
 
-        const fetchAndRenderNewData = async (countyValue) => { /* ... (oförändrad) ... */
+        const fetchAndRenderNewData = async (countyValue) => {
             trafficStatusMessage.value = "Hämtar trafikinformation...";
             const { success, data, message: fetchMessage } = await fetchTrafficDataFromServer(countyValue);
             if (success && data) {
@@ -78,15 +74,19 @@ export default {
                     filterShowAccidents.value,
                     filterShowRoadworks.value,
                     filterShowCameras.value,
-                    countyNumberToName.value
+                    countyNumberToName.value // Använder den computeade mappen
                 );
                 trafficStatusMessage.value = renderStatus.message;
             } else {
                 lastBackendResponse.value = null;
                 trafficStatusMessage.value = fetchMessage || "Kunde inte hämta trafikinformation.";
+                 // Om data inte kunde hämtas, och ett län är valt, försök centrera på det länet ändå.
+                // Om inget län är valt (t.ex. "Alla län"), centrera på "Alla län".
+                centerMapOnCounty(countyValue || '');
             }
         };
-        const applyFiltersAndReRender = () => { /* ... (oförändrad) ... */
+        
+        const applyFiltersAndReRender = () => {
             if (lastBackendResponse.value) {
                 const renderStatus = renderMarkersOnMap(
                     lastBackendResponse.value,
@@ -100,64 +100,181 @@ export default {
                 fetchAndRenderNewData(selectedCounty.value);
             }
         };
-        const handleHostMessage = (event) => { /* ... (oförändrad) ... */
+
+        // --- Start: Geolocation och Reverse Geocoding Logik ---
+        const getCountyFromCoordinates = async (latitude, longitude) => {
+            const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&accept-language=sv&addressdetails=1`; // addressdetails=1 för mer detaljer
+            
+            try {
+                console.log("Försöker reverse geocoding med URL:", nominatimUrl);
+                const response = await fetch(nominatimUrl, {
+                    headers: {
+                        'User-Agent': 'TrafikkartanWebApp/1.0 (din.email@example.com)' // VIKTIGT: ERSÄTT MED DIN EMAIL
+                    }
+                });
+                if (!response.ok) {
+                    console.error("Nominatim API fel:", response.status, await response.text());
+                    return null;
+                }
+                const data = await response.json();
+                console.log("Nominatim svar:", data);
+
+                if (data && data.address) {
+                    // Försök först med 'state' (oftast bäst för län i Sverige från Nominatim)
+                    // Sedan 'county' som kan vara kommunnamn eller ibland län.
+                    // Fallback till region om inget annat finns.
+                    let foundRegionName = data.address.state || data.address.county || data.address.region; 
+                    
+                    if (foundRegionName) {
+                        console.log("Hittat regionnamn från Nominatim:", foundRegionName);
+
+                        const matchedCounty = counties.value.find(c => {
+                            const cNameNormalized = c.name.replace(' län', '').toLowerCase();
+                            const foundNameNormalized = foundRegionName.replace(' län', '').toLowerCase();
+                            // Ibland kan Nominatim returnera t.ex. "Stockholm" för Stockholms län,
+                            // eller "Västra Götaland" för Västra Götalands län.
+                            return cNameNormalized === foundNameNormalized || c.value.toLowerCase() === foundNameNormalized;
+                        });
+
+                        if (matchedCounty) {
+                            console.log("Matchat mot lokalt län:", matchedCounty.value);
+                            return matchedCounty.value; 
+                        } else {
+                            console.warn("Kunde inte matcha Nominatim region till lokal lista:", foundRegionName);
+                        }
+                    } else {
+                        console.log("Ingen 'state', 'county' eller 'region' hittades i Nominatim-svar.");
+                    }
+                } else {
+                     console.log("Ingen 'address' data i Nominatim-svar.");
+                }
+                return null;
+            } catch (error) {
+                console.error("Fel vid reverse geocoding:", error);
+                return null;
+            }
+        };
+
+        const trySetCountyByGeolocation = () => {
+            if (navigator.geolocation) {
+                console.log("Begär geolokalisering...");
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    console.log("Geolokalisering lyckades:", position.coords);
+                    const userCountyValue = await getCountyFromCoordinates(position.coords.latitude, position.coords.longitude);
+                    if (userCountyValue) {
+                        if (selectedCounty.value === '' || selectedCounty.value !== userCountyValue) {
+                             // Uppdatera bara om inget län var förvalt eller om det geolokaliserade är annorlunda
+                            console.log("Sätter län baserat på geolokalisering:", userCountyValue);
+                            selectedCounty.value = userCountyValue;
+                            // Watchen på selectedCounty kommer att trigga fetchAndRenderNewData
+                        } else {
+                             console.log("Geolokaliserat län är samma som redan valt, ingen ändring.", selectedCounty.value);
+                             // Om inget var valt och geolokalisering inte gav resultat, eller om det är samma,
+                             // och vi inte redan har laddat data för det.
+                             if (!lastBackendResponse.value && selectedCounty.value === userCountyValue) {
+                                 fetchAndRenderNewData(selectedCounty.value);
+                             }
+                        }
+                    } else {
+                        console.log("Kunde inte bestämma län från geolokalisering, använder standard ('Alla län' om tomt).");
+                        if (selectedCounty.value === '') { 
+                           fetchAndRenderNewData(''); // Ladda "Alla län"
+                        } else {
+                           fetchAndRenderNewData(selectedCounty.value); // Ladda redan valt län om något
+                        }
+                    }
+                }, (error) => {
+                    console.warn("Geolokaliseringsfel:", error.message);
+                    if (selectedCounty.value === '') { // Ladda "Alla län" om inget är förvalt
+                        fetchAndRenderNewData('');
+                    } else { // Ladda det som eventuellt var förvalt om geolokalisering misslyckades
+                        fetchAndRenderNewData(selectedCounty.value);
+                    }
+                }, {
+                    enableHighAccuracy: false, 
+                    timeout: 10000,        
+                    maximumAge: 300000 // Acceptera cachad position upp till 5 minuter
+                });
+            } else {
+                console.warn("Geolokalisering stöds inte av denna webbläsare.");
+                if (selectedCounty.value === '') {
+                    fetchAndRenderNewData(''); // Ladda "Alla län"
+                } else {
+                    fetchAndRenderNewData(selectedCounty.value);
+                }
+            }
+        };
+        // --- Slut: Geolocation och Reverse Geocoding Logik ---
+
+        const handleHostMessage = (event) => {
             if (event.data && event.data.action === 'setViewMode') {
                 if (currentIframeMode.value !== event.data.mode) {
                     currentIframeMode.value = event.data.mode;
                     const map = getMapInstance();
-                    if (map) map.invalidateSize();
+                    if (map) map.invalidateSize(true); // true för att animera om möjligt
                 }
             }
         };
 
-        watch(selectedCounty, (newValue) => { /* ... (oförändrad) ... */
-            centerMapOnCounty(newValue);
+        watch(selectedCounty, (newValue, oldValue) => {
+            console.log(`selectedCounty ändrades från "${oldValue}" till "${newValue}"`);
+            // Anropa inte centerMapOnCounty direkt här, låt fetchAndRenderNewData och renderMarkersOnMap hantera det
             fetchAndRenderNewData(newValue);
         });
-        watch([filterShowAccidents, filterShowRoadworks, filterShowCameras], () => { /* ... (oförändrad) ... */
+
+        watch([filterShowAccidents, filterShowRoadworks, filterShowCameras], () => {
             applyFiltersAndReRender();
         });
+        
+        const handleClickOutsideFilterDropdown = (event) => {
+            const filterContainer = document.querySelector('.filter-dropdown-container');
+            const filterButton = document.getElementById('filter-button');
+            // Stäng bara om klicket är utanför både panelen OCH knappen
+            if (showFilterDropdown.value && 
+                filterContainer && 
+                !filterContainer.contains(event.target) && 
+                filterButton && 
+                !filterButton.contains(event.target)) {
+                showFilterDropdown.value = false;
+            }
+        };
 
-        onMounted(() => { /* ... (oförändrad) ... */
+        onMounted(() => {
             initMap('map');
-            fetchAndRenderNewData(selectedCounty.value);
+            trySetCountyByGeolocation(); // Försöker sätta län, som sedan kan trigga fetchAndRenderNewData via watch
+            // Om selectedCounty inte sätts av geo, och är '', kommer "Alla län" att användas.
+            // Om selectedCounty är tomt efter geoförsök, laddas "Alla län" från error/timeout callback i trySet...
+            
             window.addEventListener('message', handleHostMessage);
-            // NYTT: Lägg till eventlyssnare för att stänga filter-dropdown vid klick utanför
             document.addEventListener('click', handleClickOutsideFilterDropdown);
-            setInterval(() => fetchAndRenderNewData(selectedCounty.value), 5 * 60 * 1000);
+            // setInterval(() => fetchAndRenderNewData(selectedCounty.value), 5 * 60 * 1000); // Kan återaktiveras senare
         });
-        onUnmounted(() => { /* ... (oförändrad) ... */
+
+        onUnmounted(() => {
             window.removeEventListener('message', handleHostMessage);
-            // NYTT: Ta bort eventlyssnare
             document.removeEventListener('click', handleClickOutsideFilterDropdown);
         });
 
-        const requestExpansionIfNeeded = () => { /* ... (oförändrad) ... */
+        const requestExpansionIfNeeded = () => {
             if (currentIframeMode.value === 'banner') {
                 window.parent.postMessage({ action: 'requestExpandFromIframe' }, '*');
             }
         };
-        const handleOpenLogin = () => { /* ... (oförändrad) ... */
+
+        const handleOpenLogin = () => {
             requestExpansionIfNeeded();
             emit('open-login');
         };
-        const handleOpenSignup = () => { /* ... (oförändrad) ... */
+        const handleOpenSignup = () => {
             requestExpansionIfNeeded();
             emit('open-signup');
         };
-        const handleOpenAccount = () => emit('open-account');
-
-        // NYTT: Metod för att växla filter-dropdown
-        const toggleFilterDropdown = () => {
-            showFilterDropdown.value = !showFilterDropdown.value;
+        const handleOpenAccount = () => {
+            emit('open-account');
         };
 
-        // NYTT: Metod för att stänga dropdown om man klickar utanför
-        const handleClickOutsideFilterDropdown = (event) => {
-            const filterContainer = document.querySelector('.filter-dropdown-container');
-            if (showFilterDropdown.value && filterContainer && !filterContainer.contains(event.target)) {
-                showFilterDropdown.value = false;
-            }
+        const toggleFilterDropdown = () => {
+            showFilterDropdown.value = !showFilterDropdown.value;
         };
 
         return {
@@ -171,7 +288,6 @@ export default {
             handleOpenSignup,
             handleOpenAccount,
             isLoggedIn: computed(() => props.isLoggedIn),
-            // NYTT: Exponera för template
             showFilterDropdown,
             toggleFilterDropdown
         };
@@ -203,19 +319,20 @@ export default {
               </label>
             </div>
           </div>
+          
           <div class="control-item traffic-status-message-container" v-if="trafficStatusMessage">
               <div class="traffic-status-message">{{ trafficStatusMessage }}</div>
           </div>
         </div>
 
         <div class="buttons user-actions-buttons">
-          <button @click="isLoggedIn ? handleOpenAccount() : handleOpenLogin()" class="button-secondary">
-            {{ isLoggedIn ? 'Min Sida' : 'Logga In' }}
-          </button>
-          <button @click="handleOpenSignup()" class="button-primary" v-if="!isLoggedIn">
-            Prenumerera
-          </button>
+        <button @click="isLoggedIn ? handleOpenAccount() : handleOpenLogin()" class="button-secondary">
+          {{ isLoggedIn ? 'Min Sida' : 'Logga In' }}
+        </button>
+        <button @click="handleOpenSignup()" class="button-primary" v-if="!isLoggedIn">
+          Prenumerera
+        </button>
         </div>
-      </div>
+     </div>
     `
 };
