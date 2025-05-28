@@ -14,6 +14,8 @@ export default {
             phone: ''
           },
         subscriptions: [],
+        price: null,
+        resellerName: null,
         message: "",
         editing: false,
       };
@@ -35,6 +37,14 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.subscriptions = await res.json();
+
+        // Pris från reseller
+        const domain = window.location.hostname;
+        const resellerRes = await fetch(`http://127.0.0.1:5000/api/reseller-region?domain=${domain}`);
+        const resellerData = await resellerRes.json();
+        this.price = resellerData.price;
+        this.resellerName = resellerData.name;
+
       } catch (err) {
         console.error(err);
         this.message = "Kunde inte hämta data.";
@@ -113,13 +123,13 @@ export default {
       <p>Telefon: {{ profile.phone }}</p>
 
       <h3>Dina prenumerationer</h3>
-      <ul v-if="subscriptions.length > 0" style="list-style-type: none;">
+      <p v-if="resellerName">Tidning: {{ resellerName }}</p>
+      <p>Pris per månad: {{ price }} kr</p>
+      <ul>
         <li v-for="sub in subscriptions" :key="sub.subscription_id">
-          <strong>Status:</strong> {{ sub.active ? 'Aktiv' : 'Inaktiv' }} <br />
-          <strong>Plats:</strong> {{ sub.location || 'Ingen plats' }} <br />
-          <strong>Skapad:</strong> {{ new Date(sub.created_at).toLocaleString() }} <br />
-          <strong>Pris: 49</strong>
-          <button v-if="sub.active" @click="removeSubscription(sub.subscription_id)">Avsluta</button>
+          {{ sub.period }} – {{ sub.active ? 'Aktiv' : 'Inaktiv' }}
+           
+          <button @click="removeSubscription(sub.subscription_id)">Avsluta</button>
         </li>
       </ul>
       <p v-else>Inga prenumerationer hittades.</p>

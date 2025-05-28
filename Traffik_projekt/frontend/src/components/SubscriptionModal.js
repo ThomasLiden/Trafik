@@ -22,14 +22,14 @@ export default {
           <div v-if="step === 2">
             <h3>Steg 1 av 4: Välj område</h3>
             <select v-model="region" class="option" >
-              <option class="option-text">Östergötland</option>
-              <option class="option-text">Stockholm</option>
+              <option disabled value="">Välj ett område</option>
+              <option v-for="r in regions" :key="r.location_id" :value="r">{{ r.region }}</option>
             </select>
             <button @click="nextStep" class="button-primary">Nästa</button>
           </div>
   
           <div v-if="step === 3">
-          <SignupForm @signup-success="handleSignupSuccess" />
+          <signup-form :region="region" @signup-success="handleSignupSuccess" />
           </div>
   
           <div v-if="step === 4">
@@ -43,6 +43,7 @@ export default {
             <h3>Bekräftelse</h3>
             <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
             <p>Till: {{ phone }} ({{ email }})</p>
+            <p>Pris = {{ price }}</p>
             <button @click="submit" class="button-primary">Bekräfta</button>
           </div>
   
@@ -57,10 +58,39 @@ export default {
       return {
         step: 1,
         region: '',
+        price: null,
         email: '',
         phone: '',
-        incidentTypes: []
+        incidentTypes: [],
+        regions: []
       };
+    },
+    mounted() {
+      fetch('http://127.0.0.1:5000/api/regions')
+        .then(res => res.json())
+        .then(data => {
+          this.regions = data; 
+
+          const domain = window.location.hostname;
+          return fetch(`http://127.0.0.1:5000/api/reseller-region?domain=${domain}`);
+          
+        })
+        .then(res => res.json ())
+        .then(data => {
+
+          this.price = data.price;
+
+          const resellerRegionName = data.region;
+
+          const defaultRegion = this.regions.find(r => r.region === resellerRegionName);
+          if (defaultRegion) {
+            this.region = defaultRegion;
+          }
+          console.log("Pris satt till:", this.price);
+        })
+        .catch(err => {
+          console.error('Kunde inte hämta regioner', err);
+        });
     },
     methods: {
       nextStep() {
