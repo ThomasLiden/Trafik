@@ -119,20 +119,26 @@ export default {
         </button>
 
       <h2>Välkommen, {{ profile.first_name }}!</h2>
-      <p>E-post: {{ profile.email }}</p>
-      <p>Telefon: {{ profile.phone }}</p>
+      <p><strong>E-post:</strong> {{ profile.email }}</p>
+      <p><strong>Telefon:</strong> {{ profile.phone }}</p>
 
-      <h3>Dina prenumerationer</h3>
-      <p v-if="resellerName">Tidning: {{ resellerName }}</p>
-      <p>Pris per månad: {{ price }} kr</p>
-      <ul>
-        <li v-for="sub in subscriptions" :key="sub.subscription_id">
-          {{ sub.period }} – {{ sub.active ? 'Aktiv' : 'Inaktiv' }}
-           
+      <div class="subscription-info">
+        <h3>Dina prenumerationer</h3>
+        <p v-if="resellerName">Tidning: {{ resellerName }}</p>
+        <p><strong>Pris per månad: </strong> {{ price }} kr</p>
+
+        <ul v-if="subscriptions.length > 0">
+          <li v-for="sub in subscriptions" :key="sub.subscription_id">
+          {{ sub.period }} 
+           <span :class="{ active: sub.active, inactive: !sub.active }">
+            {{ sub.active ? 'Aktiv' : 'Inaktiv' }}
+           </span>
+        </li>   
           <button @click="removeSubscription(sub.subscription_id)">Avsluta</button>
-        </li>
+        
       </ul>
       <p v-else>Inga prenumerationer hittades.</p>
+      </div>
 
       <button class="button-secondary" @click="logout">Logga ut</button>
       <button class="button-secondary" @click="editing = true">Ändra uppgifter</button>

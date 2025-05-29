@@ -15,33 +15,27 @@ export default {
           <div v-if="step === 1">
             <h2>Prenumerera på trafikinfo</h2>
             <p>Du kommer få info om olyckor, hinder och vägarbete via SMS.</p>
-            <button class="button-primary" @click="nextStep">Nästa</button>
-          </div>
-  
-          <div v-if="step === 2">
-            <h3>Steg 1 av 5: Välj område</h3>
+            <p> Måndadskostnad: {{ price }} </p>
+            <h3> Steg 1 av 4: Välj område och händelsetyp </h3>
             <select v-model="region" class="option" >
               <option disabled value="">Välj ett område</option>
               <option v-for="r in regions" :key="r.location_id" :value="r">{{ r.region }}</option>
             </select>
-            <button @click="nextStep" class="button-primary">Nästa</button>
+            <div class="incident-types">
+              <label><input type="checkbox" v-model="incidentTypes" value="olycka"> Olycka</label>
+              <label><input type="checkbox" v-model="incidentTypes" value="vägarbete"> Vägarbete</label>  
+            </div>         
+            <button class="button-primary" @click="nextStep">Nästa</button>
           </div>
   
-          <div v-if="step === 3">
+          <div v-if="step === 2">
           <signup-form :region="region" @signup-success="handleSignupSuccess" />
           </div>
-  
-          <div v-if="step === 4">
-            <h3>Steg 2 av 5: Välj händelsetyp</h3>
-            <label><input type="checkbox" v-model="incidentTypes" value="olycka"> Olycka</label>
-            <label><input type="checkbox" v-model="incidentTypes" value="vägarbete"> Vägarbete</label>
-            <button @click="nextStep" class="button-primary">Nästa</button>
-          </div>
-  
-          <div v-if="step === 5">
-            <h3>Steg 3 av 5: Betalning</h3>
+    
+          <div v-if="step === 3">
+            <h3>Steg 3 av 4: Betalning</h3>
             <div class="payment-section">
-              <div class="payment-amount">Månadskostnad: 99 kr</div>
+              <div class="payment-amount"> Pris: {{ price }}</div>
               <div id="stripe-checkout-container"></div>
               <div v-if="error" class="error-message">{{ error }}</div>
               <button @click="handlePayment" class="button-primary" :disabled="loading">
@@ -50,17 +44,15 @@ export default {
             </div>
           </div>
   
-          <div v-if="step === 6">
-            <h3>Bekräftelse</h3>
-            <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
-            <p>Till: {{ phone }} ({{ email }})</p>
-            <p>Pris = {{ price }}</p>
-            <button @click="submit" class="button-primary">Bekräfta</button>
-          </div>
-  
-          <div v-if="step === 7">
+          <div v-if="step === 4">
             <h3>Tack!</h3>
             <p>Du är nu prenumerant.</p>
+            <h3>Bekräftelse</h3>
+            <p>Område: {{ region.region }}<p>
+            <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
+            <p>Till: {{ phone }} ({{ email }})</p>
+            <p>Pris per månad: {{ price }} kr<>
+            <button @click="submit" class="button-primary">Bekräfta</button>
           </div>
         </div>
       </div>
@@ -81,11 +73,11 @@ export default {
         error: null
       };
     },
-    async mounted() {
-      // initziera stripe när componenten är mounted
-      this.stripe = Stripe('pk_test_51RIsEVFPlu7UXDRDAlQtGOM9XRv0N27uADmwrhcb8f7PvRCZ1KDoViIn8QH3UuS38aBWsMYkhH9bcPJEH0DreFQX00tfP0ZdCF');
-    },
+
     mounted() {
+        // initziera stripe när componenten är mounted
+      this.stripe = Stripe('pk_test_51RIsEVFPlu7UXDRDAlQtGOM9XRv0N27uADmwrhcb8f7PvRCZ1KDoViIn8QH3UuS38aBWsMYkhH9bcPJEH0DreFQX00tfP0ZdCF');
+
       fetch('http://127.0.0.1:5000/api/regions')
         .then(res => res.json())
         .then(data => {
@@ -128,7 +120,7 @@ export default {
         
         try {
           // skicka request till backend för att skapa en checkout-session
-          const response = await fetch('http://localhost:5000/api/create-checkout-session', {
+          const response = await fetch('http://127.0.0.1:5000/api/create-checkout-session', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
