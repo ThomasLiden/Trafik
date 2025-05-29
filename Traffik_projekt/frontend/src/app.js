@@ -8,7 +8,6 @@ import ResetPasswordForm from "./components/ResetPasswordForm.js";
 // MapView kommer att användas av routern, så den behöver inte nödvändigtvis importeras här
 // om den är korrekt registrerad i routern och används via <router-view>.
 
-
 // Mounta Vue-applikationen
 const app = Vue.createApp({
   components: {
