@@ -19,7 +19,7 @@ p {
 
 .container {
   max-width: 75rem;
-  margin: 0 auto;
+  margin: 2rem 1rem;
   padding: 2rem 1rem;
 }
 
@@ -124,6 +124,7 @@ nav ul li a:hover {
   padding: 2rem;
   border-radius: 12px; 
   max-width: 700px; 
+  max-height: 90vh;
   width: 90%;
   box-sizing: border-box;
   overflow-y: auto;
@@ -189,22 +190,107 @@ nav ul li a:hover {
   gap: 1rem;
 }
 
-@media (max-width: 600px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-  .form-row {
-    grid-column: span 1;
-  }
-}
+
 
 /* 
-   prissättning 
+   sökfält 
  */
+ .search-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+.btn-actions {
+  grid-column: span 2;
+  margin-top: .9rem;
+  display: flex;
+  justify-content: flex-start; /* eller center */
+}
+
+/* statistik superadmin. */ 
+.stats-summary {
+  min-height: 140px;
+  margin-bottom: 2rem;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+
+.loading-placeholder {
+  font-style: italic;
+  color: #777;
+  padding: 0.5rem 0;
+}
+
+.stats-summary h4 {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.stats-card {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.stats-card p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.sms-line {
+  margin: 0.2rem 0;
+  font-size: 0.95rem;
+}
+
+.sms-meta {
+  margin-left: 0.5rem;
+  color: #666;
+  font-size: 0.85rem;
+  font-style: italic;
+}
 
 
 
+/* Resellerlista*/
+.reseller-table {
+  margin-top: 40px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
 
+.reseller-table input.table-search {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.reseller-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reseller-table th,
+.reseller-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-size: 14px;
+}
+
+.reseller-table th {
+  background-color: #f7f7f7;
+  font-weight: bold;
+}
 
 
 
@@ -270,5 +356,15 @@ nav ul li a:hover {
   nav ul li a {
     text-align: left;
     padding-left: 1.25rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-row {
+    grid-column: span 1;
+  }
+  .search-grid {
+    grid-template-columns: 1fr;
   }
 }

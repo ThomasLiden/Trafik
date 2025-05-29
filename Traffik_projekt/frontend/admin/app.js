@@ -58,6 +58,3 @@ const app = createApp({
 
 app.use(router);
 app.mount("#app");
-
-
-//Ev. Lägga till kontroll av token, om den är giltig direkt när appen startas om det skulle ligga kvar någon gammal.

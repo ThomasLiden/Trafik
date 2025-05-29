@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from models.supabase_client import supabase
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from models.auth_utils import require_authenticated, require_role
 
@@ -42,6 +42,145 @@ def admin_login():
 
 
 
+# Hämtar statistik för inloggad tidning. 
+@admin_blueprint.route('/reseller/stats', methods=['GET'])
+@require_authenticated
+def get_reseller_stats():
+
+    reseller_id = request.user_id  # Hämtar reseller_id från token
+
+    #reseller_id = "296ffdc0-2656-4ba5-9f5b-1986e1db6ed5"  #Hårdkodat in reseller_id för test!
+
+    if not reseller_id:
+        return jsonify({"error": "reseller_id saknas"}), 400
+
+    try:
+        # Hämta användare kopplade till denna tidning
+        user_rows = supabase.table("users")\
+            .select("user_id")\
+            .eq("reseller_id", reseller_id)\
+            .execute()
+        user_ids = [u["user_id"] for u in user_rows.data]
+
+        if not user_ids:
+            return jsonify({
+                "reseller_id": reseller_id,
+                "sms_30_days": 0,
+                "sms_12_months": 0,
+                "subscription_count": 0
+            }), 200
+
+        # Datumgränser
+        now = datetime.utcnow()
+        days_30 = now - timedelta(days=30)
+        days_365 = now - timedelta(days=365)
+
+        # SMS senaste 30 dagar
+        sms_30 = supabase.table("notifications")\
+            .select("id", count="exact")\
+            .in_("user_id", user_ids)\
+            .eq("channel", "sms")\
+            .gte("created_at", days_30.isoformat())\
+            .execute().count or 0
+
+        # SMS senaste 12 månader
+        sms_365 = supabase.table("notifications")\
+            .select("id", count="exact")\
+            .in_("user_id", user_ids)\
+            .eq("channel", "sms")\
+            .gte("created_at", days_365.isoformat())\
+            .execute().count or 0
+
+        # Aktiva prenumerationer
+        subs_raw = supabase.table("subscriptions")\
+            .select("user_id", "active")\
+            .in_("user_id", user_ids)\
+            .execute().data
+
+        subscription_count = sum(1 for s in subs_raw if s.get("active") is True)
+
+        return jsonify({
+            "reseller_id": reseller_id,
+            "sms_30_days": sms_30,
+            "sms_12_months": sms_365,
+            "subscription_count": subscription_count
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+""" #Hämta alla användare för den tidning som är inloggad. - denna är en funktion om vi inte vill hämta aktiv status också. 
+@admin_blueprint.route('/reseller/users', methods=['GET'])
+@require_authenticated
+def get_reseller_users():
+    #reseller_id = request.user_id  # Hämtar från token
+
+    reseller_id = "296ffdc0-2656-4ba5-9f5b-1986e1db6ed5"  #Test-ID, t.ex. från databasen
+
+    if not reseller_id:
+        return jsonify({"error": "reseller_id saknas"}), 400
+
+    try:
+        users = supabase.table("users")\
+            .select("user_id, first_name, last_name, email, created_at, active")\
+            .eq("reseller_id", reseller_id)\
+            .order("created_at", desc=True)\
+            .execute().data
+
+        return jsonify({"reseller_id": reseller_id, "users": users}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500 """
+    
+#Hämta alla användare till en tidning som är inloggad. Hämtar id via token. 
+@admin_blueprint.route('/reseller/users', methods=['GET'])
+@require_authenticated
+def get_reseller_users():
+    
+    reseller_id = request.user_id  # Hämtar från token. 
+
+    #reseller_id = "296ffdc0-2656-4ba5-9f5b-1986e1db6ed5"  #Hårdkodat in reseller_id för test!
+
+    if not reseller_id:
+        return jsonify({"error": "reseller_id saknas"}), 400
+
+    try:
+        # Hämta användare kopplade till denna tidning
+        user_rows = supabase.table("users")\
+            .select("user_id, first_name, last_name, email")\
+            .eq("reseller_id", reseller_id)\
+            .execute().data
+
+        user_ids = [u["user_id"] for u in user_rows]
+
+        if not user_ids:
+            return jsonify({"users": []}), 200
+
+        # Hämta prenumerationsstatus för dessa användare
+        subs_raw = supabase.table("subscriptions")\
+            .select("user_id, active")\
+            .in_("user_id", user_ids)\
+            .execute().data
+
+        # Skapa en dict med user_id -> active
+        subs_map = {s["user_id"]: s.get("active", False) for s in subs_raw}
+
+        # Bygg lista med användare + aktiv status
+        users = []
+        for u in user_rows:
+            users.append({
+                "user_id": u["user_id"],
+                "first_name": u.get("first_name", ""),
+                "last_name": u.get("last_name", ""),
+                "email": u.get("email", ""),
+                "active": subs_map.get(u["user_id"], False)
+            })
+
+        return jsonify({"users": users}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 #Hämta konto för en tidning för att redigera uppgifter.
 #Kräver att användaren är inloggad - dekorerad rutt. 
@@ -54,7 +193,7 @@ def get_account():
     if not reseller_id: 
         return jsonify({"error": "reseller_id saknas"}), 400 
     
-    #Hämta tidningen (reseller) via id.
+    #Hämta tidning (reseller) via id.
     reseller_result = supabase.table("reseller").select("*").eq("reseller_id", reseller_id).single().execute()
     reseller = reseller_result.data
 
@@ -72,6 +211,7 @@ def get_account():
     })
 
 #Spara konto vid redigering av uppgifter. 
+#Kräver att användaren är inloggad - dekorerad rutt. 
 @admin_blueprint.route('/account/update', methods=['POST'])
 @require_authenticated
 def update_account():
@@ -101,7 +241,146 @@ def update_account():
     return jsonify({"message": "Kontot har uppdaterats! "})
     
 
+#funktion för att hämta pris för en tidning. 
+@admin_blueprint.route('/pricing', methods=['GET'])
+@require_authenticated
+def get_reseller_price():
+    #Hämtar id för konto via token. 
+    reseller_id = request.user_id
+    
+    try:
+        #Hämta endast fältet price från reseller_tabellen.
+        result = supabase.table("reseller").select("price").eq("reseller_id", reseller_id).single().execute()
+        price = result.data
+        
+        if not price:
+           return jsonify({"error": "pris för tidning hittades inte. "}), 404
+    
+        #Returnerar pris.
+        return jsonify({"price": price.get("price")}), 200
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 
+#funktion för att uppdatera nytt pris för en tidning. 
+#Kräver att användaren är inloggad - dekorerad rutt. 
+@admin_blueprint.route('/pricing/update', methods=['POST'])
+@require_authenticated
+def update_reseller_price():
+    data = request.get_json()
+    #Hämtar id för konto via token. 
+    reseller_id = request.user_id
+
+    #Kontrollera att nytt pris skickats med. 
+    new_price = data.get("price")
+    if new_price is None:
+        return jsonify({"error": "Nytt pris saknas"}), 400
+    
+    try:
+        #Uppdatera endast fältet price. 
+        supabase.table("reseller").update({"price": new_price}).eq("reseller_id", reseller_id).execute()
+        return jsonify({"message": "Priset har uppdaterats"}), 200
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+#Funktion för att hämta alla resellers eller baserat på ett valt län. 
+#Endast för superadmin.
+@admin_blueprint.route('/resellers', methods=['GET'])
+@require_role("superadmin")
+def get_all_resellers(): 
+    #Hämtar eventuell valt län. 
+    region = request.args.get("region")
+    
+    try:
+        #Skapa en selectfråga för att hämta tidningar. 
+        query = supabase.table("reseller")\
+            .select("reseller_id, name, region, email, created_at")\
+            .eq("role", "reseller")  # Filtrera på roll.
+        
+        #Om län har angetts, filtrera på det. 
+        if region:
+          query = query.eq("region", region)
+    
+        result = query.execute() #Kör frågan.
+        return jsonify({"resellers": result.data}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+from datetime import datetime, timedelta
+
+# Hämtar statistik för en viss tidning eller för alla tidningar i ett län (region)
+# Endast för superadmin
+@admin_blueprint.route('/stats', methods=['GET'])
+@require_role("superadmin")
+def reseller_statistics():
+    region = request.args.get("region")
+    reseller_id = request.args.get("reseller_id")
+
+    try:
+        # Hämta användare baserat på region eller återförsäljare
+        users = fetch_users(region=region, reseller_id=reseller_id)
+
+        if users is None:
+            return jsonify({"error": "region eller reseller_id krävs"}), 400
+
+        user_ids = [str(u["user_id"]) for u in users]
+
+        # Om inga användare hittades, returnera tom statistik
+        if not user_ids:
+            return jsonify({
+                "reseller_id": reseller_id,
+                "region": region,
+                "sms_30_days": 0,
+                "sms_12_months": 0,
+                "subscription_count": 0
+            }), 200
+
+        # Datumgränser
+        now = datetime.utcnow()
+        days_30 = now - timedelta(days=30)
+        days_365 = now - timedelta(days=365)
+
+        # SMS senaste 30 dagar
+        sms_30 = supabase.table("notifications")\
+            .select("id", count="exact")\
+            .in_("user_id", user_ids)\
+            .eq("channel", "sms")\
+            .gte("created_at", days_30.isoformat())\
+            .execute().count or 0
+
+        # SMS senaste 12 månader
+        sms_365 = supabase.table("notifications")\
+            .select("id", count="exact")\
+            .in_("user_id", user_ids)\
+            .eq("channel", "sms")\
+            .gte("created_at", days_365.isoformat())\
+            .execute().count or 0
+
+        # Aktiva prenumerationer
+        subs_raw = supabase.table("subscriptions")\
+            .select("user_id", "active")\
+            .in_("user_id", user_ids)\
+            .execute().data
+
+        subscription_count = sum(1 for s in subs_raw if s.get("active") is True)
+
+        # Returnera statistik
+        return jsonify({
+            "reseller_id": reseller_id,
+            "region": region,
+            "sms_30_days": sms_30,
+            "sms_12_months": sms_365,
+            "subscription_count": subscription_count
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Något gick fel: {str(e)}"}), 500
 
 
 #funktion för att lägga till en ny tidning/reseller. 
@@ -151,7 +430,6 @@ def create_reseller():
             "name": name,
             "email": email,
             "price": price,
-            "sms_count": 0,
             "domain": domain,
             "region": region,
             "phone": phone,
@@ -163,3 +441,27 @@ def create_reseller():
 
 
 
+# Hjälpfunktion för att hämta användare baserat på reseller_id eller region
+def fetch_users(region=None, reseller_id=None):
+    if reseller_id:
+        return supabase.table("users")\
+            .select("user_id")\
+            .eq("reseller_id", reseller_id)\
+            .execute().data
+
+    elif region:
+        resellers = supabase.table("reseller")\
+            .select("reseller_id")\
+            .eq("region", region)\
+            .execute().data
+
+        reseller_ids = [r["reseller_id"] for r in resellers]
+        if not reseller_ids:
+            return []
+
+        return supabase.table("users")\
+            .select("user_id", "reseller_id")\
+            .in_("reseller_id", reseller_ids)\
+            .execute().data
+    else:
+        return None

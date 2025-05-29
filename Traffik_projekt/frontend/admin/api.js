@@ -23,7 +23,7 @@ export async function apiFetch(url, options = {}) {
     ...options,
     headers
   });
-  
+
   //Försök tolka svaret som JSON. Om det är tomt, returnera null.
   const data = await res.json().catch(() => null); 
 
