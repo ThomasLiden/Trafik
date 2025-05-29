@@ -72,7 +72,12 @@ export default {
         }
 
         const data = await apiFetch(url);
-        this.stats = data;
+        this.stats = {
+          sms_count: data.sms_count ?? 0,
+          sms_30_days: data.sms_30_days ?? 0,
+          sms_12_months: data.sms_12_months ?? 0,
+          subscription_count: data.subscription_count ?? 0,
+        };
         
         //Hämta och visa namnet på vald tidning i rubrik. 
         const found = this.resellers.find(
@@ -83,7 +88,7 @@ export default {
       } catch (err) {
         console.error("Fel vid hämtning:", err.message);
         this.message = "Kunde inte hämta statistik.";
-      }
+      } 
     },
     async handleRegionChange() {
     // När län ändras, nollställ vald tidning om den inte längre finns efter filter
@@ -107,7 +112,7 @@ export default {
   template: `
     <div class="container">
       <h2>Administration</h2>
-      <p>Filtrera på län eller tidning för att visa statistik.</p>
+      <p>Filtrera på län eller tidning för att se antal prenumeranter och skickade SMS.</p>
       <!-- Filtersektion -->
       <div class="search-grid">
         <div class="form-row">
@@ -165,13 +170,8 @@ export default {
             Ingen statistik hittades för det valda urvalet.
           </div>
         </template>
-        <template v-else>
-          <div class="loading-placeholder">
-            Välj ett län eller en tidning för att visa antal prenumeranter och SMS.
-          </div>
-        </template>
       </div>
-      
+
       <!-- Tabell med tidningsåterförsäljare. -->
       <reseller-table :resellers="resellers" :region-filter="selectedRegion" :reseller-id-filter="selectedReseller"
       />

@@ -2,7 +2,7 @@
 //(Så vi slipper hämta token i varje komponent och skicka med headers, authorization. //
 // Importera denna fil istället till komponenten där vi behöver göra api-anrop.
 
-//En återanvändbar funkiton för att göra API-anrop med automatiskt hantering av access_token. 
+//En återanvändbar funktion för att göra API-anrop med automatiskt hantering av access_token. 
 export async function apiFetch(url, options = {}) {
   //Hämta access_token från local storage. 
   const token = localStorage.getItem("access_token");
