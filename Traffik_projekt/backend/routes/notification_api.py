@@ -32,7 +32,6 @@ def send_sms_for_deviation():
         if not dev_id or not county_no:
             return jsonify({"error": "devId och countyNo krävs"}), 400
 
-        # Hämta plats-ID
         location_resp = supabase.table("location").select("*").execute()
         location_id = next((row["location_id"] for row in location_resp.data if str(row["county_no"]) == str(county_no)), None)
 
@@ -41,13 +40,11 @@ def send_sms_for_deviation():
 
         print("✅ Hittad plats:", location_id)
 
-        # Hämta prenumeranter
         subs_resp = supabase.table("subscriptions").select("user_id") \
             .eq("location_id", location_id).eq("active", True).execute()
         if not subs_resp.data:
             return jsonify({"message": "Inga aktiva prenumeranter"}), 200
 
-        # Hämta trafikhändelse
         try:
             trv_res = requests.get(f"{TRAFIKVERKET_API}?id={dev_id}")
             trv_data = trv_res.json()
@@ -56,20 +53,22 @@ def send_sms_for_deviation():
             print("⚠️ Kunde inte hämta devId-data:", err)
             deviation = {}
 
-        header = deviation.get("Header", "Trafikstörning")
+        header = deviation.get("Header", "Trafikstörning") or "Trafikstörning"
         message_text = deviation.get("Message", "")
-        link = f"https://trafikinfo.stratosdev.se/details/{dev_id}"
+        link = f"https://www.trafikverket.se/trafikinformation/"
 
-        # 🧠 Ta ut första 1–2 meningarna som sammanfattning
-        sentences = message_text.split(". ")
-        short_details = ". ".join(sentences[:2]).strip()
+        # Fallback om ingen meddelandetext finns
+        if message_text:
+            sentences = message_text.split(". ")
+            short_details = ". ".join(sentences[:2]).strip()
 
-        # ✂️ Räkna ut hur många tecken vi kan ha innan länken trycks ut
-        max_text_length = 160 - len(link) - 20  # 20 för marginal till rubrik och radbrytningar
-        if len(short_details) > max_text_length:
-            short_details = short_details[:max_text_length].rstrip() + "…"
+            max_text_length = 160 - len(link) - 20
+            if len(short_details) > max_text_length:
+                short_details = short_details[:max_text_length].rstrip() + "…"
+        else:
+            short_details = "Se mer information på Trafikverkets hemsida."
 
-        # 🧾 Slutlig sms-text
+        # Sätt ihop meddelandet
         composed_message = (
             f"🚧 {header.strip()[:60]}\n"
             f"{short_details}\n"
@@ -112,7 +111,7 @@ def send_sms_for_deviation():
 
         headers = {
             "Content-Type": "application/json",
-            "X-API-KEY": API_KEY  # 🔐 Lägg till nyckeln i header
+            "X-API-KEY": API_KEY
         }
 
         print("📤 Payload till HelloSMS:", sms_payload)

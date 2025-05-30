@@ -16,27 +16,9 @@
 
   <label for="countySelect">Välj län:</label>
   <select id="countySelect">
-    <option value="1">Stockholm</option>
-    <option value="3">Uppsala</option>
-    <option value="4">Södermanland</option>
-    <option value="5">Östergötland</option>
-    <option value="6">Jönköping</option>
-    <option value="7">Kronoberg</option>
-    <option value="8">Kalmar</option>
-    <option value="9">Gotland</option>
-    <option value="10">Blekinge</option>
-    <option value="12">Skåne</option>
-    <option value="13">Halland</option>
-    <option value="14">Västra Götaland</option>
-    <option value="17">Värmland</option>
-    <option value="18">Örebro</option>
-    <option value="19">Västmanland</option>
-    <option value="20">Dalarna</option>
-    <option value="21">Gävleborg</option>
-    <option value="22">Västernorrland</option>
-    <option value="23">Jämtland</option>
+    <!-- [ ... län ... ] -->
     <option value="24" selected>Västerbotten</option>
-    <option value="25">Norrbotten</option>
+    <!-- [ ... ] -->
   </select>
 
   <br />
@@ -61,22 +43,19 @@
   
         data.forEach(dev => {
           const li = document.createElement("li");
-  
-          // Förhandsvisa SMS
+
           const header = (dev.Header || "Trafikstörning").trim().slice(0, 60);
           const msg = (dev.Message || "").trim();
-          const link = `https://trafikinfo.stratosdev.se/details/${dev.Id}`;
+          const link = `https://www.trafikverket.se/trafikinformation/sok/?sok=${dev.Id}`;
           const sentences = msg.split(". ");
           let shortDetails = sentences.slice(0, 2).join(". ").trim();
           
-          // Räkna ut hur mycket plats vi har kvar för texten
           const maxTextLength = 160 - link.length - 20;
           if (shortDetails.length > maxTextLength) {
             shortDetails = shortDetails.slice(0, maxTextLength).trim() + "…";
           }
-          
+
           const preview = `🚧 ${header}\n${shortDetails}\nLäs mer: ${link}`;
-          
   
           li.innerHTML = `
             <strong>${header}</strong><br>
@@ -92,7 +71,6 @@
             </div>
           `;
   
-          // SMS-knapp
           li.querySelector(".smsBtn").addEventListener("click", async (e) => {
             const btn = e.target;
             btn.disabled = true;
@@ -116,7 +94,6 @@
             }
           });
   
-          // Mail-knapp
           li.querySelector(".emailBtn").addEventListener("click", async (e) => {
             const btn = e.target;
             btn.disabled = true;
@@ -148,6 +125,5 @@
       }
     });
   </script>
-  
 </body>
 </html>
