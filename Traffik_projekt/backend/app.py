@@ -34,6 +34,11 @@ app.register_blueprint(payments_blueprint)
 app.register_blueprint(notification_api)
 app.register_blueprint(trafikverket_proxy)
 
+
+@app.route("/")
+def healthcheck():
+    return "✅ Backend is running", 200
+
 # Starta appen (Render-vänlig inställning)
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
