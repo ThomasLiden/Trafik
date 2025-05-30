@@ -15,11 +15,14 @@ app = Flask(__name__)
 # CORS-inställningar (tillåt API-åtkomst från frontend)
 CORS(app,
      supports_credentials=True,
-     resources={r"/api/*": {"origins": "*"}},
+     resources={r"/api/*": {"origins": [
+         "https://trafik-frontend-hzww.onrender.com"
+     ]}},
      expose_headers=["Content-Type", "Authorization"],
      allow_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "OPTIONS"]
 )
+
 
 # Logga inkommande requests
 @app.before_request
