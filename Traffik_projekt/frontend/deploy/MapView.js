@@ -3,7 +3,7 @@
 
 // Importerar funktionen useTrafficMap från './map.js'.
 // Denna funktion innehåller all logik för att interagera med kartan (Leaflet) och hämta trafikdata.
-import { useTrafficMap } from "./map.js";
+import { useTrafficMap } from "./Map.js";
 
 // Exporterar Vue-komponentens definition.
 export default {

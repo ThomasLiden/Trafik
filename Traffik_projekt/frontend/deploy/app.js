@@ -1,10 +1,10 @@
 import router from "./router.js";
 
-import Modal from "./components/Modal.js";
-import SubscriptionModal from "./components/SubscriptionModal.js";
-import SignupForm from "./components/SignupForm.js";
-import LoggedInUser from "./components/LoggedInUser.js";
-import ResetPasswordForm from "./components/ResetPasswordForm.js";
+import Modal from "./Modal.js";
+import SubscriptionModal from "./SubscriptionModal.js";
+import SignupForm from "./SignupForm.js";
+import LoggedInUser from "./LoggedInUser.js";
+import ResetPasswordForm from "./ResetPasswordForm.js";
 // MapView kommer att användas av routern, så den behöver inte nödvändigtvis importeras här
 // om den är korrekt registrerad i routern och används via <router-view>.
 
