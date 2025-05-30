@@ -34,6 +34,9 @@ app.register_blueprint(payments_blueprint)
 app.register_blueprint(notification_api)
 app.register_blueprint(trafikverket_proxy)
 
+@app.route("/api/<path:path>", methods=["OPTIONS"])
+def options_handler(path):
+    return '', 200
 
 @app.route("/")
 def healthcheck():
