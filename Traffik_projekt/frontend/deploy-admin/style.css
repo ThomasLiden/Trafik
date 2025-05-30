@@ -1,0 +1,370 @@
+
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #f0f4f8;
+  font-size: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+
+p {
+  padding: 0 1.25rem 1.25rem 1.25rem;
+}
+
+.container {
+  max-width: 75rem;
+  margin: 2rem 1rem;
+  padding: 2rem 1rem;
+}
+
+.grid-container {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+
+.text-center {
+  text-align: center;
+}
+
+
+/* 
+   Navbar
+ */
+
+nav {
+  background-color: #333;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  padding: 0.625rem;
+  margin: 0;
+}
+
+nav ul li {
+  flex: 1;
+}
+
+nav ul li a {
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  display: block;
+  text-align: center;
+}
+
+nav ul li a:hover {
+  background-color: #555;
+}
+
+
+/* 
+   Admin Home / Cards
+ */
+
+.admin-home {
+  padding: 2rem;
+}
+
+.card-row {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  background: #f5f5f5;
+  padding: 1.5rem;
+  border-radius: 8px;
+  width: 15rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+}
+
+.card p {
+  font-size: 2.5rem;
+}
+
+
+/* 
+   Modaler
+*/
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px; 
+  max-width: 700px; 
+  max-height: 90vh;
+  width: 90%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+}
+
+
+.close,
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: black;
+}
+
+.close:hover,
+.close-button:hover {
+  background: none;
+}
+
+/* Formulär */
+.form-field {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 10px;
+}
+.form-row {
+  margin-bottom: 1rem;
+}
+
+.form-row label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: normal;
+}
+
+.form-row input,
+.form-row select {
+  width: 90%;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.form-actions {
+  grid-column: span 2;
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end; /* eller center */
+  gap: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+
+
+/* 
+   sökfält 
+ */
+ .search-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+.btn-actions {
+  grid-column: span 2;
+  margin-top: .9rem;
+  display: flex;
+  justify-content: flex-start; /* eller center */
+}
+
+/* statistik superadmin. */ 
+.stats-summary {
+  min-height: 140px;
+  margin-bottom: 2rem;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+
+.loading-placeholder {
+  font-style: italic;
+  color: #777;
+  padding: 0.5rem 0;
+}
+
+.stats-summary h4 {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.stats-card {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.stats-card p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.sms-line {
+  margin: 0.2rem 0;
+  font-size: 0.95rem;
+}
+
+.sms-meta {
+  margin-left: 0.5rem;
+  color: #666;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+
+
+/* Resellerlista*/
+.reseller-table {
+  margin-top: 40px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reseller-table input.table-search {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.reseller-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reseller-table th,
+.reseller-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-size: 14px;
+}
+
+.reseller-table th {
+  background-color: #f7f7f7;
+  font-weight: bold;
+}
+
+
+
+/* 
+   Knappar
+*/
+
+.button-primary {
+  background-color: black;
+  color: white;
+  padding: 0.625rem 1.25rem;
+  margin: 0.625rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px; 
+  font-weight: bold;
+}
+
+.button-primary:hover {
+  background-color: gray;
+}
+
+.button-secondary {
+  background-color: lightgray;
+  color: black;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px; 
+  font-weight: bold;
+  margin: 0.625rem;
+}
+
+.button-secondary:hover {
+  background-color: darkgray;
+}
+
+
+/* 
+   Options (special)
+ */
+
+.option {
+  padding: 0.625rem;
+  margin: 0.3125rem;
+  border-radius: 10px; 
+}
+
+
+/* 
+   Responsivt för mobil 
+ */
+
+@media (max-width: 600px) {
+  nav ul {
+    flex-direction: column;
+  }
+
+  nav ul li {
+    flex: none;
+  }
+
+  nav ul li a {
+    text-align: left;
+    padding-left: 1.25rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-row {
+    grid-column: span 1;
+  }
+  .search-grid {
+    grid-template-columns: 1fr;
+  }
+}
