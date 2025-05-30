@@ -28,7 +28,7 @@ const router = VueRouter.createRouter({
  router.beforeEach((to, from, next) => {
     //Hämtar roll. 
     const userRole = localStorage.getItem("user_role");
-    console.log(userRole);
+    //console.log(userRole);
     
     //Om ej inloggad, redirect till inloggningsvyn.  
     if (!userRole && to.path !== '/admin/login') {

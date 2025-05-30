@@ -109,28 +109,6 @@ def get_reseller_stats():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-""" #Hämta alla användare för den tidning som är inloggad. - denna är en funktion om vi inte vill hämta aktiv status också. 
-@admin_blueprint.route('/reseller/users', methods=['GET'])
-@require_authenticated
-def get_reseller_users():
-    #reseller_id = request.user_id  # Hämtar från token
-
-    reseller_id = "296ffdc0-2656-4ba5-9f5b-1986e1db6ed5"  #Test-ID, t.ex. från databasen
-
-    if not reseller_id:
-        return jsonify({"error": "reseller_id saknas"}), 400
-
-    try:
-        users = supabase.table("users")\
-            .select("user_id, first_name, last_name, email, created_at, active")\
-            .eq("reseller_id", reseller_id)\
-            .order("created_at", desc=True)\
-            .execute().data
-
-        return jsonify({"reseller_id": reseller_id, "users": users}), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500 """
     
 #Hämta alla användare till en tidning som är inloggad. Hämtar id via token. 
 @admin_blueprint.route('/reseller/users', methods=['GET'])

@@ -61,9 +61,8 @@ export default {
   },
   //HTML-struktur för komponenten. 
   template: `
-    <div class="grid-container">
-      <h1>Prissättning</h1>
-        
+    <div class="container">
+      <h2>Prissättning</h2>
         <div class="">
           <h3>Nuvarande prissättning</h3>
           <p v-if="loading">Laddar pris...</p>
