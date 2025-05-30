@@ -77,7 +77,7 @@ export default {
             renderMarkersOnMap, // Funktion för att rendera markörer på kartan.
             getMapInstance // Funktion för att få tillgång till Leaflet-kartinstansen.
         } = useTrafficMap(
-            "http://127.0.0.1:5000/api/traffic-info", // Backend-URL för trafikdata. Viktigt att den är korrekt.
+            "https://trafik-q8va.onrender.com/api/traffic-info", // Backend-URL för trafikdata. Viktigt att den är korrekt.
             counties.value, // Skickar med listan över län.
             countyNumberToName.value, // Skickar med den computeade mappningen.
             currentIframeMode // Skickar ref:en direkt så useTrafficMap kan reagera på lägesändringar.

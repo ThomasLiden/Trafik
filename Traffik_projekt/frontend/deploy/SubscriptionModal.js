@@ -78,13 +78,13 @@ export default {
         // initziera stripe när componenten är mounted
       this.stripe = Stripe('pk_test_51RIsEVFPlu7UXDRDAlQtGOM9XRv0N27uADmwrhcb8f7PvRCZ1KDoViIn8QH3UuS38aBWsMYkhH9bcPJEH0DreFQX00tfP0ZdCF');
 
-      fetch('http://127.0.0.1:5000/api/regions')
+      fetch('https://trafik-q8va.onrender.com/api/regions')
         .then(res => res.json())
         .then(data => {
           this.regions = data; 
 
           const domain = window.location.hostname;
-          return fetch(`http://127.0.0.1:5000/api/reseller-region?domain=${domain}`);
+          return fetch(`https://trafik-q8va.onrender.com/api/reseller-region?domain=${domain}`);
           
         })
         .then(res => res.json ())
@@ -120,7 +120,7 @@ export default {
         
         try {
           // skicka request till backend för att skapa en checkout-session
-          const response = await fetch('http://127.0.0.1:5000/api/create-checkout-session', {
+          const response = await fetch('https://trafik-q8va.onrender.com/api/create-checkout-session', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
