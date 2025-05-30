@@ -33,7 +33,7 @@ export default {
     //Hämta alla tidningar från backend. 
     async fetchResellers() {
       try {
-        const data = await apiFetch("http://localhost:5000/api/admin/resellers");
+        const data = await apiFetch("https://trafik-frontend-hzww.onrender.com/api/admin/resellers");
         this.resellers = data.resellers || [];
         this.message = this.resellers.length
           ? ""
@@ -58,7 +58,7 @@ export default {
 
       try {
         //Bygg upp URL med query-parametrar. 
-        let url = `http://localhost:5000/api/admin/stats`;
+        let url = `https://trafik-frontend-hzww.onrender.com/api/admin/stats`;
         const params = [];
 
         if (this.selectedRegion) {

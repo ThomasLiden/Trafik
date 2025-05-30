@@ -18,7 +18,7 @@ export default {
   async created() {
     try {
       // Hämta statistik för inloggad tidning
-      const data = await apiFetch("http://localhost:5000/api/admin/reseller/stats");
+      const data = await apiFetch("https://trafik-frontend-hzww.onrender.com/api/admin/reseller/stats");
 
       this.statistics = {
         subscriptions: data.subscription_count || 0,

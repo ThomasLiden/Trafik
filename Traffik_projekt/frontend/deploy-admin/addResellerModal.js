@@ -31,7 +31,7 @@ export default {
         
         try {
           //Skicka post-anrop till backend via apiFetch-funktionen. 
-          const data = await apiFetch("http://localhost:5000/api/admin/create_reseller", {
+          const data = await apiFetch("https://trafik-frontend-hzww.onrender.com/api/admin/create_reseller", {
             method: "POST",
             body: JSON.stringify({
               name: this.name,

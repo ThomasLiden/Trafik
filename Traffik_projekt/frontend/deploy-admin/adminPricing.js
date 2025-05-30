@@ -21,7 +21,7 @@ export default {
     async fetchprice() {
       this.loading = true; //Visa laddning
       try {
-        const data = await apiFetch("http://localhost:5000/api/admin/pricing");
+        const data = await apiFetch("https://trafik-frontend-hzww.onrender.com/api/admin/pricing");
         this.currentPrice = data.price;
       } catch (err) {
         console.error("Fel vid hämtning:", err.message);
@@ -44,7 +44,7 @@ export default {
 
       try {
         //skickar nytt pris till backend med POST. 
-        const data = await apiFetch("http://localhost:5000/api/admin/pricing/update", {
+        const data = await apiFetch("https://trafik-frontend-hzww.onrender.com/api/admin/pricing/update", {
           method: "POST",
           body: JSON.stringify({ price: parseFloat(this.newPrice)})
         });

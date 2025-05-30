@@ -15,7 +15,7 @@ export default {
   async created() {
     try {
       //Gör ett get-anrop till backend för att hämta uppgifter.
-      const data = await apiFetch("http://localhost:5000/api/admin/account");
+      const data = await apiFetch("https://trafik-frontend-hzww.onrender.com/api/admin/account");
       
       //fyll i formuläret med data.
       this.name = data.name || "";
@@ -33,7 +33,7 @@ export default {
     async saveProfile() {
       //skicka uppdaterade uppgifter till backend via ett Post.
       try {
-        const data = await apiFetch("http://localhost:5000/api/admin/account/update", {
+        const data = await apiFetch("https://trafik-frontend-hzww.onrender.com/api/admin/account/update", {
           method: "POST",
           body: JSON.stringify({
             name: this.name,
