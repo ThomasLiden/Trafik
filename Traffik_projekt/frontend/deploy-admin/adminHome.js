@@ -1,4 +1,3 @@
-
 import { apiFetch } from "../api.js";
 
 export default {
@@ -17,15 +16,14 @@ export default {
 
   async created() {
     try {
-      // Hämta statistik för inloggad tidning
-      const data = await apiFetch("https://trafik-frontend-hzww.onrender.com/api/admin/reseller/stats");
+      // Hämta statistik från backend via gemensamt API-anrop
+      const data = await apiFetch("/api/admin/reseller/stats");
 
       this.statistics = {
         subscriptions: data.subscription_count || 0,
         sms_30days: data.sms_30_days || 0,
-        price: 79, // Du kan justera detta om det ska hämtas från API
+        price: 79, // Kan bytas ut till data.price om det stöds av API:t
       };
-
     } catch (err) {
       console.error("Kunde inte hämta statistik", err);
     } finally {
