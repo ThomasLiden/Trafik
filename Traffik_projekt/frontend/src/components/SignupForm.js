@@ -1,5 +1,4 @@
 export default {
-    props: ['region'],
     template: `
   <div class="signup-modal-content">
     <div class="form-header">
@@ -66,9 +65,7 @@ export default {
             last_name: this.last_name,
             phone: this.phone,
             email: this.email,
-            location_id: this.region.location_id,
-            password: this.password,
-            //domain: window.location.hostname
+            password: this.password
           };
       
           console.log(" Payload som skickas:", payload);
@@ -81,23 +78,25 @@ export default {
       
           const data = await response.json();
 
-        if (!response.ok) {
-          this.message = data.error || data.message || "Något gick fel.";
-          return;
+          if (!response.ok) {
+            this.message = data.error || data.message || "Något gick fel.";
+            return;
+          }
+      
+          if (data.message) {
+            this.$emit("signup-success", {
+              email: this.email,
+              phone: this.phone
+            });
+          }
+      
+          this.message = data.message || data.error;
+        } catch (error) {
+          this.message = "Fel vid registrering.";
+          console.error(error);
         }
-
-        if (data.message) {
-          this.$emit("signup-success", {
-            email: this.email,
-            phone: this.phone,
-          });
-        }
-
-        this.message = data.message || data.error;
-      } catch (error) {
-        this.message = "Fel vid registrering.";
-        console.error(error);
       }
-    },
-  },
-};
+      
+    }
+  };
+  
