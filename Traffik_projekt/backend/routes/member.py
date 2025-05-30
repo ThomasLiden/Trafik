@@ -14,7 +14,24 @@ def signup():
     first_name = data.get("first_name")
     last_name = data.get("last_name")
     phone = data.get("phone")
+    location_id = data.get("location_id")
 
+#hämta reseller id
+    domain = request.host
+    if ":" in domain:
+       domain = domain.split(":")[0]  # Tar bort port, t.ex. 127.0.0.1:5000 → 127.0.0.1
+   
+    reseller_lookup = supabase.table("reseller") \
+                              .select("reseller_id") \
+                              .eq("domain", domain) \
+                              .single() \
+                              .execute()
+    
+    if not reseller_lookup.data:
+        return jsonify({"error": f"Ingen återförsäljare kopplad till domän {domain}"}), 400
+    
+    reseller_id = reseller_lookup.data["reseller_id"]
+    
     try:
         result = supabase.auth.sign_up({
             "email": email,
@@ -30,7 +47,15 @@ def signup():
             "email": email,
             "first_name": first_name,
             "last_name": last_name,
-            "phone": phone
+            "phone": phone,
+            "reseller_id": reseller_id
+        }).execute()
+
+        
+        supabase.table("subscriptions").insert({
+            "user_id": user_id,
+            "active":True,
+            "location_id": location_id
         }).execute()
 
         return jsonify({"message": "User created", "email": email}), 200
@@ -138,12 +163,62 @@ def update_user_profile():
     return jsonify({"message": "Profil uppdaterad!"})
 
 
-# Hämta prenumerationer för inloggad medlem
-@member_blueprint.route('/api/subscriptions', methods=['GET', 'OPTIONS'])
+@member_blueprint.route('/api/subscriptions', methods=['GET'])
 def get_subscriptions():
+    user_id = request.args.get("user_id")
+    print("Hämtar prenumerationer för användare:", user_id)  # Debug
+
+    resp = supabase.table("subscriptions").select("*").eq("user_id", user_id).execute()
+    print("Prenumerationer från databasen:", resp.data)  # Debug
+
+    return jsonify(resp.data), 200
+
+@member_blueprint.route('/api/cancel-subscription', methods=['POST', 'OPTIONS'])
+def cancel_subscription():
     if request.method == 'OPTIONS':
         return {}, 200
 
-    user_id = request.args.get("user_id")
-    resp = supabase.table("subscriptions").select("*").eq("user_id", user_id).execute()
-    return jsonify(resp.data), 200
+    data = request.get_json()
+    subscription_id = data.get("subscription_id")
+
+    if not subscription_id:
+        return jsonify({"error": "Prenumerations-ID krävs"}), 400
+
+    try:
+        supabase.table("subscriptions").update({"active": False}).eq("subscription_id", subscription_id).execute()
+        return jsonify({"message": "Prenumerationen har avslutats"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    
+# Hämta alla regioner från locations-tabellen
+@member_blueprint.route('/api/regions', methods=['GET'])
+def get_regions ():
+    try:
+        response = supabase.table("location") \
+                           .select("region, location_id") \
+                           .order("region") \
+                           .execute()
+        #regions = list({row["region"] for row in response.data if row.get("region")})
+        return jsonify(response.data), 200
+    except Exception as e:
+        print("==> FEL I /api/regions:", e)
+        return jsonify({"error": str(e)}), 400
+                           
+#Rutt för reseller-region
+
+@member_blueprint.route('/api/reseller-region', methods=['GET'])
+def get_reseller_region():
+    domain = request.args.get("domain")
+    if not domain:
+        return jsonify({"error": "Domain krävs"}), 400
+
+    try:
+        response = supabase.table("reseller") \
+                           .select("region, price, name") \
+                           .eq("domain", domain) \
+                           .single() \
+                           .execute()
+        return jsonify(response.data), 200
+    except Exception as e:
+        print("==> FEL i /api/reseller-region:", e)
+        return jsonify({"error": str(e)}), 400

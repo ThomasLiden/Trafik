@@ -375,6 +375,12 @@ body {
   padding: 2rem;
 }
 
+.form-scroll {
+  max-height: 90vh;  
+  overflow-y: auto;
+  padding-right: 1rem; 
+}
+
 .form-header {
   text-align: center;
   margin-bottom: 2rem;
@@ -399,6 +405,7 @@ body {
 
 .form-row {
   display: flex;
+  /*flex-direction: column;*/
   gap: 1rem;
 }
 

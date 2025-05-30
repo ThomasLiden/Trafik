@@ -20,7 +20,12 @@ load_dotenv()
 
 # Hämta URL och API-nyckel från miljövariabler
 url = os.getenv("SUPABASE_URL")
-key = os.getenv("SUPABASE_KEY")
+key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+#ÄNDRAT TILL SERVICE ROLE
+
+#print för felsökning
+print("Laddad SUPABASE_URL =", repr(url))
+print("Laddad SUPABASE_KEY =", repr(key))
 
 # Kontrollera att miljövariablerna är korrekt definierade
 if not url or not key:

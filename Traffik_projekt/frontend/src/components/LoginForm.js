@@ -48,7 +48,7 @@ export default {
     async login() {
       this.message = "";
       try {
-        const res = await fetch("http://localhost:5000/api/login", {
+        const res = await fetch("http://127.0.0.1:5000/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -79,7 +79,7 @@ export default {
     async forgotPassword() {
       this.message = "";
       try {
-        const res = await fetch("http://localhost:5000/api/forgot-password", {
+        const res = await fetch("http://127.0.0.1:5000/api/forgot-password", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: this.email })

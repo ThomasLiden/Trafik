@@ -86,6 +86,9 @@ const app = Vue.createApp({
     },
     openAccount() {
       this.modalComponent = "LoggedInUser";
+      this.$nextTick(() => {
+        this.$refs.loggedInUser?.reloadProfile();
+    });
     },
     openResetPassword() {
       this.modalComponent = "ResetPasswordForm";

@@ -5,7 +5,9 @@ import os
 from dotenv import load_dotenv
 import logging
 from flask_cors import CORS
-from supabase import create_client, Client
+""" from supabase import create_client, Client """
+from models.supabase_client import supabase
+# ändrat till centraliserad hämtningn
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -14,9 +16,10 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Supabase-klient initiering
-SUPABASE_URL = os.getenv("SUPABASE_URL")
+""" SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) """
+#ändrat till service role key
 
 # Skapa en ny blueprint för betalningar
 payments_blueprint = Blueprint('payments', __name__)
