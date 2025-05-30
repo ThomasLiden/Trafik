@@ -58,10 +58,24 @@ def send_sms_for_deviation():
 
         header = deviation.get("Header", "Trafikstörning")
         message_text = deviation.get("Message", "")
-        short_details = message_text.split(".")[0] if message_text else ""
         link = f"https://trafikinfo.stratosdev.se/details/{dev_id}"
 
-        composed_message = f"🚧 {header[:80]}\n{short_details[:100]}\n{link}"
+        # 🧠 Ta ut första 1–2 meningarna som sammanfattning
+        sentences = message_text.split(". ")
+        short_details = ". ".join(sentences[:2]).strip()
+
+        # ✂️ Räkna ut hur många tecken vi kan ha innan länken trycks ut
+        max_text_length = 160 - len(link) - 20  # 20 för marginal till rubrik och radbrytningar
+        if len(short_details) > max_text_length:
+            short_details = short_details[:max_text_length].rstrip() + "…"
+
+        # 🧾 Slutlig sms-text
+        composed_message = (
+            f"🚧 {header.strip()[:60]}\n"
+            f"{short_details}\n"
+            f"Läs mer: {link}"
+        )
+
 
         recipients = []
         for sub in subs_resp.data:

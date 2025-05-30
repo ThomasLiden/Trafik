@@ -63,11 +63,20 @@
           const li = document.createElement("li");
   
           // Förhandsvisa SMS
-          const header = dev.Header || "Trafikstörning";
-          const msg = dev.Message || "";
-          const shortDetails = msg.split(".")[0] || msg;
+          const header = (dev.Header || "Trafikstörning").trim().slice(0, 60);
+          const msg = (dev.Message || "").trim();
           const link = `https://trafikinfo.stratosdev.se/details/${dev.Id}`;
-          const preview = `🚧 ${header.slice(0, 80)}\n${shortDetails.slice(0, 100)}\n${link}`;
+          const sentences = msg.split(". ");
+          let shortDetails = sentences.slice(0, 2).join(". ").trim();
+          
+          // Räkna ut hur mycket plats vi har kvar för texten
+          const maxTextLength = 160 - link.length - 20;
+          if (shortDetails.length > maxTextLength) {
+            shortDetails = shortDetails.slice(0, maxTextLength).trim() + "…";
+          }
+          
+          const preview = `🚧 ${header}\n${shortDetails}\nLäs mer: ${link}`;
+          
   
           li.innerHTML = `
             <strong>${header}</strong><br>
@@ -94,7 +103,8 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   devId: dev.Id,
-                  countyNo: parseInt(countyNo, 10)
+                  countyNo: parseInt(countyNo, 10),
+                  shortlinks: true
                 })
               });
               const result = await smsRes.json();
