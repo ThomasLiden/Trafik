@@ -54,7 +54,7 @@ export default {
   },
   template: `
     <div class="container">
-      <h1>Kontoinställningar</h1>
+      <h2>Kontoinställningar</h2>
       <p>Här kan du ändra dina kontaktuppgifter.</p>
     
     <form class="form-grid" @submit.prevent="saveProfile">

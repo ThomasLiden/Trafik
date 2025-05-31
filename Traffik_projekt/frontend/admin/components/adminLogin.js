@@ -23,7 +23,6 @@ export default {
          <button type="submit" class="button-primary"> Logga in </button>
          </div>
       </form>
-      <button @click="forgotPassword" style="margin-top: 1rem;" class="button-tertiary">Glömt lösenord?</button>
       <p v-if="message">{{ message }}</p>
     </div>
     `,
@@ -60,10 +59,6 @@ export default {
            console.error(error);
         }
     },
-    //Metod för glömt lösenord - INTE implementerat!
-    forgotPassword() {
-      this.message = "Lösenordshantering ej implementerad ännu..";
-    }
 }
     
 }; 

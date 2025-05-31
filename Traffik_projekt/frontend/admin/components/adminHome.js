@@ -16,22 +16,26 @@ export default {
   },
 
   async created() {
+    //Hämta statistik för inloggad tidning. 
     try {
-      // Hämta statistik för inloggad tidning
-      const data = await apiFetch("http://localhost:5000/api/admin/reseller/stats");
-
-      this.statistics = {
-        subscriptions: data.subscription_count || 0,
-        sms_30days: data.sms_30_days || 0,
-        price: 79, // Du kan justera detta om det ska hämtas från API
-      };
-
+      const stats = await apiFetch("http://localhost:5000/api/admin/reseller/stats");
+      this.statistics.subscriptions = stats.subscription_count || 0;
+      this.statistics.sms_30days = stats.sms_30_days || 0;
+    
     } catch (err) {
-      console.error("Kunde inte hämta statistik", err);
+      console.error("Fel vid hämtning av statistik:", err);
+    }
+    
+    //Hämtar pris för inloggad tidning.
+    try {
+      const priceData = await apiFetch("http://localhost:5000/api/admin/pricing");
+      this.statistics.price = priceData.price || 0;
+    } catch (err) {
+      console.error("Fel vid hämtning av pris:", err);
     } finally {
       this.loading = false;
     }
-  },
+},
 
   template: `
     <div class="admin-home container">
@@ -47,12 +51,13 @@ export default {
           <p>{{ statistics.subscriptions }} st</p>
         </div>
         <div class="card">
-          <h3>Skickade SMS (senaste 30 dagar)</h3>
+          <h3>Skickade SMS </h3>
           <p>{{ statistics.sms_30days }} st</p>
+          <p class="sms-meta" style="font-size: 1rem;">senaste 30 dagar</p>
         </div>
         <div class="card">
           <h3>Pris för tjänsten</h3>
-          <p>{{ statistics.price }} kr/mån</p>
+          <p>{{ statistics.price ? statistics.price + ' kr/mån' : 'Ej angivet' }}</p>
         </div>
       </div>
     </div>
