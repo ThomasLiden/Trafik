@@ -1,3 +1,7 @@
+const BASE_URL =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000/api"
+    : "https://trafik-q8va.onrender.com/api";
 
 import { apiFetch } from "../api.js";
 
@@ -18,7 +22,7 @@ export default {
   async created() {
     //Hämta statistik för inloggad tidning. 
     try {
-      const stats = await apiFetch("http://localhost:5000/api/admin/reseller/stats");
+      const stats = await apiFetch(`${BASE_URL}/admin/reseller/stats`);
       this.statistics.subscriptions = stats.subscription_count || 0;
       this.statistics.sms_30days = stats.sms_30_days || 0;
     
@@ -28,7 +32,7 @@ export default {
     
     //Hämtar pris för inloggad tidning.
     try {
-      const priceData = await apiFetch("http://localhost:5000/api/admin/pricing");
+      const priceData = await apiFetch(`${BASE_URL}/admin/pricing`);
       this.statistics.price = priceData.price || 0;
     } catch (err) {
       console.error("Fel vid hämtning av pris:", err);

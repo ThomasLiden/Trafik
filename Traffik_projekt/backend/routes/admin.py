@@ -1,10 +1,14 @@
 from flask import Blueprint, request, jsonify
 from models.supabase_client import supabase
 from datetime import datetime, timedelta
+import stripe
+import os
 
 from models.auth_utils import require_authenticated, require_role
 
 admin_blueprint = Blueprint('admin', __name__, url_prefix= '/api/admin')
+
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 #Inloggning för adminsida.
 @admin_blueprint.route('/login', methods=['POST'])
@@ -247,19 +251,52 @@ def get_reseller_price():
 @require_authenticated
 def update_reseller_price():
     data = request.get_json()
-    #Hämtar id för konto via token. 
     reseller_id = request.user_id
 
-    #Kontrollera att nytt pris skickats med. 
     new_price = data.get("price")
     if new_price is None:
         return jsonify({"error": "Nytt pris saknas"}), 400
-    
+
     try:
-        #Uppdatera endast fältet price. 
+        # 1. Hämta aktiv produkt för resellern
+        product_row = supabase.table("reseller_products")\
+            .select("stripe_product_id")\
+            .eq("reseller_id", reseller_id)\
+            .eq("active", True)\
+            .single()\
+            .execute()
+        if not product_row.data:
+            return jsonify({"error": "Ingen aktiv produkt hittades för denna reseller."}), 400
+        stripe_product_id = product_row.data["stripe_product_id"]
+
+        # 2. Skapa nytt pris i Stripe
+        stripe_price = stripe.Price.create(
+            product=stripe_product_id,
+            unit_amount=int(float(new_price) * 100),
+            currency='sek',
+            recurring={'interval': 'month'},
+            metadata={
+                "reseller_id": reseller_id
+            }
+        )
+
+        # 3. Sätt tidigare priser som inactive
+        supabase.table("reseller_products").update({"active": False}).eq("reseller_id", reseller_id).eq("active", True).execute()
+
+        # 4. Spara nya priset som en ny rad
+        supabase.table("reseller_products").insert({
+            "reseller_id": reseller_id,
+            "stripe_product_id": stripe_product_id,
+            "stripe_price_id": stripe_price.id,
+            "price": float(new_price),
+            "active": True
+        }).execute()
+
+        # 5. Uppdatera även priset i reseller-tabellen
         supabase.table("reseller").update({"price": new_price}).eq("reseller_id", reseller_id).execute()
-        return jsonify({"message": "Priset har uppdaterats"}), 200
-    
+
+        return jsonify({"message": "Priset har uppdaterats."}), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -412,6 +449,44 @@ def create_reseller():
             "region": region,
             "phone": phone,
         }).execute()
+
+        # --- Stripe-logik ---
+        try:
+            # Skapa Stripe-produkt
+            product = stripe.Product.create(
+                name=f"Trafiknotifiering - {name}",
+                description="Prenumeration för trafiknotifieringar",
+                metadata={
+                    "reseller_id": reseller_id,
+                    "reseller_name": name
+                }
+            )
+            # Skapa Stripe-pris
+            stripe_price = stripe.Price.create(
+                product=product.id,
+                unit_amount=int(float(price) * 100),  # priset i öre
+                currency='sek',
+                recurring={'interval': 'month'},
+                metadata={
+                    "reseller_id": reseller_id
+                }
+            )
+            # Spara i reseller_products
+            supabase.table("reseller_products").insert({
+                "reseller_id": reseller_id,
+                "stripe_product_id": product.id,
+                "stripe_price_id": stripe_price.id,
+                "price": float(price),
+                "active": True
+            }).execute()
+        except Exception as stripe_err:
+            # Om Stripe misslyckas, returnera ändå reseller men med varning
+            return jsonify({
+                "message": "Reseller skapad, men Stripe-anslutning misslyckades!",
+                "reseller": result.data,
+                "stripe_error": str(stripe_err)
+            }), 201
+        # --- Slut Stripe-logik ---
 
         return jsonify({"message": "Reseller skapad!", "reseller": result.data}), 201
     except Exception as e:

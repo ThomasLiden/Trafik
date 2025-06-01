@@ -17,7 +17,9 @@ CORS(app,
      supports_credentials=True,
      resources={r"/api/*": {"origins": [
          "https://trafik-frontend-hzww.onrender.com",
-         "https://admin-lqz8.onrender.com"
+         "https://admin-lqz8.onrender.com",
+         "http://localhost:5500",
+         "http://127.0.0.1:5500"
      ]}},
      expose_headers=["Content-Type", "Authorization"],
      allow_headers=["Content-Type", "Authorization"],
