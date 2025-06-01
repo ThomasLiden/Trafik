@@ -9,6 +9,16 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
   crossorigin=""/>
+
+  <!-- lagt in ett enklet script som redirectar till verify om det är är en länk som innehåller en access token med typ signup -->
+<script>
+ 
+  const hash = window.location.hash;
+  if (hash.includes("access_token") && hash.includes("type=signup")) { 
+    window.location.href = "/Traffik_projekt/frontend/src/verify.html" + hash;
+  }
+</script>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""></script>
