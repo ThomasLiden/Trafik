@@ -112,6 +112,7 @@ export default {
         this.email = payload.email;
         this.phone = payload.phone;
         this.userId = payload.user_id;
+        console.log("✅ userId från signup:", this.userId); 
         this.nextStep();
       },
       async handlePayment() {

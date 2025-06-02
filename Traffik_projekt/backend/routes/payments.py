@@ -76,7 +76,11 @@ def create_checkout_session_api():
         data = request.get_json()
         logger.info(f"Received data: {data}")
         user_id = data.get('user_id')
-        logger.info(f"Creating checkout session for user: {user_id}")
+        if not user_id or user_id == "None":
+            logger.error("❌ Ogiltigt eller saknat user_id i request")
+            return jsonify({"error": "Ingen giltig user_id angiven"}), 400
+
+        logger.info(f"✅ Skapar checkout session för user_id: {user_id}")
 
         # Hämta reseller_id för användaren
         user_row = supabase.table("users").select("reseller_id").eq("user_id", user_id).single().execute()
