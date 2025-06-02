@@ -92,7 +92,7 @@ def signup():
 
         # 5. Skicka SMS via din sms-server
         sms_response = requests.post(
-            os.getenv("RENDER_SMS_URL", "https://trafikwidget-projekt.onrender.com/send-sms"),
+            os.getenv("SMS_SERVER_URL", "https://trafikwidget-projekt.onrender.com/send-sms"),
             headers={
                 "x-api-key": os.getenv("X_API_KEY")
             },
@@ -102,6 +102,10 @@ def signup():
                 "from": "TrafikInfo"
             }
         )
+
+        print("==> SMS response status:", sms_response.status_code)
+        print("==> SMS response body:", sms_response.text)
+
 
         if sms_response.status_code != 200:
             print("❌ Misslyckades att skicka SMS:", sms_response.text)
