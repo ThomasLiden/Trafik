@@ -4,23 +4,45 @@ import nodemailer from "nodemailer";
 import axios from "axios";
 import cors from "cors";
 
+// 🔐 Ladda miljövariabler
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 📦 Middleware
 app.use(cors());
 app.use(express.json());
 
+// 🔐 API-nyckelkontroll
+const checkApiKey = (req, res, next) => {
+  const providedKey = req.headers["x-api-key"];
+  const expectedKey = process.env["X_API_KEY"];
+
+  console.log("🛡️ Mottagen:", providedKey);
+  console.log("🔐 Förväntad:", expectedKey);
+
+  if (!providedKey || providedKey !== expectedKey) {
+    return res.status(401).json({
+      status: "error",
+      statusText: "Invalid or missing API key"
+    });
+  }
+
+  next();
+};
+
+// ✅ Hälsokoll
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-app.post("/send-email", async (req, res) => {
-  const { to, subject, text } = req.body;
+// ✉️ Skicka e-post
+app.post("/send-email", checkApiKey, async (req, res) => {
+  const { to, subject, message } = req.body;
 
-  if (!to || !subject || !text) {
-    return res.status(400).json({ error: "Missing 'to', 'subject' or 'text'" });
+  if (!to || !subject || !message) {
+    return res.status(400).json({ error: "Missing 'to', 'subject' or 'message'" });
   }
 
   const transporter = nodemailer.createTransport({
@@ -34,77 +56,88 @@ app.post("/send-email", async (req, res) => {
   });
 
   try {
-    await transporter.sendMail({
+    console.log("📤 Försöker skicka mail till:", to);
+
+    const result = await transporter.sendMail({
       from: process.env.SMTP_USER,
       to,
       subject,
-      text
+      text: message
     });
 
+    console.log("✅ Mail skickat:", result.response || result);
     res.status(200).json({ message: "Email sent!" });
+
   } catch (err) {
-    console.error("SMTP error:", err);
-    res.status(500).json({ error: "Failed to send email" });
+    console.error("❌ SMTP error:", err);
+    res.status(502).json({ error: "Failed to send email", details: err.message });
   }
 });
 
-app.post("/send-sms", async (req, res) => {
-  const { to, message, sender = "TrafikInfo" } = req.body;
+// 📲 Skicka SMS
+const fromRegex = /^[A-Za-z0-9 _åäö]{3,11}$/i;
+
+app.post("/send-sms", checkApiKey, async (req, res) => {
+  const {
+    to,
+    message,
+    from = "TrafikInfo",
+    testMode = false,
+    shortLinks = false
+  } = req.body;
 
   if (!to || !message) {
     return res.status(400).json({ error: "Missing 'to' or 'message'" });
   }
 
-  const recipients = Array.isArray(to) ? to : [to];
-  const responses = [];
-
-  for (const number of recipients) {
-    const formatted = number.replace(/\s+/g, "");
-
-    if (process.env.MOCK_SMS === "true") {
-      console.log(`🧪 MOCK SMS ➤ To: ${formatted}, Message: ${message}`);
-      responses.push({
-        to: formatted,
-        id: "mock-id",
-        status: "mocked"
-      });
-      continue;
-    }
-
-    try {
-      const response = await axios.post(
-        "https://api.46elks.com/a1/sms",
-        new URLSearchParams({
-          from: sender,
-          to: formatted,
-          message
-        }),
-        {
-          auth: {
-            username: process.env.ELKS_USER,
-            password: process.env.ELKS_PASS
-          }
-        }
-      );
-
-      responses.push({
-        to: formatted,
-        id: response.data.id,
-        status: response.status
-      });
-    } catch (err) {
-      console.error("SMS error:", err.response?.data || err.message);
-      responses.push({
-        to: formatted,
-        id: "error",
-        error: err.response?.data || err.message
-      });
-    }
+  if (!fromRegex.test(from)) {
+    return res.status(400).json({
+      error: "Invalid sender name",
+      details:
+        "Sender must be 3–11 characters and contain only letters, numbers, spaces, underscores, or åäö."
+    });
   }
 
-  res.status(200).json({ results: responses });
+  const recipients = Array.isArray(to) ? to : [to];
+
+  const auth = Buffer.from(`${process.env.SMS_USER}:${process.env.SMS_PASS}`).toString("base64");
+
+  try {
+    const response = await axios.post(
+      "https://api.hellosms.se/api/v1/sms/send",
+      {
+        to: recipients,
+        from,
+        message,
+        testMode,
+        shortLinks
+      },
+      {
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        }
+      }
+    );
+
+    console.log("✅ SMS skickat:", response.data);
+    res.status(200).json({
+      message: "SMS sent",
+      actualFrom: from,
+      apiResponse: response.data
+    });
+
+  } catch (err) {
+    console.error("❌ SMS error:", err.response?.data || err.message);
+    res.status(500).json({
+      error: "Failed to send SMS",
+      details: err.response?.data || err.message
+    });
+  }
 });
 
+// 🚀 Starta server
 app.listen(PORT, () => {
   console.log(`✅ Notification server running on port ${PORT}`);
 });
