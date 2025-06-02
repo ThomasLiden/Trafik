@@ -164,9 +164,95 @@ h1, h2, h3, h4, h5, h6 {
   margin-right: 8px;
 }
 
+/* mobilläge */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px; /* Justera bas-fontstorlek för mobil */
+  }
+
+  #app {
+    /* Ta bort fast höjd för att låta innehållet flöda */
+    height: auto; 
+    min-height: 100%; /* Säkerställ att appen minst täcker hela höjden */
+  }
+
+  .map-section {
+    flex-grow: 1; /* Låt kartsektionen ta upp tillgängligt utrymme */
+    min-height: 250px; /* En minsta höjd för kartan på mobilen */
+  }
+
+  .controls {
+    flex-direction: column; /* Stapla kontroller vertikalt på mobil */
+    gap: 10px; /* Justera mellanrum */
+    padding: 8px; /* Mindre padding */
+  }
+
+  .controls .control-item {
+    flex-direction: column; /* Stapla label och select/input vertikalt */
+    align-items: flex-start; /* Justera till vänster */
+    width: 100%; /* Ta upp full bredd */
+  }
+
+  .controls .control-item label,
+  .controls .control-item select {
+    font-size: 12px; /* Mindre fontstorlek för kontroller */
+    width: 100%; /* Säkerställ att fälten tar upp full bredd */
+    box-sizing: border-box; /* Inkludera padding och border i bredden */
+  }
+
+  .filter-toggle-btn {
+    font-size: 12px; /* Mindre fontstorlek för filterknappen */
+    padding: 6px 10px; /* Mindre padding */
+  }
+
+  .filter-dropdown-panel {
+    min-width: 160px; /* Mindre min-bredd för dropdown på mobil */
+    padding: 8px; /* Mindre padding */
+    bottom: auto; /* Återställ bottom, låt den flöda med innehållet */
+    top: calc(100% + 5px); /* Positionera nedanför knappen */
+    left: 0; /* Justera position */
+    transform: none; /* Ta bort transform */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Mindre skugga */
+  }
+
+  .filter-dropdown-panel label.filter-dropdown-item {
+    font-size: 12px; /* Mindre fontstorlek för dropdown-items */
+    padding: 4px 6px; /* Mindre padding */
+  }
+
+  /* Justera knappar */
+  .button-primary,
+  .button-secondary {
+    padding: 8px 15px; /* Mindre padding på knappar */
+    font-size: 14px; /* Mindre fontstorlek */
+  }
+
+  .user-actions-buttons {
+    flex-direction: column; /* Stapla användaråtgärdsknappar vertikalt */
+    right: 5px; /* Justera position */
+    top: 5px; /* Justera position */
+    gap: 5px; /* Mindre mellanrum */
+  }
+
+  .modal-container {
+    padding: 1rem; /* Mindre padding för modal */
+    max-width: 95%; /* Ta upp mer bredd på små skärmar */
+  }
+
+  .signup-container {
+    padding: 1.5rem; /* Mindre padding för signup-container */
+    margin: 1rem; /* Lägg till marginal för att inte klistra mot kanterna */
+  }
+
+  .form-row {
+    flex-direction: column; /* Stapla formulärfält vertikalt */
+    gap: 1rem;
+  }
+}
+
 /* === BANDEROLL-LÄGE === (Dessa regler är oförändrade från din originalkod) */
 @media (max-width: 1000px) and (max-height: 200px) { 
-  .map-section {}
+  .map-section {
   #map {
     height: 100% !important; 
     flex-grow: 0 !important; 
@@ -226,7 +312,7 @@ h1, h2, h3, h4, h5, h6 {
     transform: scale(0.8);
   }
 }
-
+}
 /* Knappstilar */
 .button-primary {
   background-color: var(--app-primary-color); 
