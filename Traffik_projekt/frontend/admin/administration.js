@@ -6,7 +6,7 @@ import regions from "./regions.js";
 const BASE_URL =
   window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
     ? "http://localhost:5000/api"
-    : "https://trafik-q8va.onrender.com/api";
+    : "https://admin-lqz8.onrender.com/api";
 
 export default {
   //Registrera komponenter som används. 
@@ -63,7 +63,7 @@ export default {
 
       try {
         //Bygg upp URL med query-parametrar. 
-        let url = `http://localhost:5000/api/admin/stats`;
+        let url = `/admin/stats`;
         const params = [];
 
         if (this.selectedRegion) {
@@ -76,7 +76,7 @@ export default {
           url += "?" + params.join("&");
         }
 
-        const fullUrl = url.startsWith('/api') ? `${BASE_URL}${url}` : url;
+        const fullUrl = `${BASE_URL}${url}`;
         const data = await apiFetch(fullUrl);
         this.stats = {
           sms_count: data.sms_count ?? 0,

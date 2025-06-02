@@ -2,7 +2,7 @@
 const BASE_URL =
   window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
     ? "http://localhost:5000/api"
-    : "https://trafik-q8va.onrender.com/api";
+    : "https://admin-lqz8.onrender.com/api";
 
 //Login-komponent som hanterar inloggning för tidningar och superadmin. 
 export default {
