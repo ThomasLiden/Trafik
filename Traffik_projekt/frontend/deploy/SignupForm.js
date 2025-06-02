@@ -68,7 +68,7 @@ export default {
             email: this.email,
             location_id: this.region.location_id,
             password: this.password,
-            //domain: window.location.hostname
+            domain: window.location.hostname
           };
       
           console.log(" Payload som skickas:", payload);

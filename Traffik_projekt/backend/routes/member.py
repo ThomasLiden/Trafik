@@ -21,7 +21,7 @@ def signup():
         phone = data.get("phone")
         location_id = data.get("location_id")
 
-        domain = request.host
+        domain = data.get("domain")
         if ":" in domain:
             domain = domain.split(":")[0]
 
