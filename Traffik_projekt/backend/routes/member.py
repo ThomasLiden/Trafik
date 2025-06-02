@@ -10,20 +10,26 @@ member_blueprint = Blueprint('member', __name__)
 @member_blueprint.route('/api/signup', methods=['POST', 'OPTIONS'])
 def signup():
     if request.method == 'OPTIONS':
-        return '', 200  # <- svara tidigt på preflight
+        return '', 200
 
     try:
         data = request.get_json()
+        print("==> Inkommande data:", data)
+
         email = data.get("email")
         password = data.get("password")
         first_name = data.get("first_name")
         last_name = data.get("last_name")
         phone = data.get("phone")
         location_id = data.get("location_id")
-
         domain = data.get("domain")
+
+        if not domain:
+            raise ValueError("Ingen domän angiven från frontend.")
         if ":" in domain:
             domain = domain.split(":")[0]
+
+        print("==> Slår upp återförsäljare för domän:", domain)
 
         reseller_lookup = supabase.table("reseller") \
                                   .select("reseller_id") \
@@ -31,10 +37,13 @@ def signup():
                                   .single() \
                                   .execute()
 
-        if not reseller_lookup.data:
+        # Skydda mot None
+        reseller_data = reseller_lookup.data if reseller_lookup else {}
+        reseller_id = reseller_data.get("reseller_id")
+        if not reseller_id:
             raise ValueError(f"Ingen återförsäljare kopplad till domän {domain}")
 
-        reseller_id = reseller_lookup.data["reseller_id"]
+        print("==> Återförsäljare ID:", reseller_id)
 
         result = supabase.auth.sign_up({
             "email": email,
@@ -65,7 +74,8 @@ def signup():
         return jsonify({"message": "User created", "email": email}), 200
 
     except Exception as e:
-        print("==> FEL I SIGNUP:", e)
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
 
 
