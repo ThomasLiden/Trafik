@@ -68,7 +68,7 @@ export default {
             email: this.email,
             location_id: this.region.location_id,
             password: this.password,
-            //domain: window.location.hostname
+            domain: window.location.hostname
           };
       
           console.log(" Payload som skickas:", payload);
@@ -76,7 +76,8 @@ export default {
           const response = await fetch("https://trafik-q8va.onrender.com/api/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            credentials: "include",
           });
       
           const data = await response.json();

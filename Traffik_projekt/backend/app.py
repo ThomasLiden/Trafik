@@ -12,20 +12,21 @@ from routes.trafikverket_proxy import trafikverket_proxy
 
 app = Flask(__name__)
 
+
 # CORS-inställningar (tillåt API-åtkomst från frontend)
 CORS(app,
      supports_credentials=True,
      resources={r"/api/*": {"origins": [
          "https://trafik-frontend-hzww.onrender.com",
          "https://admin-lqz8.onrender.com",
-         "https://www.dagspressutgivarna.se",
-         "http://127.0.0.1:5500" # <<< TILLAGD: För lokal utveckling av frontend
-          # Överväg "http://localhost:PORT" för kundens eventuella lokala tester
+         "http://localhost:5500",
+         "http://127.0.0.1:5500"
      ]}},
      expose_headers=["Content-Type", "Authorization"],
      allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"]
+     methods=["GET", "POST", "OPTIONS"]
 )
+
 
 
 
@@ -41,6 +42,21 @@ app.register_blueprint(traffic_blueprint)
 app.register_blueprint(payments_blueprint)
 app.register_blueprint(notification_api)
 app.register_blueprint(trafikverket_proxy)
+
+# CORS-inställningar (tillåt API-åtkomst från frontend)
+CORS(app,
+     supports_credentials=True,
+     resources={r"/api/*": {"origins": [
+         "https://trafik-frontend-hzww.onrender.com",
+         "https://admin-lqz8.onrender.com",
+         "https://www.dagspressutgivarna.se",
+         "http://127.0.0.1:5500" # <<< TILLAGD: För lokal utveckling av frontend
+          # Överväg "http://localhost:PORT" för kundens eventuella lokala tester
+     ]}},
+     expose_headers=["Content-Type", "Authorization"],
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"]
+)
 
 @app.route("/api/<path:path>", methods=["OPTIONS"])
 def options_handler(path):

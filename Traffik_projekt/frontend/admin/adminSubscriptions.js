@@ -1,4 +1,9 @@
-import { apiFetch } from "../api.js";
+import { apiFetch } from "./api.js";
+
+const BASE_URL =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000/api"
+    : "https://admin-lqz8.onrender.com/api";
 
 export default {
   name: "ResellerStatsComponent",
@@ -20,7 +25,7 @@ export default {
   async created() {
     try {
       // Hämtar statistik för inloggad återförsäljare (tidning)
-      const stats = await apiFetch("http://localhost:5000/api/admin/reseller/stats");
+      const stats = await apiFetch(`${BASE_URL}/admin/reseller/stats`);
 
       // Sparar data från API-anropet
       this.subscriptions.activeSubscribers = stats.subscription_count || 0;
@@ -32,7 +37,7 @@ export default {
 
     try {
       // Hämtar lista med användare kopplade till tidningen
-      const usersData = await apiFetch("http://localhost:5000/api/admin/reseller/users");
+      const usersData = await apiFetch(`${BASE_URL}/admin/reseller/users`);
       this.users = usersData.users || [];
     } catch (err) {
       console.error("Kunde inte hämta användare", err);

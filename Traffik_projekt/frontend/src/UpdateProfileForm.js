@@ -46,7 +46,7 @@ export default {
       try {
         const userId = localStorage.getItem("user_id");
         const token  = localStorage.getItem("access_token");
-        const res    = await fetch(`http://127.0.0.1:5000/api/user-profile?user_id=${userId}`, {
+        const res    = await fetch(`https://trafik-q8va.onrender.com/api/user-profile?user_id=${userId}`, {
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
         });
         const data   = await res.json();
@@ -64,7 +64,7 @@ export default {
     methods: {
       async updateProfile() {
         const user_id = localStorage.getItem("user_id");
-        const res = await fetch("http://127.0.0.1:5000/api/update-profile", {
+        const res = await fetch("https://trafik-q8va.onrender.com/api/update-profile", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

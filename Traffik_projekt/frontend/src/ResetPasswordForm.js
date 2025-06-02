@@ -47,7 +47,7 @@ export default {
       }
 
       try {
-        const res = await fetch("http://localhost:5000/api/reset-password", {
+        const res = await fetch("https://trafik-q8va.onrender.com/api/reset-password", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
