@@ -47,6 +47,8 @@ export default {
             <button @click="handlePayment" class="button-primary" :disabled="loading">
               {{ loading ? 'Laddar...' : 'Fortsätt till betalning' }}
             </button>
+            <p><button @click="resendCode" class="button-secondary">Skicka koden igen</button></p>
+            <p>Om du inte får koden, kontrollera att ditt nummer är korrekt.</p>
           </div>
         </div>
 
@@ -148,6 +150,31 @@ export default {
       } catch (err) {
         console.error("❌ Verifieringsfel:", err);
         this.codeError = err.message || "Kunde inte verifiera koden.";
+      }
+    },
+
+    async resendCode() {
+      try {
+        const response = await fetch('https://trafik-q8va.onrender.com/api/resend-sms-code', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phone: this.phone
+          })
+        });
+    
+        const result = await response.json();
+    
+        if (!response.ok) {
+          throw new Error(result.error || 'Misslyckades att skicka om koden');
+        }
+    
+        alert("En ny verifieringskod har skickats via SMS.");
+      } catch (error) {
+        console.error("❌ Kunde inte skicka om SMS:", error);
+        this.codeError = error.message;
       }
     },
 
