@@ -83,7 +83,7 @@ def create_checkout_session_api():
         logger.info(f"✅ Skapar checkout session för user_id: {user_id}")
 
         # Hämta reseller_id för användaren
-        user_row = supabase.table("users").select("reseller_id").eq("id", user_id).single().execute()
+        user_row = supabase.table("users").select("reseller_id").eq("user_id", user_id).single().execute()
         if not user_row.data:
             return jsonify({"error": "User not found"}), 400
         reseller_id = user_row.data["reseller_id"]

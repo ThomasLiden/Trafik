@@ -113,14 +113,25 @@ export default {
         this.phone = payload.phone;
         this.userId = payload.user_id;
         console.log("✅ userId från signup:", this.userId); 
+      
+        // ⬇️ SPARA user_id för senare steg
+        localStorage.setItem("user_id", this.userId);
+      
         this.nextStep();
       },
+      
       async handlePayment() {
         this.loading = true;
         this.error = null;
-        
+      
         try {
-          // skicka request till backend för att skapa en checkout-session
+          // ⬇️ ANVÄND SPARAD user_id som fallback
+          const userIdToSend = this.userId || localStorage.getItem("user_id");
+      
+          if (!userIdToSend) {
+            throw new Error("Ingen giltig user_id tillgänglig för betalning");
+          }
+      
           const response = await fetch('https://trafik-q8va.onrender.com/api/create-checkout-session', {
             method: 'POST',
             headers: {
@@ -128,44 +139,39 @@ export default {
               'Accept': 'application/json'
             },
             body: JSON.stringify({
-              user_id: this.userId  // Skicka med användar-ID för att koppla betalningen
+              user_id: userIdToSend
             })
           });
-          
-          // kolla om request lyckades
+      
           if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Något gick fel vid kommunikation med servern');
           }
-          
-          // Hämta client secret från svaret
+      
           const data = await response.json();
-          
+      
           if (!data.clientSecret) {
             throw new Error('Inget client secret mottaget från servern');
           }
-          
-          // Verifiera att Stripe är initialiserat
+      
           if (!this.stripe) {
             throw new Error('Stripe är inte initialiserad');
           }
-          
-          // Skapa en ny checkout
+      
           const checkout = await this.stripe.initEmbeddedCheckout({
             clientSecret: data.clientSecret
           });
-          
-          // mounta checkout i modalen
+      
           checkout.mount('#stripe-checkout-container');
-          
+      
         } catch (error) {
-          // Hantera och visa eventuella fel
           console.error('Error in payment process:', error);
           this.error = error.message || 'Ett fel uppstod vid betalningsprocessen';
         } finally {
           this.loading = false;
         }
-      },
+      }
+      ,
       closeModal() {
         this.$emit('close');
       }
