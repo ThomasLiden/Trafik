@@ -1,35 +1,51 @@
+/* styles.css för er Vue-applikation (trafikkartan) */
+
+:root {
+  /* Standardvärden / Fallback-värden för CSS Custom Properties */
+  --app-font-family: 'Poppins', sans-serif; /* Standardtypsnitt */
+  --app-primary-color: #3A86FF;           /* Standard primärfärg (blå från er .button-tertiary) */
+  
+  /* Framtida potentiella variabler (avkommentera och använd vid behov) */
+  /* --app-text-color: #333; */
+  /* --app-font-size: 16px; */
+  /* --app-background-color: white; */
+}
+
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  font-family: var(--app-font-family); /* ANVÄNDER CSS-VARIABEL */
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
-    background: #f0f4f8; /* Syns endast om #app inte täcker allt */
-    font-size: 16px;
+    background: #f0f4f8; 
+    font-size: 16px; 
     display: flex;
     flex-direction: column;
 }
 
-#app { /* Ditt rot-Vue-element från index.html (inuti iframen) */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--app-font-family); 
+}
+
+#app { 
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     height: 100%;
-    background-color: white; /* Ge en bakgrundsfärg till Vue-appen */
+    background-color: white; 
 }
 
 .map-section {
-    flex-grow: 1; /* Gör att .map-section fyller #app */
+    flex-grow: 1;
     display: flex;
-    flex-direction: column; /* Stackar #map och .controls vertikalt som standard */
-    position: relative; /* Viktigt för absolut positionering av .controls och .user-actions-buttons i banderoll-läge */
+    flex-direction: column;
+    position: relative;
     text-align: center; 
     overflow: hidden; 
 }
 
-/* === GRUNDLÄGGANDE DESKTOP-LÄGE === */
 #map {
   flex-grow: 1; 
   width: 100%;   
@@ -43,69 +59,63 @@ body {
   padding: 10px;
   background-color: #f8f8f8;
   display: flex;
-  /* NYTT: Ändrat till row för att "Välj län" och "Filter" ska ligga bredvid varandra som standard */
   flex-direction: row; 
-  flex-wrap: wrap; /* Tillåt items att wrappa till ny rad om det behövs */
-  align-items: center; /* Centrera items vertikalt i raden */
-  justify-content: center; /* Centrera kontrollgruppen horisontellt */
-  gap: 15px; /* Ökat gap lite för att ge mer luft mellan Välj Län och Filter */
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
   position: static; 
   z-index: 5; 
 }
 
-/* NYTT: Gemensam styling för varje huvudkontroll (Välj Län, Filter-knapp, Status) */
 .controls .control-item {
-  display: flex; /* För att label och select/button ska linjera snyggt */
+  display: flex;
   align-items: center;
-  gap: 5px; /* Litet gap mellan label och input/button inuti ett item */
+  gap: 5px;
 }
 
-
-/* Etiketter och select-element i .controls */
-.controls .control-item label { /* Gäller nu label för "Välj Län" och labels inuti dropdown */
-  margin-right: 0; /* Tas bort då .control-item har gap */
-  font-size: 14px; /* Minskad från 16px för att matcha select/button bättre */
+.controls .control-item label {
+  margin-right: 0;
+  font-size: 14px;
   white-space: nowrap;
 }
-.controls .control-item select { /* Gäller "Välj Län" */
+.controls .control-item select {
   padding: 8px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  font-family: var(--app-font-family); 
 }
 
-/* Statusmeddelande */
-.traffic-status-message-container { /* NYTT: Wrapper för statusmeddelandet */
-  width: 100%; /* Tvinga full bredd av föräldern (.controls) om den wrappar */
-  display: flex; /* Använd flexbox inuti för att enkelt centrera */
-  justify-content: center; /* Centrera .traffic-status-message horisontellt */
+.traffic-status-message-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
   margin-top: 5px; 
   order: 3; 
 }
 .traffic-status-message {
   font-size: 14px;
-  color: #333;
+  color: #333; 
 }
 
-
-/* NYTT: Styling för filter-dropdown-container och knapp */
 .filter-dropdown-container {
-  position: relative; /* Viktigt för positionering av dropdown-panelen */
+  position: relative;
 }
 
 .filter-toggle-btn { 
-  /* Använder .button-secondary stilar som bas, men med lokala justeringar */
   background-color: lightgray;
   color: black;
-  padding: 8px 12px; /* Matchar select-padding */
-  border: 1px solid #ccc; /* Lägg till kantlinje för att matcha select */
+  padding: 8px 12px;
+  border: 1px solid #ccc;
   cursor: pointer;
   border-radius: 4px;
-  font-weight: bold; /* Behålls från .button-secondary */
-  font-size: 14px;   /* Matchar select-fontstorlek */
-  margin: 0; /* Nollställ global .button-secondary margin */
-  display: flex; /* För att pilen ska linjera snyggt */
+  font-weight: bold;
+  font-size: 14px;
+  margin: 0;
+  display: flex;
   align-items: center;
+  font-family: var(--app-font-family); 
 }
 .filter-toggle-btn:hover {
   background-color: darkgray;
@@ -114,36 +124,36 @@ body {
 .filter-arrow {
   margin-left: 8px;
   font-size: 0.8em; 
-  line-height: 1; /* Förbättrar vertikal linjering av pilen */
+  line-height: 1;
 }
 
 .filter-dropdown-panel {
   position: absolute;
-  bottom: calc(100% + 5px); /* Placera precis under knappen med lite marginal */
-  left: 50%; /* Starta från mitten av knappen */
-  transform: translateX(-50%); /* Centrera panelen under knappen */
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
   background-color: white;
   border: 1px solid #ccc;
   border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Lite mer distinkt skugga */
-  z-index: 1010; /* Se till att den ligger över andra kontrollelement och kart-popups */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1010;
   padding: 10px;
   min-width: 200px; 
   display: flex;
-  flex-direction: column; /* Stacka filteralternativen vertikalt */
-  gap: 8px; /* Mellanrum mellan filteralternativen */
+  flex-direction: column;
+  gap: 8px;
 }
 
 .filter-dropdown-panel label.filter-dropdown-item {
-  display: flex; /* För att checkbox och text ska linjera snyggt */
+  display: flex;
   align-items: center;
   padding: 6px 8px;
   margin: 0; 
   font-size: 14px; 
   cursor: pointer;
   white-space: nowrap;
-  border-radius: 4px; /* För hover-effekten */
-  text-align: left; /* Se till att texten är vänsterjusterad */
+  border-radius: 4px;
+  text-align: left;
 }
 
 .filter-dropdown-panel label.filter-dropdown-item:hover {
@@ -152,49 +162,40 @@ body {
 
 .filter-dropdown-panel input[type="checkbox"] {
   margin-right: 8px;
-  /* Behåll din transform: scale(0.8) om du vill ha mindre checkboxes */
-  /* transform: scale(0.8); */ 
 }
 
-/* === BANDEROLL-LÄGE === */
+/* === BANDEROLL-LÄGE === (Dessa regler är oförändrade från din originalkod) */
 @media (max-width: 1000px) and (max-height: 200px) { 
-
-  .map-section {
-    /* Behåller sin flex-column och position: relative */
-  }
-
+  .map-section {}
   #map {
     height: 100% !important; 
     flex-grow: 0 !important; 
     border-bottom: none !important; 
   }
-
   .controls { 
     position: absolute !important; 
-    top: 5px !important;      /* Justerad top för att ge plats åt user-actions-buttons */
+    top: 5px !important;
     left: 50% !important;     
     transform: translateX(-50%) !important; 
     width: auto !important;   
-    max-width: calc(100% - 120px) !important; /* Max bredd, ge plats för knappar på höger sida */
+    max-width: calc(100% - 120px) !important;
     z-index: 1000 !important; 
-    background-color: rgba(255, 255, 255, 0.95) !important; /* Lite mindre transparent */
-    padding: 5px !important; /* Minskad padding */
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    padding: 5px !important;
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     display: flex !important;
     flex-direction: row !important; 
-    flex-wrap: nowrap !important; /* Förhindra wrap i banner, de ska vara på en rad */
+    flex-wrap: nowrap !important;
     align-items: center !important; 
-    gap: 8px !important; /* Minskad gap */
+    gap: 8px !important;
     pointer-events: auto; 
   }
-
-  /* Justeringar för .control-item och dess innehåll i banner-läge */
-  .controls .control-item label, /* Gäller label för "Välj Län" */
+  .controls .control-item label,
   .controls .control-item select,
   .filter-toggle-btn {
     font-size: 10px !important;
-    padding-top: 3px !important;    /* Mindre padding för elementen */
+    padding-top: 3px !important;
     padding-bottom: 3px !important;
   }
   .controls .control-item select {
@@ -205,48 +206,45 @@ body {
      padding-left: 6px !important;
      padding-right: 6px !important;
   }
-  
-  /* Dölj gamla .filter-controls (om någon rest finns kvar) och statusmeddelandet */
   .filter-controls,
-  .traffic-status-message-container { /* Använd den nya wrappern */
+  .traffic-status-message-container {
     display: none !important;
   }
-
-  /* Dropdown-panelen i banner-läge (kan behöva finjusteras) */
   .filter-dropdown-panel {
     min-width: 160px; 
-    top: calc(100% + 5px);    /* Återställ till nedåt för banner */
-    bottom: auto;             /* Ta bort bottom-positionering för banner */
-    left: 0;                  /* Kan öppnas från vänsterkanten av knappen */
-    transform: none;          /* Ta bort horisontell centrering om left:0 */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Skugga nedåt igen */
-
+    top: calc(100% + 5px);
+    bottom: auto;
+    left: 0;
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   }
   .filter-dropdown-panel label.filter-dropdown-item {
     font-size: 12px !important;
     padding: 4px 6px;
   }
   .filter-dropdown-panel input[type="checkbox"] {
-    transform: scale(0.8); /* Behåll mindre checkboxar här */
+    transform: scale(0.8);
   }
 }
 
-/* Knappstilar (befintliga) */
+/* Knappstilar */
 .button-primary {
-  background-color: rgb(232, 228, 228);
-  color: rgb(0, 0, 0);
+  background-color: var(--app-primary-color); 
+  color: white; 
   padding: 10px 20px;
   margin: 10px;
-  border: none;
+  border: none; 
   cursor: pointer;
   border-radius: 4px;
   font-weight: bold;
+  font-family: var(--app-font-family); 
 }
 .button-primary:hover {
-  background-color: rgb(168, 167, 167);
+  filter: brightness(90%); 
 }
+
 .button-secondary {
-  background-color: rgb(255, 255, 255);
+  background-color: rgb(255, 255, 255); 
   color: black;
   padding: 10px 20px;
   cursor: pointer;
@@ -254,63 +252,62 @@ body {
   font-weight: bold;
   border: 1px solid #ccc;
   margin: 10px;
+  font-family: var(--app-font-family); 
 }
 .button-secondary:hover {
   background-color: darkgray;
 }
+
 .button-tertiary {
   background: none;
   border: none;
-  color: #3A86FF; 
+  color: var(--app-primary-color); 
   text-decoration: underline;
   cursor: pointer;
   font-weight: normal;
   padding: 5px;
+  font-family: var(--app-font-family); 
 }
 .button-tertiary:hover {
-  color: #023E8A; 
+  filter: brightness(80%); 
 }
 
 .user-actions-buttons {
   position: absolute; 
   top: 10px;          
   right: 10px;        
-  z-index: 1005;      /* Över kartan och kontroller i vissa fall */
+  z-index: 1005;
   display: flex;
-  gap: 8px; /* Mellanrum mellan knapparna */
+  gap: 8px;
 }
-/* Nollställ globala marginaler för knappar specifikt inuti denna container */
 .user-actions-buttons .button-secondary,
 .user-actions-buttons .button-primary {
     margin: 0; 
-    /* Behåll padding och andra stilar från globala klasser, justera vid behov */
 }
 
-/* Justeringar för user-actions-buttons i BANNER-LÄGE */
 @media (max-width: 1000px) and (max-height: 200px) {
   .user-actions-buttons {
-    top: 5px !important; /* Närmare kanten i banner */
+    top: 5px !important;
     right: 5px !important;
   }
   .user-actions-buttons .button-secondary,
   .user-actions-buttons .button-primary {
-    padding: 3px 6px !important; /* Mindre knappar */
+    padding: 3px 6px !important;
     font-size: 10px !important;
   }
 }
 
-
-/* Modalstilar (dina befintliga) */
-.modal-overlay { /* ... dina befintliga stilar ... */ 
+/* Modalstilar */
+.modal-overlay { 
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1050; /* Se till att modalen ligger överst */
+    z-index: 1050;
 }
 .modal-container { 
-    background: #fff;
+    background: #fff; 
     border-radius: 8px;
     padding: 1.5rem;
     max-width: 450px;
@@ -331,18 +328,19 @@ body {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.5);
     display: flex; justify-content: center; align-items: center;
-    font-size: 1.2rem;
-    z-index: 1050; /* Se till att modalen ligger överst */
+    font-size: 1.2rem; 
+    z-index: 1050;
 }
 .modal-content {
-    position: relative; background: white; padding: 2rem;
+    position: relative; background: white; 
+    padding: 2rem;
     border-radius: 0.75rem; max-width: 700px; width: 90%;
     box-sizing: border-box; overflow-y: auto;
 }
 .close { 
     position: absolute; top: 15px; right: 20px;
     background: none; border: none; font-size: 24px;
-    cursor: pointer; color: black;
+    cursor: pointer; color: black; 
 }
 .close:hover{ background: none; }
 
@@ -350,18 +348,20 @@ body {
   padding: 10px;
   margin: 5px;
   border-radius: 10px;
+  font-family: var(--app-font-family); 
 }
 
 .option {
   padding: 10px;
   margin: 5px;
   border-radius: 10px;
+  font-family: var(--app-font-family); 
 }
 
 .signup-container {
   max-width: 600px;
   margin: auto;
-  background: white;
+  background: white; 
   padding: 2rem;
   border-radius: 12px;
   position: relative;
@@ -371,7 +371,7 @@ body {
 .logged-in-user{
   max-width: 600px;
   margin: auto;
-  background: white;
+  background: white; 
   padding: 2rem;
 }
 
@@ -386,15 +386,19 @@ body {
   margin-bottom: 2rem;
 }
 
-.back-button {
+.back-button { 
   position: absolute;
   top: 1rem;
   right: 1rem;
   background: none;
   border: none;
-  color: #007BFF;
+  color: var(--app-primary-color); 
   text-decoration: underline;
   cursor: pointer;
+  font-family: var(--app-font-family);
+}
+.back-button:hover {
+  filter: brightness(80%);
 }
 
 .signup-form {
@@ -405,15 +409,15 @@ body {
 
 .form-row {
   display: flex;
-  /*flex-direction: column;*/
   gap: 1rem;
 }
 
 .signup-form input {
   padding: 0.5rem;
-  font-size: 1rem;
+  font-size: 1rem; 
   border: 2px solid #ccc;
   border-radius: 6px;
+  font-family: var(--app-font-family); 
 }
 
 .form-group {
@@ -423,13 +427,13 @@ body {
 }
 
 .form-group small {
-  font-size: 0.8rem;
-  color: #666;
+  font-size: 0.8rem; 
+  color: #666; 
   margin-top: 0.25rem;
 }
 
 .required {
-  color: red;
+  color: red; 
 }
 
 .form-actions {
@@ -438,7 +442,20 @@ body {
   justify-content: flex-end;
   margin-top: 1.5rem;
 }
-/* Leaflet popup-stilar (befintliga) */
-.leaflet-popup-content-wrapper { border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
-.leaflet-popup-content { font-size: 14px; line-height: 1.5; }
-.leaflet-popup-content h3 { margin-top: 0; margin-bottom: 8px; font-size: 16px; color: #333; }
+/* Leaflet popup-stilar */
+.leaflet-popup-content-wrapper { 
+  border-radius: 5px; 
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15); 
+}
+.leaflet-popup-content { 
+  font-size: 14px; 
+  line-height: 1.5; 
+  font-family: var(--app-font-family);
+}
+.leaflet-popup-content h3 { 
+  margin-top: 0; 
+  margin-bottom: 8px; 
+  font-size: 16px; 
+  color: #333; 
+  font-family: var(--app-font-family);
+}

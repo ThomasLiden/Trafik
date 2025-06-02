@@ -1,9 +1,9 @@
 const { createRouter, createWebHashHistory } = VueRouter;
 
-import SubscriptionModal from "./components/SubscriptionModal.js";
-import MapView from "./components/MapView.js";
-import LoginForm from "./components/LoginForm.js";
-import ResetPasswordForm from "./components/ResetPasswordForm.js";
+import SubscriptionModal from "./SubscriptionModal.js";
+import MapView from "./MapView.js";
+import LoginForm from "./LoginForm.js";
+import ResetPasswordForm from "./ResetPasswordForm.js";
 
 const routes = [
   {
