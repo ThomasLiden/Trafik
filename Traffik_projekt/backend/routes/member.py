@@ -9,6 +9,9 @@ member_blueprint = Blueprint('member', __name__)
 # Registrering
 @member_blueprint.route('/api/signup', methods=['POST', 'OPTIONS'])
 def signup():
+    if request.method == 'OPTIONS':
+        return '', 200  # <- svara tidigt på preflight
+
     try:
         data = request.get_json()
         email = data.get("email")
