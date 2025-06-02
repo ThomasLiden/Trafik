@@ -2,46 +2,48 @@ from flask import Blueprint, request, jsonify
 from models.supabase_client import supabase
 from supabase import create_client, Client
 import os
+from flask_cors import cross_origin
 
 member_blueprint = Blueprint('member', __name__)
 
 # Registrering
-@member_blueprint.route('/api/signup', methods=['POST'])
+@member_blueprint.route('/api/signup', methods=['POST', 'OPTIONS'])
 def signup():
-    data = request.get_json()
-    email = data.get("email")
-    password = data.get("password")
-    first_name = data.get("first_name")
-    last_name = data.get("last_name")
-    phone = data.get("phone")
-    location_id = data.get("location_id")
-
-#hämta reseller id
-    domain = request.host
-    if ":" in domain:
-       domain = domain.split(":")[0]  # Tar bort port, t.ex. 127.0.0.1:5000 → 127.0.0.1
-   
-    reseller_lookup = supabase.table("reseller") \
-                              .select("reseller_id") \
-                              .eq("domain", domain) \
-                              .single() \
-                              .execute()
-    
-    if not reseller_lookup.data:
-        return jsonify({"error": f"Ingen återförsäljare kopplad till domän {domain}"}), 400
-    
-    reseller_id = reseller_lookup.data["reseller_id"]
-    
     try:
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
+        first_name = data.get("first_name")
+        last_name = data.get("last_name")
+        phone = data.get("phone")
+        location_id = data.get("location_id")
+
+        domain = request.host
+        if ":" in domain:
+            domain = domain.split(":")[0]
+
+        reseller_lookup = supabase.table("reseller") \
+                                  .select("reseller_id") \
+                                  .eq("domain", domain) \
+                                  .single() \
+                                  .execute()
+
+        if not reseller_lookup.data:
+            raise ValueError(f"Ingen återförsäljare kopplad till domän {domain}")
+
+        reseller_id = reseller_lookup.data["reseller_id"]
+
         result = supabase.auth.sign_up({
             "email": email,
             "password": password
         })
+
         user = result.user
         if not user:
-            return jsonify({"error": "Signup failed, no user returned"}), 400
+            raise ValueError("Signup failed, no user returned")
 
         user_id = user.id
+
         supabase.table("users").insert({
             "user_id": user_id,
             "email": email,
@@ -51,16 +53,16 @@ def signup():
             "reseller_id": reseller_id
         }).execute()
 
-        
         supabase.table("subscriptions").insert({
             "user_id": user_id,
-            "active":True,
+            "active": True,
             "location_id": location_id
         }).execute()
 
         return jsonify({"message": "User created", "email": email}), 200
 
     except Exception as e:
+        print("==> FEL I SIGNUP:", e)
         return jsonify({"error": str(e)}), 400
 
 
