@@ -92,15 +92,19 @@ def create_checkout_session_api():
         reseller_id = user_result.data[0]["reseller_id"]
 
         # Hämta aktivt stripe_price_id för denna reseller
-        product_data = supabase.table("reseller_products")\
+        product_result = supabase.table("reseller_products")\
             .select("stripe_price_id")\
             .eq("reseller_id", reseller_id)\
             .eq("active", True)\
-            .single()\
+            .limit(1)\
             .execute()
-        if not product_data.data:
-            return jsonify({"error": "No active product found for this reseller"}), 400
-        stripe_price_id = product_data.data['stripe_price_id']
+
+        if not product_result.data or len(product_result.data) == 0:
+            logger.error(f"Inga aktiva produkter hittades för reseller_id: {reseller_id}")
+            return jsonify({"error": "No active product found for this reseller"}), 404
+
+        stripe_price_id = product_result.data[0]["stripe_price_id"]
+
 
         # Skapa checkout session med rätt pris
         session = stripe.checkout.Session.create(
