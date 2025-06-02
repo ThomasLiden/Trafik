@@ -211,19 +211,30 @@ def get_regions ():
                            
 #Rutt för reseller-region
 
+
+#ny version med hämtning från utl istället för host
 @member_blueprint.route('/api/reseller-region', methods=['GET'])
 def get_reseller_region():
-    domain = request.args.get("domain")
-    if not domain:
-        return jsonify({"error": "Domain krävs"}), 400
+    # 1) Läs ut resellerKey från query-string
+    reseller_key = request.args.get("resellerKey")
+    if not reseller_key:
+        return jsonify({"error": "resellerKey krävs"}), 400
 
     try:
+        # 2) Hämta raden i 'reseller'-tabellen där id == resellerKey
         response = supabase.table("reseller") \
-                           .select("region, price, name") \
-                           .eq("domain", domain) \
+                           .select("reseller_id, price, name, region") \
+                           .eq("reseller_id", reseller_key) \
                            .single() \
                            .execute()
+
+        # Om inget data returnerades, ge 404
+        if not response.data:
+            return jsonify({"error": "Ingen reseller hittades för detta resellerKey"}), 404
+
+        # 3) Skicka tillbaka hela raden som JSON
         return jsonify(response.data), 200
+
     except Exception as e:
         print("==> FEL i /api/reseller-region:", e)
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": str(e)}), 500
