@@ -77,10 +77,10 @@ def create_checkout_session_api():
         logger.info(f"Received data: {data}")
         user_id = data.get('user_id')
         if not user_id or user_id == "None":
-            logger.error("❌ Ogiltigt eller saknat user_id i request")
+            logger.error("Ogiltigt eller saknat user_id i request")
             return jsonify({"error": "Ingen giltig user_id angiven"}), 400
 
-        logger.info(f"✅ Skapar checkout session för user_id: {user_id}")
+        logger.info(f"Skapar checkout session för user_id: {user_id}")
 
         # Hämta reseller_id för användaren
         user_result = supabase.table("users").select("reseller_id").eq("user_id", user_id).limit(1).execute()
@@ -91,7 +91,7 @@ def create_checkout_session_api():
 
         reseller_id = user_result.data[0]["reseller_id"]
 
-        # Hämta aktivt stripe_price_id för denna reseller
+        #hämta aktivt stripe_price_id för denna reseller
         product_result = supabase.table("reseller_products")\
             .select("stripe_price_id")\
             .eq("reseller_id", reseller_id)\
@@ -162,19 +162,19 @@ def stripe_webhook():
     webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
     event = None
     try:
-        # Verifiera att webhooken verkligen kommer från Stripe
+        # Verifiera att webhooken kommer från Stripe
         event = stripe.Webhook.construct_event(
             payload, sig_header, webhook_secret
         )
         logger.info(f"✅ Stripe webhook event mottaget: {event['type']}")
     except ValueError as e:
-        logger.error(f"❌ Ogiltig payload: {e}")
+        logger.error(f"Ogiltig payload: {e}")
         return 'Invalid payload', 400
     except stripe.error.SignatureVerificationError as e:
-        logger.error(f"❌ Ogiltig signatur: {e}")
+        logger.error(f"Ogiltig signatur: {e}")
         return 'Invalid signature', 400
     except Exception as e:
-        logger.error(f"❌ Annat fel vid webhook-verifiering: {e}")
+        logger.error(f"Annat fel vid webhook-verifiering: {e}")
         return 'Webhook error', 400
 
     # Hantera olika Stripe events
@@ -214,5 +214,5 @@ def stripe_webhook():
 
         return '', 200
     except Exception as e:
-        logger.error(f"❌ Fel vid hantering av Stripe-event: {e}", exc_info=True)
+        logger.error(f"Fel vid hantering av Stripe-event: {e}", exc_info=True)
         return 'Webhook handling error', 500
