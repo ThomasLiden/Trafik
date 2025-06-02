@@ -36,6 +36,8 @@ export default {
           <input v-model="smsCode" placeholder="6-siffrig kod" maxlength="6" class="option" />
           <div v-if="codeError" class="error-message">{{ codeError }}</div>
           <button @click="verifyCode" class="button-primary">Verifiera</button>
+          <p><button @click="resendCode" class="button-secondary">Skicka koden igen</button></p>
+          <p>Om du inte får koden, kontrollera att ditt nummer är korrekt.</p>
         </div>
 
         <div v-if="step === 4">
@@ -47,8 +49,6 @@ export default {
             <button @click="handlePayment" class="button-primary" :disabled="loading">
               {{ loading ? 'Laddar...' : 'Fortsätt till betalning' }}
             </button>
-            <p><button @click="resendCode" class="button-secondary">Skicka koden igen</button></p>
-            <p>Om du inte får koden, kontrollera att ditt nummer är korrekt.</p>
           </div>
         </div>
 
