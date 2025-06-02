@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from supabase import create_client
-from poller import poll_once  # Importera poller-funktionen
+from Traffik_projekt.backend.poller import poll_once  # Importera poller-funktionen
 import requests
 import os
 
