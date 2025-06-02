@@ -1,5 +1,10 @@
-import regions from "../regions.js"
-import { apiFetch } from "../api.js";
+import regions from "./regions.js"
+import { apiFetch } from "./api.js";
+
+const BASE_URL =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000/api"
+    : "https://trafik-q8va.onrender.com/api";
 
 export default {
     props: ["show"],
@@ -31,7 +36,7 @@ export default {
         
         try {
           //Skicka post-anrop till backend via apiFetch-funktionen. 
-          const data = await apiFetch("http://localhost:5000/api/admin/create_reseller", {
+          const data = await apiFetch(`${BASE_URL}/admin/create_reseller`, {
             method: "POST",
             body: JSON.stringify({
               name: this.name,

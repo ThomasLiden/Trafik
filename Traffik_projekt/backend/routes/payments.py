@@ -71,40 +71,53 @@ def create_checkout_session_api():
         return response
         
     try:
-        # Verifiera att Stripe API-nyckel och pris-ID är konfigurerade
-        if not stripe.api_key:
-            logger.error("Stripe API key not configured")
-            raise Exception("Stripe API key not configured")
-        if not stripe_price_id:
-            logger.error("Stripe price ID not configured")
-            raise Exception("Stripe price ID not configured")
-            
         # Hämta användar-ID från request
         data = request.get_json()
         logger.info(f"Received data: {data}")
         user_id = data.get('user_id')
         logger.info(f"Creating checkout session for user: {user_id}")
-        
-        # Skapa en ny Stripe checkout-session
+
+        # Hämta reseller_id för användaren
+        user_row = supabase.table("users").select("reseller_id").eq("user_id", user_id).single().execute()
+        if not user_row.data:
+            return jsonify({"error": "User not found"}), 400
+        reseller_id = user_row.data["reseller_id"]
+
+        # Hämta aktivt stripe_price_id för denna reseller
+        product_data = supabase.table("reseller_products")\
+            .select("stripe_price_id")\
+            .eq("reseller_id", reseller_id)\
+            .eq("active", True)\
+            .single()\
+            .execute()
+        if not product_data.data:
+            return jsonify({"error": "No active product found for this reseller"}), 400
+        stripe_price_id = product_data.data['stripe_price_id']
+
+        # Skapa checkout session med rätt pris
         session = stripe.checkout.Session.create(
-            payment_method_types=['card'],  # endast kortbetalning
+            payment_method_types=['card'],
             line_items=[{
-                'price': stripe_price_id,    # fördefinierat pris-ID från Stripe prudukt
-                'quantity': 1,               # antal prenumerationer
+                'price': stripe_price_id,
+                'quantity': 1,
             }],
-            mode='subscription',             #  prenumeration läge
-            ui_mode='embedded',              # inbäddad checkout i modalen
-            return_url='http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}',  # URL för att hantera retur efter betalning
-            client_reference_id=user_id,     # oppla sessionen till användaren
+            mode='subscription',
+            ui_mode='embedded',
+            return_url='http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}',
+            client_reference_id=user_id,
+            metadata={
+                "reseller_id": reseller_id
+            }
         )
         logger.info(f"Checkout session created successfully: {session.id}")
 
-        # sparara betalningen i Supabase
+        # spara betalningen i Supabase
         payment_data = {
             "stripe_session_id": session.id,
             "stripe_subscription_id": session.subscription,  
             "stripe_confirmation": session.client_secret,
             "user_id": user_id,
+            "reseller_id": reseller_id,
             "status": "pending"
         }
         try:
