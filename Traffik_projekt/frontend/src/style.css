@@ -166,7 +166,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* === BANDEROLL-LÄGE === (Dessa regler är oförändrade från din originalkod) */
 @media (max-width: 1000px) and (max-height: 200px) { 
-  .map-section {}
+  /* .map-section {} */
   #map {
     height: 100% !important; 
     flex-grow: 0 !important; 

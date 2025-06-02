@@ -1,5 +1,15 @@
 export default {
-    props: ['region'], 
+    props:  {
+    region: {
+    type: Object,
+    required: true
+  },
+  resellerId: {
+    type: String,
+    required: true
+  }
+    },
+  
     template: `
   <div class="signup-modal-content">
     <div class="form-header">
@@ -47,23 +57,6 @@ export default {
   </div>
 `
 ,
-mounted() {
-  // Hämta query‐parameters från window.location.search
-  console.log("Mounted SignupForm, söksträng =", window.location.search);
-  const urlParams = new URLSearchParams(window.location.search);
-  const resellerKey = urlParams.get('resellerKey');
-
-  if (!resellerKey) {
-    this.message = "Reseller‐nyckel saknas i URL.";
-    return;
-  }
-
-  // Spara i komponentens data, så ni kan använda det senare
-  this.resellerKey = resellerKey;
-
-  // 3) Hämta reseller‐info baserat på publisher‐nyckeln
-  this.fetchResellerData(resellerKey);
-},
     data() {
       return {
         first_name: "",
@@ -72,35 +65,23 @@ mounted() {
         email: "",
         password: "",
         message: "", 
-        resellerKey: null, 
-        resellerId: null,
-        price: null, 
-        resellerName: ""
+      
       };
     },
-    methods: {
-      async fetchResellerData(resellerKey) {
-    try {
-      const res = await fetch(
-        `https://trafik-q8va.onrender.com/api/reseller-region?resellerKey=${encodeURIComponent(resellerKey)}`
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        this.message = data.error || "Kunde inte hämta reseller‐data.";
-        return;
-      }
-      // mappar namn med rätt dats
-      this.resellerId = data.reseller_id;
-      this.price = data.price;
-      this.resellerName = data.name;
-    } catch (err) {
-      console.error(err);
-      this.message = "Tekniskt fel vid hämtning av reseller.";
-    }
-  },
 
+    methods: {
       async signup() {
         this.message = ""; 
+
+      if (!this.resellerId) {
+        this.message = "Reseller-ID saknas.";
+        return;
+      }
+      if (!this.region || !this.region.location_id) {
+        this.message = "Region saknas.";
+        return;
+      }
+
         try {
           const payload = {
             first_name: this.first_name,
@@ -115,7 +96,8 @@ mounted() {
       
           console.log(" Payload som skickas:", payload);
       
-          const response = await fetch("https://trafik-q8va.onrender.com/api/signup", {
+          const response = /* await fetch("https://trafik-q8va.onrender.com/api/signup", */ 
+          await fetch("http://127.0.0.1:5000/api/signup",{
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)

@@ -22,11 +22,14 @@ export default {
               <option v-for="r in regions" :key="r.location_id" :value="r">{{ r.region }}</option>
             </select>
                
-            <button class="button-primary" @click="nextStep">Nästa</button>
+            <button class="button-primary" @click="nextStep"
+            :disabled="!resellerId || !region || !region.location_id"
+             >Nästa</button>
           </div>
   
           <div v-if="step === 2">
-          <signup-form :region="region" @signup-success="handleSignupSuccess" />
+          <signup-form :region="region" :reseller-id="resellerId"
+          @signup-success="handleSignupSuccess" />
           </div>
     
           <div v-if="step === 3">
@@ -45,7 +48,7 @@ export default {
             <h3>Tack!</h3>
             <p>Du är nu prenumerant.</p>
             <h3>Bekräftelse</h3>
-            <p>Område: {{ region.region }}<p>
+            <p>Område: {{ region.region }}</p>
             <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
             <p>Till: {{ phone }} ({{ email }})</p>
             <p>Pris per månad: {{ price }} kr</p>
@@ -57,12 +60,12 @@ export default {
     data() {
       return {
         step: 1,
-        region: '',
-        price: null,
+        region: null, //använderens valda region
+        /* price: null, */
         email: '',
         phone: '',
         incidentTypes: [],
-        regions: [],
+        regions: [], //listan över regioner
         userId: null,
         resellerId: null,
         stripe: null,
@@ -75,52 +78,44 @@ export default {
         // initziera stripe när componenten är mounted
       this.stripe = Stripe('pk_test_51RIsEVFPlu7UXDRDAlQtGOM9XRv0N27uADmwrhcb8f7PvRCZ1KDoViIn8QH3UuS38aBWsMYkhH9bcPJEH0DreFQX00tfP0ZdCF');
 
-          // 2) Hämta alla regioner först
-    try {
-      const regionsRes = await fetch('https://trafik-q8va.onrender.com/api/regions');
+      console.log("SubscriptionModal mounted, $route.query =", this.$route.query);
+      
+          try {
+      const regionsRes = await fetch("http://127.0.0.1:5000/api/regions")/* await fetch("https://trafik-q8va.onrender.com/api/regions"); */
+      
+      if (!regionsRes.ok) throw new Error("Kunde inte hämta regioner");
       this.regions = await regionsRes.json();
     } catch (err) {
-      console.error('Kunde inte hämta regioner', err);
+      console.error("Kunde inte hämta regioner:", err);
+      this.error = "Kunde inte hämta regioner";
       return;
     }
 
-    // 3) Läs in resellerKey från iframe‐URL:en
-    const urlParams = new URLSearchParams(window.location.search);
-    const resellerKey = urlParams.get('resellerKey');
+
+      const resellerKey = this.$route.query.resellerKey;
     if (!resellerKey) {
-      console.error('resellerKey saknas i URL');
-      this.error = 'Ingen reseller‐nyckel i URL.';
+      this.error = "Ingen resellerKey i URL.";
       return;
     }
+    this.resellerId = resellerKey;
+  
+  console.log("→ Hittade resellerKey:", resellerKey);
 
-    // 4) Hämta reseller‐data baserat på resellerKey (istället för domain)
-    try {
-      const resellerRes = await fetch(
-        `https://trafik-q8va.onrender.com/api/reseller-region?resellerKey=${encodeURIComponent(resellerKey)}`
-      );
-      const resellerData = await resellerRes.json();
+/*     const defaultRegion = this.regions.find(r => r.region === resellerData.region);
+    if (defaultRegion) {
+      this.region = defaultRegion;
+    } */
+  
 
+/* 
       if (!resellerRes.ok) {
         console.error('Kunde inte hämta reseller‐data:', resellerData);
         this.error = resellerData.error || 'Kunde inte hämta reseller-data.';
         return;
       }
-
+ */
       // Spara pris och namn om du vill (region kör vi separat nedan)
-      this.price = resellerData.price;
-      this.resellerId = resellerData.reseller_id;
-
-      // 5) Matcha defaultRegion utifrån det fält “region” som backend returnerar
-      const defaultRegion = this.regions.find(r => r.region === resellerData.region);
-      if (defaultRegion) {
-        this.region = defaultRegion;
-      }
-
-      console.log('Pris satt till:', this.price, 'ResellerId:', this.resellerId, 'Standardregion:', this.region);
-    } catch (err) {
-      console.error('Tekniskt fel vid hämtning av reseller:', err);
-      this.error = 'Tekniskt fel vid hämtning av reseller.';
-    }
+ 
 
       /* fetch('https://trafik-q8va.onrender.com/api/regions')
         .then(res => res.json())
@@ -150,6 +145,15 @@ export default {
     },
     methods: {
       nextStep() {
+            if (!this.resellerId) {
+      alert("Vänta tills priset laddats innan du går vidare.");
+      return;
+    }
+    // 2) Kolla att region är valt (objekt med location_id)
+    if (!this.region || !this.region.location_id) {
+      alert("Välj ett område innan du går vidare.");
+      return;
+    }
         this.step++;
       },
       handleSignupSuccess(payload) {
@@ -164,7 +168,7 @@ export default {
         
         try {
           // skicka request till backend för att skapa en checkout-session
-          const response = await fetch('https://trafik-q8va.onrender.com/api/create-checkout-session', {
+          const response = await /* fetch('https://trafik-q8va.onrender.com/api/create-checkout-session' */fetch('http://127.0.0.1:5000/api/create-checkout-session', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

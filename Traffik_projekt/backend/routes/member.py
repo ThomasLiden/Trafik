@@ -7,7 +7,7 @@ from flask_cors import cross_origin
 member_blueprint = Blueprint('member', __name__)
 
 # Registrering
-@member_blueprint.route('/api/signup', methods=['POST', 'OPTIONS'])
+""" @member_blueprint.route('/api/signup', methods=['POST', 'OPTIONS'])
 def signup():
     if request.method == 'OPTIONS':
         return '', 200  # <- svara tidigt på preflight
@@ -20,6 +20,7 @@ def signup():
         last_name = data.get("last_name")
         phone = data.get("phone")
         location_id = data.get("location_id")
+        reseller_id = data.get("reseller_id")
 
         domain = data.get("domain")
         if ":" in domain:
@@ -66,7 +67,72 @@ def signup():
 
     except Exception as e:
         print("==> FEL I SIGNUP:", e)
+        return jsonify({"error": str(e)}), 400 """
+
+@member_blueprint.route('/api/signup', methods=['POST', 'OPTIONS'])
+def signup():
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    try:
+        data = request.get_json()
+        
+        email      = data.get("email")
+        password   = data.get("password")
+        first_name = data.get("first_name")
+        last_name  = data.get("last_name")
+        phone      = data.get("phone")
+        location_id = data.get("location_id")
+        reseller_id = data.get("reseller_id")
+
+        # 1) Kontrollera att reseller_id faktiskt skickats
+        if not reseller_id:
+            return jsonify({"error": "reseller_id krävs"}), 400
+
+        # 2) Valfritt: Bekräfta att reseller_id finns i databasen
+        lookup = supabase.table("reseller") \
+                         .select("reseller_id") \
+                         .eq("reseller_id", reseller_id) \
+                         .single() \
+                         .execute()
+        if not lookup.data:
+            return jsonify({"error": f"Ingen reseller med id {reseller_id} hittades"}), 400
+
+        # 3) Skapa Supabase‐användaren
+        result = supabase.auth.sign_up({
+            "email": email,
+            "password": password
+        })
+
+        user = result.user
+        if not user:
+            raise ValueError("Signup failed, no user returned")
+
+        user_id = user.id
+
+        # 4) Spara i ’users’‐tabellen
+        supabase.table("users").insert({
+            "user_id": user_id,
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "phone": phone,
+            "reseller_id": reseller_id
+        }).execute()
+
+        # 5) Skapa prenumeration
+        supabase.table("subscriptions").insert({
+            "user_id": user_id,
+            "active": True,
+            "location_id": location_id
+        }).execute()
+
+        return jsonify({"message": "User created", "email": email, "user_id": user_id}), 200
+
+    except Exception as e:
+        print("==> FEL I SIGNUP:", e)
         return jsonify({"error": str(e)}), 400
+
 
 
 # Logga in
