@@ -1,12 +1,221 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=iframe_host.html" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Omdirigerar…</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .page-controls {
+            margin-bottom: 10px;
+        }
+        .iframe-wrapper {
+            border: 2px solid #333;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: relative;
+            background-color: #f0f0f0;
+        }
+        iframe {
+            display: block;
+            border: none;
+        }
+        .iframe-wrapper.expanded-mode {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background-color: white;
+        }
+        #pageOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        #closeExpandedViewBtn {
+            display: none;
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 28px;
+            text-align: center;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        #closeExpandedViewBtn:hover {
+            background-color: #f0f0f0;
+            color: red;
+        }
+        #expandIconBtn {
+            display: none;
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+            line-height: 36px;
+            text-align: center;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            transition: background-color 0.2s ease;
+        }
+        #expandIconBtn:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+    </style>
 </head>
 <body>
-  <p>Omdirigerar till iframe_host.html…</p>
+
+    <div id="pageOverlay"></div>
+
+    <div class="page-controls">
+    </div>
+
+    <div class="iframe-wrapper">
+        <button id="closeExpandedViewBtn" title="Stäng utökad vy">&times;</button>
+        <button id="expandIconBtn" title="Utöka kartan">&#x2197;</button>
+        
+        <iframe id="appIframe" width="1000" height="400"> Din webbläsare stödjer inte iframes.
+        </iframe>
+    </div>
+
+    <script>
+        // === KUNDENS KONFIGURATION START ===
+        const customerStyleConfig = {
+            fontFamily: "'Merriweather', serif",
+            primaryColor: "#005A9C",
+        };
+
+        // ** VIKTIGT FÖR KUNDEN ATT KONFIGURERA **
+        const vueAppBasePath = './';
+        // === KUNDENS KONFIGURATION SLUT ===
+
+        const iframe = document.getElementById('appIframe');
+
+        const baseAppUrl = vueAppBasePath + 'index.html';
+        const queryParams = new URLSearchParams();
+
+        if (customerStyleConfig.fontFamily) {
+            queryParams.append('fontFamily', customerStyleConfig.fontFamily);
+        }
+        if (customerStyleConfig.primaryColor) {
+            queryParams.append('primaryColor', customerStyleConfig.primaryColor);
+        }
+
+        let finalIframeSrc = baseAppUrl;
+        const queryString = queryParams.toString();
+
+        if (queryString) {
+            finalIframeSrc += '?' + queryString;
+        }
+        finalIframeSrc += '#/';
+
+        iframe.src = finalIframeSrc;
+        console.log("Dynamiskt satt iframe src till:", finalIframeSrc);
+
+        // Din befintliga JavaScript-kod för iframe-hantering:
+        const iframeWrapper = document.querySelector('.iframe-wrapper');
+        const pageOverlay = document.getElementById('pageOverlay');
+        const closeExpandedViewBtn = document.getElementById('closeExpandedViewBtn');
+        const expandIconBtn = document.getElementById('expandIconBtn');
+
+        const expandedSize = { width: 1200, height: 700 };
+        const bannerSize = { width: 1000, height: 200 };
+        let currentMode = 'banner';
+
+        function setIframeView(mode) {
+            const newSize = (mode === 'expanded') ? expandedSize : bannerSize;
+            const previousMode = currentMode;
+            currentMode = mode;
+
+            iframe.setAttribute('width', String(newSize.width));
+            iframe.setAttribute('height', String(newSize.height));
+            iframeWrapper.style.width = newSize.width + 'px';
+            iframeWrapper.style.height = newSize.height + 'px';
+
+            if (mode === 'expanded') {
+                iframeWrapper.classList.add('expanded-mode');
+                pageOverlay.style.display = 'block';
+                closeExpandedViewBtn.style.display = 'block';
+                expandIconBtn.style.display = 'none';
+            } else { // 'banner' mode
+                iframeWrapper.classList.remove('expanded-mode');
+                pageOverlay.style.display = 'none';
+                closeExpandedViewBtn.style.display = 'none';
+                expandIconBtn.style.display = 'block';
+            }
+
+            if (previousMode !== currentMode || !iframe.dataset.initialModeSent) {
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({ action: 'setViewMode', mode: mode }, '*');
+                    iframe.dataset.initialModeSent = true;
+                }
+            }
+            console.log(`Host: Switched to ${mode} mode. Size: ${newSize.width}x${newSize.height}`);
+        }
+
+        iframe.addEventListener('load', () => {
+            console.log("Iframe loaded with src:", iframe.src, ". Setting initial view.");
+            iframe.dataset.initialModeSent = false;
+            setIframeView('banner'); // Ställer in iframen till "banner"-läge vid laddning
+            if (currentMode === 'banner') { // Säkerställ att knappen visas
+                expandIconBtn.style.display = 'block';
+            }
+        });
+        
+        expandIconBtn.addEventListener('click', () => {
+            setIframeView('expanded');
+        });
+
+        closeExpandedViewBtn.addEventListener('click', () => {
+            setIframeView('banner');
+        });
+
+        pageOverlay.addEventListener('click', () => {
+            if (currentMode === 'expanded') {
+                setIframeView('banner');
+            }
+        });
+
+        window.addEventListener('message', (event) => {
+            // const expectedOrigin = new URL(vueAppBasePath, window.location.href).origin;
+            // if (event.origin !== expectedOrigin && ! (new URL(iframe.src).origin === event.origin) ) { // Tillåt även från iframe src origin
+            //     console.warn("Message received from unexpected origin:", event.origin);
+            //     return;
+            // }
+
+            if (event.data && event.data.action === 'requestExpandFromIframe') {
+                console.log("Host received requestExpandFromIframe from iframe.");
+                if (currentMode === 'banner') {
+                    setIframeView('expanded');
+                }
+            }
+        });
+    </script>
+
 </body>
 </html>
