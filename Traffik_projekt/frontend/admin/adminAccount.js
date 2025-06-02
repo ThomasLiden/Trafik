@@ -5,7 +5,7 @@ const BASE_URL =
     : "https://trafik-q8va.onrender.com/api";
 
 //importerar fetch-funktion.
-import { apiFetch } from "../api.js";
+import { apiFetch } from "./api.js";
 
 export default {
   data() {

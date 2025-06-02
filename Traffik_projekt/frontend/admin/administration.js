@@ -1,7 +1,7 @@
 import AddResellerModal from "./addResellerModal.js";
 import ResellerTable from "./resellersTable.js";
-import { apiFetch } from "../api.js";
-import regions from "../regions.js";
+import { apiFetch } from "./api.js";
+import regions from "./regions.js";
 
 const BASE_URL =
   window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"

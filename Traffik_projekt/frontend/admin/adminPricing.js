@@ -5,7 +5,7 @@ const BASE_URL =
     : "https://trafik-q8va.onrender.com/api";
 
 //hämta återanvändbar hjälpmetod för att göra api-anrop. 
-import {apiFetch} from "../api.js"
+import {apiFetch} from "./api.js"
 
 
 export default {

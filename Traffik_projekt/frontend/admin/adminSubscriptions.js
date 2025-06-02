@@ -1,4 +1,4 @@
-import { apiFetch } from "../api.js";
+import { apiFetch } from "./api.js";
 
 const BASE_URL =
   window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"

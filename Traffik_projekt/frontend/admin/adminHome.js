@@ -3,7 +3,7 @@ const BASE_URL =
     ? "http://localhost:5000/api"
     : "https://admin-lqz8.onrender.com/api";
 
-import { apiFetch } from "../api.js";
+import { apiFetch } from "./api.js";
 
 export default {
   name: "AdminOverview",
