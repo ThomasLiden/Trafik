@@ -8,6 +8,7 @@ from flask_cors import CORS
 """ from supabase import create_client, Client """
 from models.supabase_client import supabase
 # ändrat till centraliserad hämtningn
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")  # fallback för lokal dev
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -25,7 +26,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) """
 payments_blueprint = Blueprint('payments', __name__)
 CORS(payments_blueprint, resources={
     r"/api/*": {
-        "origins": ["http://127.0.0.1:5500", "http://localhost:5500"],
+        "origins": ["http://127.0.0.1:5500", "http://localhost:5500", FRONTEND_URL],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "Accept"]
     }
@@ -51,7 +52,7 @@ def create_checkout_session():
             }],
             mode='subscription',
             ui_mode='embedded',
-            return_url='http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}',
+            return_url='f"{FRONTEND_URL}/return?session_id={CHECKOUT_SESSION_ID}',
         )
         
         return jsonify({
@@ -65,11 +66,11 @@ def create_checkout_session_api():
     # Hantera CORS preflight request
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'http://127.0.0.1:5500')
+        response.headers.add('Access-Control-Allow-Origin', FRONTEND_URL)
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept')
         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
         return response
-        
+
     try:
         # Hämta användar-ID från request
         data = request.get_json()
@@ -103,7 +104,7 @@ def create_checkout_session_api():
             }],
             mode='subscription',
             ui_mode='embedded',
-            return_url='http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}',
+            return_url=f'{FRONTEND_URL}/return?session_id={{CHECKOUT_SESSION_ID}}',
             client_reference_id=user_id,
             metadata={
                 "reseller_id": reseller_id
@@ -111,7 +112,7 @@ def create_checkout_session_api():
         )
         logger.info(f"Checkout session created successfully: {session.id}")
 
-        # spara betalningen i Supabase
+        # Spara betalningen i Supabase
         payment_data = {
             "stripe_session_id": session.id,
             "stripe_subscription_id": session.subscription,  
@@ -126,19 +127,18 @@ def create_checkout_session_api():
         except Exception as supa_err:
             logger.error(f"Failed to save payment to Supabase: {supa_err}")
 
-        # Returnera client secret som frontend behöver för att initiera checkout
+        # Returnera client secret
         response = jsonify({
             'clientSecret': session.client_secret
         })
-        response.headers.add('Access-Control-Allow-Origin', 'http://127.0.0.1:5500')
+        response.headers.add('Access-Control-Allow-Origin', FRONTEND_URL)
         return response
-        
+
     except Exception as e:
-        # returnera fel
         logger.error(f"Error in create_checkout_session: {str(e)}", exc_info=True)
         response = jsonify({'error': str(e)}), 500
-        response[0].headers.add('Access-Control-Allow-Origin', 'http://127.0.0.1:5500')
-        return response 
+        response[0].headers.add('Access-Control-Allow-Origin', FRONTEND_URL)
+        return response
 
 #  kod för webhook
 
