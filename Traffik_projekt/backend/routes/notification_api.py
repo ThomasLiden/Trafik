@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
 from supabase import create_client
+from poller import poll_once  # Importera poller-funktionen
 import requests
 import os
+
 
 notification_api = Blueprint("notification_api", __name__, url_prefix="/api")
 
@@ -234,3 +236,13 @@ def list_notifications():
     except Exception as e:
         print("❌ Fel vid hämtning av notifikationer:", e)
         return jsonify({"error": "Kunde inte hämta notifikationer", "details": str(e)}), 500
+    
+@notification_api.route("/trigger-poller", methods=["POST"])
+def trigger_poller():
+    try:
+        print("🚀 Manuell trigger av poller startad...")
+        poll_once()
+        return jsonify({"message": "Poller kördes"}), 200
+    except Exception as e:
+        print("❌ Fel vid manuell poller-trigger:", e)
+        return jsonify({"error": str(e)}), 500
