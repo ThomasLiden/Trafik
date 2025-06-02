@@ -12,6 +12,19 @@ from routes.trafikverket_proxy import trafikverket_proxy
 
 app = Flask(__name__)
 
+# Logga inkommande requests
+@app.before_request
+def debug():
+    print(f"➡️ {request.method} {request.path}")
+
+# Registrera Blueprints
+app.register_blueprint(member_blueprint)
+app.register_blueprint(admin_blueprint)
+app.register_blueprint(traffic_blueprint)
+app.register_blueprint(payments_blueprint)
+app.register_blueprint(notification_api)
+app.register_blueprint(trafikverket_proxy)
+
 # CORS-inställningar (tillåt API-åtkomst från frontend)
 CORS(app,
      supports_credentials=True,
@@ -26,21 +39,6 @@ CORS(app,
      allow_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"]
 )
-
-
-
-# Logga inkommande requests
-@app.before_request
-def debug():
-    print(f"➡️ {request.method} {request.path}")
-
-# Registrera Blueprints
-app.register_blueprint(member_blueprint)
-app.register_blueprint(admin_blueprint)
-app.register_blueprint(traffic_blueprint)
-app.register_blueprint(payments_blueprint)
-app.register_blueprint(notification_api)
-app.register_blueprint(trafikverket_proxy)
 
 @app.route("/api/<path:path>", methods=["OPTIONS"])
 def options_handler(path):
