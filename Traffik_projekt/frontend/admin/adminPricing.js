@@ -1,5 +1,11 @@
+// Lägg till högst upp i filen:
+const BASE_URL =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000/api"
+    : "https://trafik-q8va.onrender.com/api";
+
 //hämta återanvändbar hjälpmetod för att göra api-anrop. 
-import {apiFetch} from "../api.js"
+import {apiFetch} from "./api.js"
 
 
 export default {
@@ -21,7 +27,7 @@ export default {
     async fetchprice() {
       this.loading = true; //Visa laddning
       try {
-        const data = await apiFetch("http://localhost:5000/api/admin/pricing");
+        const data = await apiFetch(`${BASE_URL}/admin/pricing`);
         this.currentPrice = data.price;
       } catch (err) {
         console.error("Fel vid hämtning:", err.message);
@@ -44,7 +50,7 @@ export default {
 
       try {
         //skickar nytt pris till backend med POST. 
-        const data = await apiFetch("http://localhost:5000/api/admin/pricing/update", {
+        const data = await apiFetch(`${BASE_URL}/admin/pricing/update`, {
           method: "POST",
           body: JSON.stringify({ price: parseFloat(this.newPrice)})
         });

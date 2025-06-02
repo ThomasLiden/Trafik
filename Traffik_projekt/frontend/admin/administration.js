@@ -1,7 +1,12 @@
 import AddResellerModal from "./addResellerModal.js";
 import ResellerTable from "./resellersTable.js";
-import { apiFetch } from "../api.js";
-import regions from "../regions.js";
+import { apiFetch } from "./api.js";
+import regions from "./regions.js";
+
+const BASE_URL =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000/api"
+    : "https://trafik-q8va.onrender.com/api";
 
 export default {
   //Registrera komponenter som används. 
@@ -33,7 +38,7 @@ export default {
     //Hämta alla tidningar från backend. 
     async fetchResellers() {
       try {
-        const data = await apiFetch("http://localhost:5000/api/admin/resellers");
+        const data = await apiFetch(`${BASE_URL}/admin/resellers`);
         this.resellers = data.resellers || [];
         this.message = this.resellers.length
           ? ""
@@ -71,7 +76,8 @@ export default {
           url += "?" + params.join("&");
         }
 
-        const data = await apiFetch(url);
+        const fullUrl = url.startsWith('/api') ? `${BASE_URL}${url}` : url;
+        const data = await apiFetch(fullUrl);
         this.stats = {
           sms_count: data.sms_count ?? 0,
           sms_30_days: data.sms_30_days ?? 0,

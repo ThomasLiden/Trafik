@@ -2,6 +2,11 @@
 
 import SignupForm from "./SignupForm.js";
 
+const BASE_URL =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000/api"
+    : "https://trafik-q8va.onrender.com/api";
+
 export default {
     name: 'subscription-modal',
     components: {
@@ -78,13 +83,13 @@ export default {
         // initziera stripe när componenten är mounted
       this.stripe = Stripe('pk_test_51RIsEVFPlu7UXDRDAlQtGOM9XRv0N27uADmwrhcb8f7PvRCZ1KDoViIn8QH3UuS38aBWsMYkhH9bcPJEH0DreFQX00tfP0ZdCF');
 
-      fetch('https://trafik-q8va.onrender.com/api/regions')
+      fetch(`${BASE_URL}/regions`)
         .then(res => res.json())
         .then(data => {
           this.regions = data; 
 
           const domain = window.location.hostname;
-          return fetch(`https://trafik-q8va.onrender.com/api/reseller-region?domain=${domain}`);
+          return fetch(`${BASE_URL}/reseller-region?domain=${domain}`);
           
         })
         .then(res => res.json ())
@@ -120,7 +125,7 @@ export default {
         
         try {
           // skicka request till backend för att skapa en checkout-session
-          const response = await fetch('https://trafik-q8va.onrender.com/api/create-checkout-session', {
+          const response = await fetch(`${BASE_URL}/create-checkout-session`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
