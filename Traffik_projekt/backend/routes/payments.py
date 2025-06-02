@@ -24,13 +24,13 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) """
 
 # Skapa en ny blueprint för betalningar
 payments_blueprint = Blueprint('payments', __name__)
-CORS(payments_blueprint, resources={
-    r"/api/*": {
-        "origins": ["http://127.0.0.1:5500", "http://localhost:5500", FRONTEND_URL],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "Accept"]
-    }
-})
+# CORS(payments_blueprint, resources={
+#     r"/api/*": {
+#         "origins": ["http://127.0.0.1:5500", "http://localhost:5500", FRONTEND_URL],
+#         "methods": ["GET", "POST", "OPTIONS"],
+#         "allow_headers": ["Content-Type", "Authorization", "Accept"]
+#     }
+# })
 
 # Konfigurera Stripe secret key och price ID
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
