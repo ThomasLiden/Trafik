@@ -71,7 +71,12 @@ def signup():
             "location_id": location_id
         }).execute()
 
-        return jsonify({"message": "User created", "email": email}), 200
+        return jsonify({
+            "message": "User created",
+            "email": email,
+            "user_id": user_id  # ⬅️ detta är det som frontend behöver
+        }), 200
+
 
     except Exception as e:
         import traceback

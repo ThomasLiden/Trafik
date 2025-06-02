@@ -88,11 +88,14 @@ export default {
           return;
         }
 
-        if (data.message) {
+        if (data.message && data.user_id) {
           this.$emit("signup-success", {
             email: this.email,
-            phone: this.phone
+            phone: this.phone,
+            user_id: data.user_id
           });
+        } else {
+          console.error("❌ user_id saknas i backend-svar:", data);
         }
 
         this.message = data.message || data.error;
