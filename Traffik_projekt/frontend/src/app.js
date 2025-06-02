@@ -1,12 +1,41 @@
 import router from "./router.js";
 
-import Modal from "./components/Modal.js";
-import SubscriptionModal from "./components/SubscriptionModal.js";
-import SignupForm from "./components/SignupForm.js";
-import LoggedInUser from "./components/LoggedInUser.js";
-import ResetPasswordForm from "./components/ResetPasswordForm.js";
+import Modal from "./Modal.js";
+import SubscriptionModal from "./SubscriptionModal.js";
+import SignupForm from "./SignupForm.js";
+import LoggedInUser from "./LoggedInUser.js";
+import ResetPasswordForm from "./ResetPasswordForm.js";
 // MapView kommer att användas av routern, så den behöver inte nödvändigtvis importeras här
 // om den är korrekt registrerad i routern och används via <router-view>.
+
+// Funktion för att applicera anpassade stilar från URL:en
+function applyCustomStylesFromUrl() {
+  // Parametrar förväntas vara FÖRE hashen (#) i URL:en
+  // t.ex. /kundmapp/index.html?fontFamily=Arial&primaryColor=red#/sökväg
+  const urlParams = new URLSearchParams(window.location.search);
+  const rootElement = document.documentElement; // Applicera CSS-variabler på <html> (eller document.getElementById('app'))
+
+  // Hämta och applicera fontFamily
+  const fontFamily = urlParams.get('fontFamily');
+  if (fontFamily) {
+      rootElement.style.setProperty('--app-font-family', fontFamily);
+  }
+
+  // Hämta och applicera primaryColor
+  const primaryColor = urlParams.get('primaryColor');
+  if (primaryColor) {
+      rootElement.style.setProperty('--app-primary-color', primaryColor);
+  }
+
+  // Här kan vi lägga till logik för andra parametrar (textColor, fontSize, backgroundColor)
+  // om och när de blir aktuella, t.ex.:
+  // const textColor = urlParams.get('textColor');
+  // if (textColor) {
+  //     rootElement.style.setProperty('--app-text-color', textColor);
+  // }
+}
+
+
 
 // Mounta Vue-applikationen
 const app = Vue.createApp({
@@ -100,6 +129,9 @@ const app = Vue.createApp({
   },
 
   mounted() {
+    // Anropa funktionen för att applicera stilar när appen är monterad
+     applyCustomStylesFromUrl();
+
     if (this.loggedIn) {
       this.userId = localStorage.getItem("user_id");
     }

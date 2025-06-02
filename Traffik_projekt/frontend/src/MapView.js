@@ -3,7 +3,7 @@
 
 // Importerar funktionen useTrafficMap från './map.js'.
 // Denna funktion innehåller all logik för att interagera med kartan (Leaflet) och hämta trafikdata.
-import { useTrafficMap } from "./map.js";
+import { useTrafficMap } from "./Map.js";
 
 // Exporterar Vue-komponentens definition.
 export default {
@@ -77,7 +77,7 @@ export default {
             renderMarkersOnMap, // Funktion för att rendera markörer på kartan.
             getMapInstance // Funktion för att få tillgång till Leaflet-kartinstansen.
         } = useTrafficMap(
-            "http://127.0.0.1:5000/api/traffic-info", // Backend-URL för trafikdata. Viktigt att den är korrekt.
+            "https://trafik-q8va.onrender.com/api/traffic-info", // Backend-URL för trafikdata. Viktigt att den är korrekt.
             counties.value, // Skickar med listan över län.
             countyNumberToName.value, // Skickar med den computeade mappningen.
             currentIframeMode // Skickar ref:en direkt så useTrafficMap kan reagera på lägesändringar.
@@ -338,7 +338,8 @@ export default {
             emit('open-signup'); // Skickar 'open-signup' händelsen till föräldrakomponenten.
         };
         const handleOpenAccount = () => {
-            emit('open-account'); // Skickar 'open-account' händelsen. Behöver inte expandera först, då det är en del av appen.
+            requestExpansionIfNeeded();
+            emit('open-account');
         };
 
         // Växlar synligheten för filter-dropdown-menyn.

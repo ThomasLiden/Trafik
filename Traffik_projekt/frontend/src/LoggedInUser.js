@@ -27,20 +27,20 @@ export default {
         if (!this.userId) return;     // ingen userId → inget fetch
         const token = localStorage.getItem("access_token");
         // Hämta profil
-        let res = await fetch(`http://127.0.0.1:5000/api/user-profile?user_id=${this.userId}`, {
+        let res = await fetch(`https://trafik-q8va.onrender.com/api/user-profile?user_id=${this.userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.profile = await res.json();
   
         // Hämta abonnemang
-        res = await fetch(`http://127.0.0.1:5000/api/subscriptions?user_id=${this.userId}`, {
+        res = await fetch(`https://trafik-q8va.onrender.com/api/subscriptions?user_id=${this.userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.subscriptions = await res.json();
 
         // Pris från reseller
         const domain = window.location.hostname;
-        const resellerRes = await fetch(`http://127.0.0.1:5000/api/reseller-region?domain=${domain}`);
+        const resellerRes = await fetch(`https://trafik-q8va.onrender.com/api/reseller-region?domain=${domain}`);
         const resellerData = await resellerRes.json();
         this.price = resellerData.price;
         this.resellerName = resellerData.name;
@@ -56,13 +56,13 @@ export default {
         try {
             if (!this.userId) return;
             // Hämta profil
-            let res = await fetch(`http://127.0.0.1:5000/api/user-profile?user_id=${this.userId}`, {
+            let res = await fetch(`https://trafik-q8va.onrender.com/api/user-profile?user_id=${this.userId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             this.profile = await res.json();
 
             // Hämta abonnemang
-            res = await fetch(`http://127.0.0.1:5000/api/subscriptions?user_id=${this.userId}`, {
+            res = await fetch(`https://trafik-q8va.onrender.com/api/subscriptions?user_id=${this.userId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             this.subscriptions = await res.json();
@@ -85,7 +85,7 @@ export default {
         if (!confirm("Är du säker på att du vill avsluta denna prenumeration?")) return;
 
         try {
-            const res = await fetch("http://127.0.0.1:5000/api/cancel-subscription", {
+            const res = await fetch("https://trafik-q8va.onrender.com/api/cancel-subscription", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
