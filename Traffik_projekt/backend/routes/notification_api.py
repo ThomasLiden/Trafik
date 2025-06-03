@@ -247,11 +247,9 @@ def send_sms_code():
         print("🔍 Payload:", data)
 
         phone = data.get("phone")
-        user_id = data.get("user_id")
 
-        if not phone or not user_id:
-            print("❌ Saknar phone eller user_id")
-            return jsonify({"error": "Telefonnummer eller användar-ID saknas"}), 400
+        if not phone:
+            return jsonify({"error": "Telefonnummer saknas"}), 400
 
         # Rensa gamla koder
         supabase.table("sms_codes").delete().eq("phone", phone).execute()
@@ -264,7 +262,6 @@ def send_sms_code():
 
         # Spara koden i Supabase
         insert_result = supabase.table("sms_codes").insert({
-            "user_id": user_id,
             "phone": phone,
             "code": code,
             "verified": False,
