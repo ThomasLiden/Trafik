@@ -312,7 +312,8 @@ def verify_sms_code():
             return jsonify({"error": "Intern fel – kod saknar utgångstid"}), 500
 
         if isinstance(expires_at, str):
-            expires_at = datetime.fromisoformat(expires_at)
+            # Tar bort Z från slutet för att undvika ValueError i fromisoformat
+            expires_at = datetime.fromisoformat(expires_at.replace("Z", ""))
 
         print(f"⏰ expires_at: {expires_at}, nu: {datetime.utcnow()}")
 
@@ -328,7 +329,6 @@ def verify_sms_code():
     except Exception as e:
         print("❌ Fel i verify_sms_code:", e)
         return jsonify({"error": "Verifiering misslyckades", "details": str(e)}), 500
-
 
 @notification_api.route("/resend-sms-code", methods=["POST", "OPTIONS"])
 def resend_sms_code():
