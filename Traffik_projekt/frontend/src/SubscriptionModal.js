@@ -56,7 +56,7 @@ export default {
           <h3>Tack!</h3>
           <p>Du är nu prenumerant.</p>
           <h3>Bekräftelse</h3>
-          <p>Område: {{ region.region }}<p>
+          <p>Område: {{ region.region }}</p>
           <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
           <p>Till: {{ phone }} ({{ email }})</p>
           <p>Pris per månad: {{ price }} kr</p>

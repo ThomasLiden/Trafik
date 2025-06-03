@@ -270,7 +270,7 @@ def send_sms_code():
 
         # Skicka till sms-server
         sms_response = requests.post(
-            os.getenv("SMS_SERVER_URL", "http://localhost:3000/send-sms"),
+            SMS_SERVER_URL,
             json={"to": phone, "message": f"Din verifieringskod är {code}"},
             timeout=50
         )
