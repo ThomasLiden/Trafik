@@ -208,10 +208,10 @@ h1, h2, h3, h4, h5, h6 {
   .filter-dropdown-panel {
     min-width: 160px; /* Mindre min-bredd för dropdown på mobil */
     padding: 8px; /* Mindre padding */
-    bottom: auto; /* Återställ bottom, låt den flöda med innehållet */
-    top: calc(100% + 5px); /* Positionera nedanför knappen */
-    left: 0; /* Justera position */
-    transform: none; /* Ta bort transform */
+    bottom: calc(100% + 5px); /* Positionerar panelen 5px ovanför knappen */
+    top: auto; /* Se till att top inte påverkar positionen nedifrån */
+    left: 50%; /* Centrera horisontellt */
+    transform: translateX(-50%); /* Korrigera centreringen */
     box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Mindre skugga */
   }
 
