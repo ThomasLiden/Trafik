@@ -14,9 +14,9 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # 🔗 Externa tjänster
-TRAFIKVERKET_API = os.getenv("TRAFIKVERKET_PROXY_URL", "http://localhost:5000/trafikinfo")
-SMS_SERVER_URL = os.getenv("RENDER_SMS_URL", "http://localhost:3000/send-sms")
-EMAIL_SERVER_URL = os.getenv("RENDER_EMAIL_URL", "http://localhost:3000/send-email")
+TRAFIKVERKET_API = os.getenv("TRAFIKVERKET_PROXY_URL")
+SMS_SERVER_URL = os.getenv("RENDER_SMS_URL")
+EMAIL_SERVER_URL = os.getenv("RENDER_EMAIL_URL")
 API_KEY = os.getenv("X_API_KEY")  # 🔐 Hämtas från .env
 
 @notification_api.route("/send_sms_for_deviation", methods=["POST", "OPTIONS"])
@@ -247,7 +247,6 @@ def send_sms_code():
         print("🔍 Payload:", data)
 
         phone = data.get("phone")
-
         if not phone:
             return jsonify({"error": "Telefonnummer saknas"}), 400
 
@@ -269,10 +268,11 @@ def send_sms_code():
         }).execute()
         print("💾 Insert-resultat:", insert_result)
 
-        # Skicka till sms-server (eller e-post i dev)
+        # Skicka till sms-server
         sms_response = requests.post(
             os.getenv("SMS_SERVER_URL", "http://localhost:3000/send-sms"),
-            json={"to": phone, "message": f"Din verifieringskod är {code}"}
+            json={"to": phone, "message": f"Din verifieringskod är {code}"},
+            timeout=50
         )
         print("📤 SMS-server svar:", sms_response.status_code, sms_response.text)
 
@@ -281,6 +281,7 @@ def send_sms_code():
     except Exception as e:
         print("❌ Undantag i /send-sms-code:", e)
         return jsonify({"error": "Misslyckades att skicka kod", "details": str(e)}), 500
+
 
 @notification_api.route("/verify-sms-code", methods=["POST"])
 def verify_sms_code():
@@ -310,7 +311,6 @@ def verify_sms_code():
             print("⚠️ 'expires_at' saknas i raden:", sms_code)
             return jsonify({"error": "Intern fel – kod saknar utgångstid"}), 500
 
-        # Om det är str, konvertera
         if isinstance(expires_at, str):
             expires_at = datetime.fromisoformat(expires_at)
 
@@ -364,7 +364,12 @@ def resend_sms_code():
             "X-API-KEY": API_KEY
         }
 
-        sms_res = requests.post(SMS_SERVER_URL, json=payload, headers=headers)
+        sms_res = requests.post(
+            SMS_SERVER_URL,
+            json=payload,
+            headers=headers,
+            timeout=50
+        )
         sms_res.raise_for_status()
 
         return jsonify({"message": "Verifieringskod skickad igen"}), 200
