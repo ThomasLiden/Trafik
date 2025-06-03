@@ -120,31 +120,28 @@ export default {
     },
     template: `
         <div v-if="profile" class="logged-in-user">
-        <button class="button-tertiary" @click="$emit('back-to-map')">
-        Till kartan
-        </button>
 
-      <h2>Välkommen, {{ profile.first_name }}!</h2>
+      <h2>Välkommen {{ profile.first_name }}!</h2>
       <p><strong>E-post:</strong> {{ profile.email }}</p>
       <p><strong>Telefon:</strong> {{ profile.phone }}</p>
 
       <div class="subscription-info">
         <h3>Dina prenumerationer</h3>
-        <p v-if="resellerName">Tidning: {{ resellerName }}</p>
-        <p><strong>Pris per månad: </strong> {{ price }} kr</p>
-
-        <ul v-if="subscriptions.length > 0">
-          <li v-for="sub in subscriptions" :key="sub.subscription_id">
-          {{ sub.period }} 
-           <span :class="{ active: sub.active, inactive: !sub.active }">
-            {{ sub.active ? 'Aktiv' : 'Inaktiv' }}
-           </span>
-        </li>   
-          <button @click="removeSubscription(sub.subscription_id)">Avsluta</button>
-        
-      </ul>
-      <p v-else>Inga prenumerationer hittades.</p>
-      </div>
+                 <div v-if="subscriptions.length > 0" class="subscription-list">
+          <p v-if="resellerName"><strong>Tidning: </strong> {{ resellerName }}</p>
+          <p><strong>Pris per månad: </strong> {{ price }} kr</p>
+          <p v-for="sub in subscriptions" :key="sub.subscription_id" class="subscription-item">
+          <strong>Status: </strong>
+          <span class="period">{{ sub.period }}</span>
+            <span :class="['status', sub.active ? 'active' : 'inactive']">
+              {{ sub.active ? 'Aktiv' : 'Avslutad' }}
+                           <button class="button-tertiary" @click="removeSubscription(sub.subscription_id)">
+              Avsluta prenumeration
+            </button>
+            </span>
+             </p>
+            </div>
+            <div v-else>Inga prenumerationer hittades.</div>
 
       <button class="button-secondary" @click="logout">Logga ut</button>
       <button class="button-secondary" @click="editing = true">Ändra uppgifter</button>
@@ -153,6 +150,7 @@ export default {
          @cancel="editing = false"
             />
 
+    </div>
     </div>
     <p v-else>Laddar profil…</p>
     `
