@@ -27,9 +27,16 @@
       background: #f5f5f5;
       padding: 0.5em;
       border-radius: 4px;
+      overflow-x: auto;
     }
     .actions button {
       margin-right: 1em;
+    }
+    .sms-preview {
+      margin-top: 0.5em;
+      font-family: monospace;
+      font-size: 0.98em;
+      color: #333;
     }
   </style>
 </head>
@@ -70,6 +77,30 @@
   <script>
     const BASE_URL = "https://trafik-q8va.onrender.com";
 
+    // Hjälpfunktion för att bygga SMS-preview exakt som backend
+    function buildSmsPreview(dev) {
+      const maxSmsLen = 160;
+      const header = (dev.Header || dev.Title || "Trafikhändelse").trim().substring(0, 60);
+      const msg = (dev.Message || dev.Description || "").trim();
+      const devId = dev.Id || "";
+      const link = devId
+        ? `https://www.trafikverket.se/trafikinformation/sok/?sok=${devId}`
+        : "https://www.trafikverket.se/trafikinformation/";
+      let shortDetails = "";
+      if (msg) {
+        // Ta max två meningar men trunkera snyggt om det blir för långt
+        const sentences = msg.split(". ");
+        shortDetails = sentences.slice(0, 2).join(". ").trim();
+        const allowedLen = maxSmsLen - link.length - header.length - 25;
+        if (shortDetails.length > allowedLen) {
+          shortDetails = shortDetails.substring(0, allowedLen).trim() + "…";
+        }
+      } else {
+        shortDetails = "Ingen ytterligare information – se länk.";
+      }
+      return `🚧 ${header}\n${shortDetails}\nLäs mer: ${link}`;
+    }
+
     document.getElementById("fetchBtn").addEventListener("click", async () => {
       const countyNo = document.getElementById("countySelect").value;
       const results = document.getElementById("results");
@@ -89,16 +120,18 @@
           const li = document.createElement("li");
           const header = dev.Header || "Trafikhändelse";
           const msg = dev.Message || "";
-          const link = `https://www.trafikverket.se/trafikinformation/sok/?sok=${dev.Id}`;
-          const short = msg.split(". ").slice(0, 2).join(". ");
+          const link = dev.Id
+            ? `https://www.trafikverket.se/trafikinformation/sok/?sok=${dev.Id}`
+            : "https://www.trafikverket.se/trafikinformation/";
 
-          const preview = `🚧 ${header}\n${short}\nLäs mer: ${link}`;
+          // Preview enligt samma logik som backend
+          const preview = buildSmsPreview(dev);
 
           li.innerHTML = `
             <strong>${header}</strong><br>
-            ${msg}<br>
+            ${msg ? msg + "<br>" : ""}
             <small><em>${dev.MessageTypeValue || "Typ okänd"} på väg ${dev.RoadNumber || "okänd"}</em></small>
-            <pre><strong>SMS-preview:</strong>\n${preview}</pre>
+            <pre class="sms-preview"><strong>SMS-preview:</strong>\n${preview}</pre>
             <div class="actions">
               <button class="smsBtn">📲 Skicka SMS</button>
               <button class="emailBtn">📧 Skicka Mail</button>
@@ -109,7 +142,6 @@
             const btn = li.querySelector(".smsBtn");
             btn.disabled = true;
             btn.innerText = "⏳ Skickar SMS...";
-
             try {
               const res = await fetch(`${BASE_URL}/api/send_sms_for_deviation`, {
                 method: "POST",
@@ -120,7 +152,6 @@
                   shortlinks: true
                 })
               });
-
               const json = await res.json();
               li.classList.add("sent");
               btn.innerText = `✅ SMS skickat (${json.count || 0})`;
@@ -134,7 +165,6 @@
             const btn = li.querySelector(".emailBtn");
             btn.disabled = true;
             btn.innerText = "⏳ Skickar Mail...";
-
             try {
               const res = await fetch(`${BASE_URL}/api/send_email_for_deviation`, {
                 method: "POST",
@@ -144,7 +174,6 @@
                   countyNo: parseInt(countyNo)
                 })
               });
-
               const json = await res.json();
               li.classList.add("sent");
               btn.innerText = `✅ Mail skickat (${json.count || "OK"})`;
