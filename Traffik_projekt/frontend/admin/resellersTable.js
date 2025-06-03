@@ -67,6 +67,7 @@ export default {
             <th>Tidningsutgivare</th>
             <th>E-post</th>
             <th>Län</th>
+            <th>Reseller ID</th>
           </tr>
         </thead>
         <tbody>
@@ -81,6 +82,7 @@ export default {
             <td>{{ r.name }}</td>
             <td>{{ r.email }}</td>
             <td>{{ r.region }}</td>
+            <td>{{ r.reseller_id }}</td>
           </tr>
         </tbody>
       </table>

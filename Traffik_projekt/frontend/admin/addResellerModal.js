@@ -49,7 +49,12 @@ export default {
             })
           });
           //Om lyckat, visa meddelande. 
-          this.message = "Tidning skapad!";
+          this.message = `
+             Tidning skapad!\n
+             E-post: ${data.email}\n
+             Lösenord: ${data.password}\n
+             Reseller ID: ${data.reseller_id}
+          `;
           
           // Rensa fälten
           this.name = "";
@@ -71,7 +76,7 @@ export default {
         <div class="modal-content">
           <span class="close-button" @click="$emit('close')"> x </span>  
           <h3>Lägg till ny tidning</h3>
-          <p v-if="message">{{ message }}</p>
+          <p v-if="message" style="white-space: pre-line">{{ message }}</p>
   
           <form @submit.prevent="addReseller" class="form-grid">
   

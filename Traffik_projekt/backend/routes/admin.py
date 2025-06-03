@@ -263,11 +263,31 @@ def update_reseller_price():
             .select("stripe_product_id")\
             .eq("reseller_id", reseller_id)\
             .eq("active", True)\
-            .single()\
+            .limit(1)\
             .execute()
         if not product_row.data:
-            return jsonify({"error": "Ingen aktiv produkt hittades för denna reseller."}), 400
-        stripe_product_id = product_row.data["stripe_product_id"]
+            # Om ingen reseller_product finns - Skapa ny Stripe-produkt
+            reseller_info = supabase.table("reseller")\
+                .select("name")\
+                .eq("reseller_id", reseller_id)\
+                .single()\
+                .execute()
+
+            reseller_name = reseller_info.data.get("name", "Tidning")
+
+            product = stripe.Product.create(
+               name=f"Trafiknotifiering - {reseller_name}",
+               description="Prenumeration för trafiknotifieringar",
+               metadata={
+               "reseller_id": reseller_id,
+               "reseller_name": reseller_name
+             }
+            )
+
+            stripe_product_id = product.id
+        else:
+            stripe_product_id = product_row.data[0]["stripe_product_id"]
+
 
         # 2. Skapa nytt pris i Stripe
         stripe_price = stripe.Price.create(
@@ -326,8 +346,6 @@ def get_all_resellers():
         return jsonify({"error": str(e)}), 500
 
 
-
-from datetime import datetime, timedelta
 
 # Hämtar statistik för en viss tidning eller för alla tidningar i ett län (region)
 # Endast för superadmin
@@ -488,7 +506,13 @@ def create_reseller():
             }), 201
         # --- Slut Stripe-logik ---
 
-        return jsonify({"message": "Reseller skapad!", "reseller": result.data}), 201
+        #return jsonify({"message": "Reseller skapad!", "reseller": result.data}), 201
+        return jsonify({
+            "message": "Reseller skapad!",
+            "reseller_id": reseller_id,
+            "email": email,
+            "password": password  # bara för bekräftelse – sparas inte i databasen!
+        }), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
