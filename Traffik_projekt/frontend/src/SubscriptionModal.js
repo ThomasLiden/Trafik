@@ -99,7 +99,7 @@ export default {
 
     // LAGT TILL - pris och namn från reseller 
   try {
-    const response = await fetch(`http://127.0.0.1:5000/api/reseller-info?reseller_id=${resellerKey}`);
+    const response = await fetch(`https://trafik-q8va.onrender.com/api/reseller-info?reseller_id=${resellerKey}`);
     const data = await response.json();
 
     if (!response.ok) throw new Error(data.error || "Fel vid hämtning");
