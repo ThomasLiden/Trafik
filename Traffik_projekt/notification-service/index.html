@@ -3,194 +3,228 @@
 <head>
   <meta charset="UTF-8" />
   <title>Trafiknotifieringar</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: system-ui, sans-serif;
       max-width: 800px;
       margin: 2em auto;
+      padding: 0 1em;
     }
-    select, button, input {
+
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 1em;
+    }
+
+    select, button {
       padding: 0.5em;
       font-size: 1em;
       margin-top: 0.5em;
     }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
     li {
       margin-bottom: 1em;
       padding: 1em;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 8px;
     }
+
     .sent {
       background-color: #e0ffe0;
     }
-    pre {
-      background: #f5f5f5;
+
+    .actions {
+      margin-top: 0.5em;
+    }
+
+    .actions button {
+      margin-right: 0.5em;
+    }
+
+    pre.sms-preview {
+      background: #f8f8f8;
       padding: 0.5em;
       border-radius: 4px;
-      overflow-x: auto;
-    }
-    .actions button {
-      margin-right: 1em;
-    }
-    .sms-preview {
-      margin-top: 0.5em;
       font-family: monospace;
-      font-size: 0.98em;
-      color: #333;
+      white-space: pre-wrap;
+      margin-top: 0.5em;
     }
   </style>
 </head>
 <body>
-  <h1>📡 Trafiknotifieringar – Liveflöde</h1>
+  <div id="app">
+    <h1>📡 Trafiknotifieringar – Liveflöde</h1>
 
-  <label for="countySelect">Välj län:</label>
-  <select id="countySelect">
-    <option value="" disabled selected>-- Välj ett län --</option>
-    <option value="1">Stockholms län</option>
-    <option value="2">Västerbottens län</option>
-    <option value="3">Uppsala län</option>
-    <option value="4">Södermanlands län</option>
-    <option value="5">Östergötlands län</option>
-    <option value="6">Jönköpings län</option>
-    <option value="7">Kronobergs län</option>
-    <option value="8">Kalmar län</option>
-    <option value="9">Gotlands län</option>
-    <option value="10">Blekinge län</option>
-    <option value="12">Skåne län</option>
-    <option value="13">Hallands län</option>
-    <option value="14">Västra Götalands län</option>
-    <option value="17">Värmlands län</option>
-    <option value="18">Örebro län</option>
-    <option value="19">Västmanlands län</option>
-    <option value="20">Dalarnas län</option>
-    <option value="21">Gävleborgs län</option>
-    <option value="22">Västernorrlands län</option>
-    <option value="23">Jämtlands län</option>
-    <option value="24">Västerbottens län</option>
-    <option value="25">Norrbottens län</option>
-  </select>
+    <label for="countySelect">Välj län:</label>
+    <select id="countySelect" v-model="countyNo">
+      <option disabled value="">-- Välj ett län --</option>
+      <option v-for="(name, id) in counties" :key="id" :value="id">{{ name }}</option>
+    </select>
 
-  <br />
-  <button id="fetchBtn">🔍 Hämta trafikdata</button>
-  <ul id="results"></ul>
+    <br />
+    <button @click="fetchData" :disabled="loading">🔍 Hämta trafikdata</button>
 
-  <script>
-    const BASE_URL = "https://trafik-q8va.onrender.com";
+    <ul>
+      <li v-if="loading">🔄 Hämtar data från Trafikverket...</li>
+      <li v-if="!loading && results.length === 0">✅ Inga händelser just nu.</li>
 
-    // Hjälpfunktion för att bygga SMS-preview exakt som backend
-    function buildSmsPreview(dev) {
-      const maxSmsLen = 160;
-      const header = (dev.Header || dev.Title || "Trafikhändelse").trim().substring(0, 60);
-      const msg = (dev.Message || dev.Description || "").trim();
-      const devId = dev.Id || "";
-      const link = devId
-        ? `https://www.trafikverket.se/trafikinformation/sok/?sok=${devId}`
-        : "https://www.trafikverket.se/trafikinformation/";
-      let shortDetails = "";
-      if (msg) {
-        // Ta max två meningar men trunkera snyggt om det blir för långt
-        const sentences = msg.split(". ");
-        shortDetails = sentences.slice(0, 2).join(". ").trim();
-        const allowedLen = maxSmsLen - link.length - header.length - 25;
-        if (shortDetails.length > allowedLen) {
-          shortDetails = shortDetails.substring(0, allowedLen).trim() + "…";
-        }
-      } else {
-        shortDetails = "Ingen ytterligare information – se länk.";
-      }
-      return `🚧 ${header}\n${shortDetails}\nLäs mer: ${link}`;
-    }
+      <li v-for="(dev, index) in results" :key="dev.Id" :class="{ sent: dev.sent }">
+        <strong>{{ dev.Header || 'Trafikhändelse' }}</strong><br />
+        <span v-if="dev.Message">{{ dev.Message }}<br /></span>
+        <small><em>{{ dev.MessageTypeValue || 'Typ okänd' }} på väg {{ dev.RoadNumber || 'okänd' }}</em></small>
 
-    document.getElementById("fetchBtn").addEventListener("click", async () => {
-      const countyNo = document.getElementById("countySelect").value;
-      const results = document.getElementById("results");
-      results.innerHTML = "<li>🔄 Hämtar data från Trafikverket...</li>";
+        <pre class="sms-preview"><strong>SMS-preview:</strong>
+{{ buildSmsPreview(dev) }}</pre>
 
-      try {
-        const res = await fetch(`${BASE_URL}/trafikinfo?county=${countyNo}`);
-        const data = await res.json();
-        results.innerHTML = "";
+        <div class="actions">
+          <button @click="sendSms(dev, index)" :disabled="dev.smsSending">
+            {{ dev.smsSending ? '⏳ Skickar SMS...' : dev.smsSent ? `✅ SMS skickat (${dev.smsCount || 0})` : '📲 Skicka SMS' }}
+          </button>
+          <button @click="sendEmail(dev, index)" :disabled="dev.emailSending">
+            {{ dev.emailSending ? '⏳ Skickar Mail...' : dev.emailSent ? `✅ Mail skickat (${dev.emailCount || 'OK'})` : '📧 Skicka Mail' }}
+          </button>
+        </div>
+      </li>
+    </ul>
+  </div>
 
-        if (!data.length) {
-          results.innerHTML = "<li>✅ Inga händelser just nu.</li>";
-          return;
-        }
+  <script type="module">
+    const { createApp, reactive } = Vue;
 
-        data.forEach(dev => {
-          const li = document.createElement("li");
-          const header = dev.Header || "Trafikhändelse";
-          const msg = dev.Message || "";
-          const link = dev.Id
-            ? `https://www.trafikverket.se/trafikinformation/sok/?sok=${dev.Id}`
-            : "https://www.trafikverket.se/trafikinformation/";
+    createApp({
+      setup() {
+        const BASE_URL = "https://trafik-q8va.onrender.com";
 
-          // Preview enligt samma logik som backend
-          const preview = buildSmsPreview(dev);
+        const counties = {
+          1: "Stockholms län",
+          2: "Uppsala län",
+          3: "Södermanlands län",
+          4: "Östergötlands län",
+          5: "Jönköpings län",
+          6: "Kronobergs län",
+          7: "Kalmar län",
+          8: "Gotlands län",
+          9: "Blekinge län",
+          10: "Skåne län",
+          12: "Hallands län",
+          13: "Västra Götalands län",
+          14: "Värmlands län",
+          17: "Örebro län",
+          18: "Västmanlands län",
+          19: "Dalarnas län",
+          20: "Gävleborgs län",
+          21: "Västernorrlands län",
+          22: "Jämtlands län",
+          23: "Västerbottens län",
+          24: "Norrbottens län",
+          25: "Utomlands (ej svenskt län)"
+        };
+        
 
-          li.innerHTML = `
-            <strong>${header}</strong><br>
-            ${msg ? msg + "<br>" : ""}
-            <small><em>${dev.MessageTypeValue || "Typ okänd"} på väg ${dev.RoadNumber || "okänd"}</em></small>
-            <pre class="sms-preview"><strong>SMS-preview:</strong>\n${preview}</pre>
-            <div class="actions">
-              <button class="smsBtn">📲 Skicka SMS</button>
-              <button class="emailBtn">📧 Skicka Mail</button>
-            </div>
-          `;
-
-          li.querySelector(".smsBtn").addEventListener("click", async () => {
-            const btn = li.querySelector(".smsBtn");
-            btn.disabled = true;
-            btn.innerText = "⏳ Skickar SMS...";
-            try {
-              const res = await fetch(`${BASE_URL}/api/send_sms_for_deviation`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  devId: dev.Id,
-                  countyNo: parseInt(countyNo),
-                  shortlinks: true,
-                  deviation: dev 
-                })
-              });
-              const json = await res.json();
-              li.classList.add("sent");
-              btn.innerText = `✅ SMS skickat (${json.count || 0})`;
-            } catch (err) {
-              btn.innerText = "❌ Fel vid SMS";
-              console.error(err);
-            }
-          });
-
-          li.querySelector(".emailBtn").addEventListener("click", async () => {
-            const btn = li.querySelector(".emailBtn");
-            btn.disabled = true;
-            btn.innerText = "⏳ Skickar Mail...";
-            try {
-              const res = await fetch(`${BASE_URL}/api/send_email_for_deviation`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  devId: dev.Id,
-                  countyNo: parseInt(countyNo)
-                })
-              });
-              const json = await res.json();
-              li.classList.add("sent");
-              btn.innerText = `✅ Mail skickat (${json.count || "OK"})`;
-            } catch (err) {
-              btn.innerText = "❌ Fel vid mail";
-              console.error(err);
-            }
-          });
-
-          results.appendChild(li);
+        const state = reactive({
+          countyNo: "",
+          counties,
+          results: [],
+          loading: false
         });
-      } catch (err) {
-        console.error("⚠️ Kunde inte hämta data:", err);
-        results.innerHTML = "<li>❌ Fel vid hämtning av data</li>";
+
+        function buildSmsPreview(dev) {
+          const maxSmsLen = 160;
+          const header = (dev.Header || dev.Title || "Trafikhändelse").trim().substring(0, 60);
+          const msg = (dev.Message || dev.Description || "").trim();
+          const devId = dev.Id || "";
+          const link = devId
+            ? `https://www.trafikverket.se/trafikinformation/sok/?sok=${devId}`
+            : "https://www.trafikverket.se/trafikinformation/";
+          let shortDetails = "";
+          if (msg) {
+            const sentences = msg.split(". ");
+            shortDetails = sentences.slice(0, 2).join(". ").trim();
+            const allowedLen = maxSmsLen - link.length - header.length - 25;
+            if (shortDetails.length > allowedLen) {
+              shortDetails = shortDetails.substring(0, allowedLen).trim() + "…";
+            }
+          } else {
+            shortDetails = "Ingen ytterligare information – se länk.";
+          }
+          return `🚧 ${header}\n${shortDetails}\nLäs mer: ${link}`;
+        }
+
+        async function fetchData() {
+          state.loading = true;
+          try {
+            const res = await fetch(`${BASE_URL}/trafikinfo?county=${state.countyNo}`);
+            const data = await res.json();
+            state.results = data.map(d => ({ ...d, smsSent: false, emailSent: false }));
+          } catch (e) {
+            console.error("⚠️ Fel vid hämtning:", e);
+            state.results = [];
+          } finally {
+            state.loading = false;
+          }
+        }
+
+        async function sendSms(dev, index) {
+          state.results[index].smsSending = true;
+          try {
+            const res = await fetch(`${BASE_URL}/api/send_sms_for_deviation`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                devId: dev.Id,
+                countyNo: parseInt(state.countyNo),
+                deviation: dev
+              })
+            });
+            const json = await res.json();
+            state.results[index].smsSent = true;
+            state.results[index].smsCount = json.count || 0;
+            state.results[index].sent = true;
+          } catch (e) {
+            console.error("❌ Fel vid SMS:", e);
+          } finally {
+            state.results[index].smsSending = false;
+          }
+        }
+
+        async function sendEmail(dev, index) {
+          state.results[index].emailSending = true;
+          try {
+            const res = await fetch(`${BASE_URL}/api/send_email_for_deviation`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                devId: dev.Id,
+                countyNo: parseInt(state.countyNo),
+                deviation: dev
+              })
+            });
+            const json = await res.json();
+            state.results[index].emailSent = true;
+            state.results[index].emailCount = json.count || "OK";
+            state.results[index].sent = true;
+          } catch (e) {
+            console.error("❌ Fel vid mail:", e);
+          } finally {
+            state.results[index].emailSending = false;
+          }
+        }
+
+        return {
+          ...Vue.toRefs(state),
+          fetchData,
+          sendSms,
+          sendEmail,
+          buildSmsPreview
+        };
       }
-    });
+    }).mount("#app");
   </script>
 </body>
 </html>
