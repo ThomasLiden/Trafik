@@ -52,7 +52,7 @@ def create_checkout_session():
             }],
             mode='subscription',
             ui_mode='embedded',
-            return_url='f"{FRONTEND_URL}/return?session_id={CHECKOUT_SESSION_ID}',
+            return_url=f"{FRONTEND_URL}/return?session_id={{CHECKOUT_SESSION_ID}}",
         )
         
         return jsonify({

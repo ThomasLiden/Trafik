@@ -42,7 +42,7 @@ export default {
             <h3>Tack!</h3>
             <p>Du är nu prenumerant.</p>
             <h3>Bekräftelse</h3>
-            <p>Område: {{ region.region }}<p>
+            <p>Område: {{ region.region }}</p>
             <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
             <p>Till: {{ phone }} ({{ email }})</p>
             <p>Pris per månad: {{ price }} kr</p>
@@ -115,13 +115,6 @@ export default {
 
     },
   
-    watch: {
-      step(newVal) {
-        if (newVal === 3) {
-          this.sendVerificationCode();
-        }
-      }
-    },
   
     methods: {
       nextStep() {
@@ -145,89 +138,17 @@ export default {
         this.step = 3;
       },
   
-      async sendVerificationCode() {
-        this.codeError = '';
-        try {
-          const response = await fetch('https://trafik-q8va.onrender.com/api/send-sms-code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: this.phone })
-          });
-  
-          const result = await response.json();
-          if (!response.ok) {
-            throw new Error(result.error || 'Misslyckades att skicka verifieringskoden.');
-          }
-  
-          console.log("✅ Verifieringskod skickad till", this.phone);
-        } catch (error) {
-          console.error("❌ Kunde inte skicka verifieringskod:", error);
-          this.codeError = "Kunde inte skicka verifieringskod: " + error.message;
-        }
-      },
-  
-      async verifyCode() {
-        this.codeError = '';
-        if (!this.smsCode || this.smsCode.length !== 6) {
-          this.codeError = "Koden måste vara 6 siffror.";
-          return;
-        }
-  
-        try {
-          const res = await fetch("https://trafik-q8va.onrender.com/api/verify-sms-code", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              phone: this.phone,
-              code: this.smsCode
-            })
-          });
-  
-          const data = await res.json();
-          if (!res.ok) {
-            throw new Error(data.error || "Ogiltig kod.");
-          }
-  
-          this.nextStep();
-        } catch (err) {
-          console.error("❌ Verifieringsfel:", err);
-          this.codeError = err.message || "Kunde inte verifiera koden.";
-        }
-      },
-  
-      async resendCode() {
-        try {
-          const response = await fetch('https://trafik-q8va.onrender.com/api/resend-sms-code', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ phone: this.phone })
-          });
-  
-          const result = await response.json();
-  
-          if (!response.ok) {
-            throw new Error(result.error || 'Misslyckades att skicka om koden');
-          }
-  
-          alert("En ny verifieringskod har skickats via SMS.");
-        } catch (error) {
-          console.error("❌ Kunde inte skicka om SMS:", error);
-          this.codeError = error.message;
-        }
-      },
-  
+ 
       async handlePayment() {
         this.loading = true;
         this.error = null;
-  
+      
         try {
           const userIdToSend = this.userId || localStorage.getItem("user_id");
           if (!userIdToSend) {
             throw new Error("Ingen giltig user_id tillgänglig för betalning");
           }
-  
+      
           const response = await fetch('https://trafik-q8va.onrender.com/api/create-checkout-session', {
             method: 'POST',
             headers: {
@@ -236,28 +157,33 @@ export default {
             },
             body: JSON.stringify({ user_id: userIdToSend })
           });
-  
+      
           if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Något gick fel vid kommunikation med servern');
           }
-  
+      
           const data = await response.json();
           if (!data.clientSecret) {
             throw new Error('Inget client secret mottaget från servern');
           }
-  
+      
           if (!this.stripe) {
             throw new Error('Stripe är inte initialiserad');
           }
-  
-          const checkout = await this.stripe.initEmbeddedCheckout({
-            clientSecret: data.clientSecret
+      
+          // Gå till steg 3 först (så att DOM-elementet finns)
+          this.step = 3;
+      
+          // Vänta tills DOM har uppdaterats innan vi mountar
+          this.$nextTick(async () => {
+            const checkout = await this.stripe.initEmbeddedCheckout({
+              clientSecret: data.clientSecret
+            });
+      
+            checkout.mount('#stripe-checkout-container');
           });
-  
-          checkout.mount('#stripe-checkout-container');
-          this.step = 5;
-  
+      
         } catch (error) {
           console.error('Error in payment process:', error);
           this.error = error.message || 'Ett fel uppstod vid betalningsprocessen';
@@ -265,9 +191,8 @@ export default {
           this.loading = false;
         }
       },
-  
       closeModal() {
         this.$emit('close');
       }
     }
-  };
+};

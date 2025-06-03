@@ -27,15 +27,15 @@ export default {
         if (!this.userId) return;     // ingen userId → inget fetch
         const token = localStorage.getItem("access_token");
         // Hämta profil
-        let res = //await fetch(`https://trafik-q8va.onrender.com/api/user-profile?user_id=${this.userId}`, {
-                    await fetch(`http://127.0.0.1:5000/api/user-profile?user_id=${this.userId}`, {
+        let res = await fetch(`https://trafik-q8va.onrender.com/api/user-profile?user_id=${this.userId}`, {
+                  //  await fetch(`http://127.0.0.1:5000/api/user-profile?user_id=${this.userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.profile = await res.json();
   
         // Hämta abonnemang
-        res = //await fetch(`https://trafik-q8va.onrender.com/api/subscriptions?user_id=${this.userId}`, {
-              await fetch(`http://127.0.0.1:5000/api/subscriptions?user_id=${this.userId}`, {
+        res = await fetch(`https://trafik-q8va.onrender.com/api/subscriptions?user_id=${this.userId}`, {
+              //await fetch(`http://127.0.0.1:5000/api/subscriptions?user_id=${this.userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.subscriptions = await res.json();
@@ -43,7 +43,7 @@ export default {
         // Hämta pris från reseller
         const resellerId = this.profile.reseller_id;
         if (resellerId) {
-          const resellerRes = await fetch(`http://127.0.0.1:5000/api/reseller-info?reseller_id=${resellerId}`); //await fetch(`https://trafik-q8va.onrender.com/api/reseller-info?reseller_id=${resellerId}`);
+          const resellerRes = await fetch(`https://trafik-q8va.onrender.com/api/reseller-info?reseller_id=${resellerId}`); //await fetch(`https://trafik-q8va.onrender.com/api/reseller-info?reseller_id=${resellerId}`);
           const resellerData = await resellerRes.json();
           this.price = resellerData.price;
           this.resellerName = resellerData.name;
