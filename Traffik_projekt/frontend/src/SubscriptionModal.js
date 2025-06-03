@@ -1,5 +1,3 @@
-//steg 3 är komponenten signupform
-
 import SignupForm from "./SignupForm.js";
 
 export default {
@@ -9,33 +7,29 @@ export default {
     },
     template: `
       <div class="modal">
-        <div class="modal-content"> 
-        <button class="close" @click="closeModal">X</button>
-
+        <div class="modal-content">
+           <button class="close" @click="closeModal">X</button>
+  
           <div v-if="step === 1">
             <h2>Prenumerera på trafikinfo</h2>
             <p>Du kommer få info om olyckor, hinder och vägarbete via SMS.</p>
-            <p> Måndadskostnad: {{ price }}SEK</p>
-            <h3> Steg 1 av 4: Välj område </h3>
+            <p> Måndadskostnad: {{ price }} SEK </p>
+            <h3> Steg 1 av 4: Välj område och händelsetyp </h3>
             <select v-model="region" class="option" >
               <option disabled :value="null" selected>Välj ett område</option>
               <option v-for="r in regions" :key="r.location_id" :value="r">{{ r.region }}</option>
-            </select>
-               
-            <button class="button-primary" @click="nextStep"
-            :disabled="!resellerId || !region || !region.location_id"
-             >Nästa</button>
+            </select>        
+            <button class="button-primary" @click="nextStep">Nästa</button>
           </div>
   
           <div v-if="step === 2">
-          <signup-form :region="region" :reseller-id="resellerId"
-          @signup-success="handleSignupSuccess" />
+          <signup-form :region="region" :reseller-id="resellerId" @signup-success="handleSignupSuccess" />
           </div>
     
           <div v-if="step === 3">
             <h3>Steg 3 av 4: Betalning</h3>
             <div class="payment-section">
-              <div class="payment-amount"> Pris: {{ price }}SEK</div>
+              <div class="payment-amount"> Pris: {{ price }}</div>
               <div id="stripe-checkout-container"></div>
               <div v-if="error" class="error-message">{{ error }}</div>
               <button @click="handlePayment" class="button-primary" :disabled="loading">
@@ -48,7 +42,7 @@ export default {
             <h3>Tack!</h3>
             <p>Du är nu prenumerant.</p>
             <h3>Bekräftelse</h3>
-            <p>Område: {{ region.region }}</p>
+            <p>Område: {{ region.region }}<p>
             <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
             <p>Till: {{ phone }} ({{ email }})</p>
             <p>Pris per månad: {{ price }} kr</p>
@@ -60,29 +54,29 @@ export default {
     data() {
       return {
         step: 1,
-        region: null, //använderens valda region
+        region: null,
         email: '',
         phone: '',
         incidentTypes: [],
-        regions: [], //listan över regioner
+        regions: [],
         userId: null,
         resellerId: null,
         resellerName: null,
         price: null, //lagt till
-        stripe: null, //lagt till 
+        stripe: null,
         loading: false,
         error: null
       };
     },
 
-   async mounted() {
+    async mounted() {
         // initziera stripe när componenten är mounted
       this.stripe = Stripe('pk_test_51RIsEVFPlu7UXDRDAlQtGOM9XRv0N27uADmwrhcb8f7PvRCZ1KDoViIn8QH3UuS38aBWsMYkhH9bcPJEH0DreFQX00tfP0ZdCF');
 
       console.log("SubscriptionModal mounted, $route.query =", this.$route.query);
       
           try {
-      const regionsRes = await fetch("http://127.0.0.1:5000/api/regions")/* await fetch("https://trafik-q8va.onrender.com/api/regions"); */
+      const regionsRes = await fetch("https://trafik-q8va.onrender.com/api/regions");
       
       if (!regionsRes.ok) throw new Error("Kunde inte hämta regioner");
       this.regions = await regionsRes.json();
@@ -120,6 +114,15 @@ export default {
   }
 
     },
+  
+    watch: {
+      step(newVal) {
+        if (newVal === 3) {
+          this.sendVerificationCode();
+        }
+      }
+    },
+  
     methods: {
       nextStep() {
             if (!this.resellerId) {
@@ -133,66 +136,138 @@ export default {
     }
         this.step++;
       },
+  
       handleSignupSuccess(payload) {
         this.email = payload.email;
         this.phone = payload.phone;
         this.userId = payload.user_id;
-        this.nextStep();
+        localStorage.setItem("user_id", this.userId);
+        this.step = 3;
       },
+  
+      async sendVerificationCode() {
+        this.codeError = '';
+        try {
+          const response = await fetch('https://trafik-q8va.onrender.com/api/send-sms-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: this.phone })
+          });
+  
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.error || 'Misslyckades att skicka verifieringskoden.');
+          }
+  
+          console.log("✅ Verifieringskod skickad till", this.phone);
+        } catch (error) {
+          console.error("❌ Kunde inte skicka verifieringskod:", error);
+          this.codeError = "Kunde inte skicka verifieringskod: " + error.message;
+        }
+      },
+  
+      async verifyCode() {
+        this.codeError = '';
+        if (!this.smsCode || this.smsCode.length !== 6) {
+          this.codeError = "Koden måste vara 6 siffror.";
+          return;
+        }
+  
+        try {
+          const res = await fetch("https://trafik-q8va.onrender.com/api/verify-sms-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone: this.phone,
+              code: this.smsCode
+            })
+          });
+  
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || "Ogiltig kod.");
+          }
+  
+          this.nextStep();
+        } catch (err) {
+          console.error("❌ Verifieringsfel:", err);
+          this.codeError = err.message || "Kunde inte verifiera koden.";
+        }
+      },
+  
+      async resendCode() {
+        try {
+          const response = await fetch('https://trafik-q8va.onrender.com/api/resend-sms-code', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ phone: this.phone })
+          });
+  
+          const result = await response.json();
+  
+          if (!response.ok) {
+            throw new Error(result.error || 'Misslyckades att skicka om koden');
+          }
+  
+          alert("En ny verifieringskod har skickats via SMS.");
+        } catch (error) {
+          console.error("❌ Kunde inte skicka om SMS:", error);
+          this.codeError = error.message;
+        }
+      },
+  
       async handlePayment() {
         this.loading = true;
         this.error = null;
-        
+  
         try {
-          // skicka request till backend för att skapa en checkout-session
-          const response = await /* fetch('https://trafik-q8va.onrender.com/api/create-checkout-session' */fetch('http://127.0.0.1:5000/api/create-checkout-session', {
+          const userIdToSend = this.userId || localStorage.getItem("user_id");
+          if (!userIdToSend) {
+            throw new Error("Ingen giltig user_id tillgänglig för betalning");
+          }
+  
+          const response = await fetch('https://trafik-q8va.onrender.com/api/create-checkout-session', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
-            body: JSON.stringify({
-              user_id: this.userId  // Skicka med användar-ID för att koppla betalningen
-            })
+            body: JSON.stringify({ user_id: userIdToSend })
           });
-          
-          // kolla om request lyckades
+  
           if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Något gick fel vid kommunikation med servern');
           }
-          
-          // Hämta client secret från svaret
+  
           const data = await response.json();
-          
           if (!data.clientSecret) {
             throw new Error('Inget client secret mottaget från servern');
           }
-          
-          // Verifiera att Stripe är initialiserat
+  
           if (!this.stripe) {
             throw new Error('Stripe är inte initialiserad');
           }
-          
-          // Skapa en ny checkout
+  
           const checkout = await this.stripe.initEmbeddedCheckout({
             clientSecret: data.clientSecret
           });
-          
-          // mounta checkout i modalen
+  
           checkout.mount('#stripe-checkout-container');
-          
+          this.step = 5;
+  
         } catch (error) {
-          // Hantera och visa eventuella fel
           console.error('Error in payment process:', error);
           this.error = error.message || 'Ett fel uppstod vid betalningsprocessen';
         } finally {
           this.loading = false;
         }
       },
+  
       closeModal() {
         this.$emit('close');
       }
     }
   };
-  

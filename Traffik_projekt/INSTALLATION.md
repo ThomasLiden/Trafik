@@ -6,7 +6,7 @@ Denna guide beskriver hur du installerar och konfigurerar Trafiktjänstens front
 ## Paketets Innehåll
 Du ska ha mottagit ett paket (t.ex. en ZIP-fil) som innehåller:
 1.  `trafiktjanst_frontend_dist/`: En mapp med alla filer för Trafiktjänstens frontend-applikation.
-2.  `iframe_host_template.html`: En mallfil för att bädda in Trafiktjänsten.
+2.  `index.html`: En mallfil för att bädda in Trafiktjänsten.
 3.  Denna installationsguide (`INSTALLATION.md`).
 
 ## Installationssteg
@@ -30,17 +30,26 @@ Du ska ha mottagit ett paket (t.ex. en ZIP-fil) som innehåller:
 
 ### Del 2: Konfigurera och Placera Inbäddningssidan
 
-1.  **Kopiera Mallen:** Ta filen `iframe_host_template.html` och döp om den till något passande, t.ex. `visa_trafiktjanst.html`. Placera denna fil där du vill att den ska vara åtkomlig på din webbplats (t.ex. i roten `public_html/` eller i en specifik undermapp).
-2.  **Redigera Inbäddningssidan:** Öppna din nyskapade fil (t.ex. `visa_trafiktjanst.html`) i en textredigerare.
+1.  **Kopiera Mallen:** Ta filen `index.html` och placera denna fil där du vill att den ska vara åtkomlig på din webbplats (t.ex. i roten `public_html/` eller i en specifik undermapp).
+2.  **Redigera Inbäddningssidan:** Öppna din nyskapade fil (t.ex. `index.html`) i en textredigerare.
 3.  **Ställ in Sökväg (VIKTIGT):**
     Leta upp raden (inuti `<script>`-taggen):
     ```javascript
-    const vueAppBasePath = './'; 
+    const vueAppBasePath = './';
     ```
-    Anpassa värdet för `vueAppBasePath` så att det korrekt pekar på mappen där du laddade upp Trafiktjänstens filer (från Del 1), **relativt till platsen för `visa_trafiktjanst.html`**.
-    * Om `visa_trafiktjanst.html` är i `public_html/` och app-filerna i `public_html/trafiktjanst/`, är `'./trafiktjanst/'` korrekt.
-    * Om `visa_trafiktjanst.html` är i `public_html/min_sida/` och app-filerna i `public_html/trafiktjanst/`, ändra till `'../trafiktjanst/'`.
-    * Om `visa_trafiktjanst.html` är i *samma* mapp som app-filerna (t.ex. båda i `public_html/trafiktjanst/`), behåll då `'./'`.
+    Anpassa värdet för `vueAppBasePath` så att det korrekt pekar på mappen där du laddade upp Trafiktjänstens filer (från Del 1).
+
+    Här är några vanliga scenarier för `vueAppBasePath`:
+    * **Scenario A (Rekommenderat i Del 1):** Om din `index.html` (värdsidan) ligger i `public_html/` och Vue-appens filer (från `trafiktjanst_frontend_dist/`) har laddats upp till `public_html/trafiktjanst/`:
+    Då ska `vueAppBasePath` vara `'./trafiktjanst/'`. (Detta matchar exemplet i kod-blocket ovan).
+
+    * **Scenario B:** Om din `index.html` (värdsidan) placeras *inuti* samma mapp som Vue-appens filer (t.ex. du placerade värdsidans `index.html` i `public_html/trafiktjanst/` tillsammans med Vue-appens egen `index.html` och dess js/css-mappar): Då ska `vueAppBasePath` vara `'./'`.
+
+    * **Scenario C:** Om din `index.html` (värdsidan) ligger i en undermapp, t.ex. `public_html/min-sida/`, och Vue-appens filer ligger i `public_html/trafiktjanst/`: Då ska `vueAppBasePath` vara `'../trafiktjanst/'`.
+
+    Kontrollera noggrant att denna sökväg blir korrekt för din filstruktur. Det är här det oftast blir fel om iframen inte laddas.
+
+
 4.  **Anpassa Utseende (Valfritt):**
     Leta upp sektionen `customerStyleConfig`:
     ```javascript
@@ -59,11 +68,11 @@ Du ska ha mottagit ett paket (t.ex. en ZIP-fil) som innehåller:
 För att Trafiktjänsten ska kunna hämta data från vårt API måste er domän (`www.dagspressutgivarna.se`) vara godkänd. **Kontakta Utvecklarna AB och meddela att installationen är gjord på `https://www.dagspressutgivarna.se`** så att vi kan slutföra konfigurationen på vår sida.
 
 ### Del 4: Testa
-När allt är uppladdat och konfigurerat, och ni har fått bekräftelse från oss att er domän är tillagd, besök sidan där du placerade `visa_trafiktjanst.html` (t.ex. `https://www.dagspressutgivarna.se/visa_trafiktjanst.html`).
+När allt är uppladdat och konfigurerat, och ni har fått bekräftelse från oss att er domän är tillagd, besök sidan där du placerade `index.html` (t.ex. `https://www.dagspressutgivarna.se/index.html`).
 
 ## Felsökning
 * **Tom iframe / "File not found":** Troligtvis fel i `vueAppBasePath`. Dubbelkolla sökvägen. Säkerställ att alla filer från `trafiktjanst_frontend_dist/` är korrekt uppladdade.
 * **Ingen data / Fel i webbläsarkonsolen (t.ex. CORS-fel):** Er domän är troligen inte korrekt tillagd i vårt API:s CORS-inställningar. Kontakta oss (se Del 3).
-* **Stiländringar syns inte:** Rensa webbläsarens cache. Kontrollera att `customerStyleConfig`-värdena är korrekta CSS-värden och att du sparat ändringarna i `visa_trafiktjanst.html`.
+* **Stiländringar syns inte:** Rensa webbläsarens cache. Kontrollera att `customerStyleConfig`-värdena är korrekta CSS-värden och att du sparat ändringarna i `index.html`.
 
 För ytterligare support, kontakta Utvecklarna AB.

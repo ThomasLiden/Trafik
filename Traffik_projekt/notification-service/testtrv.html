@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trafikinformation – Alla län</title>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 2em auto; }
+    select, button { padding: 0.5em; margin-top: 1em; }
+    li { margin-bottom: 1em; border: 1px solid #ccc; padding: 1em; border-radius: 5px; }
+    .sent { background-color: #e7ffe7; }
+    .actions button { margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Olyckor & Vägarbeten – Välj län</h1>
+
+  <label for="countySelect">Välj län:</label>
+  <select id="countySelect">
+    <option value="24" selected>Västerbotten</option>
+    <!-- Lägg till fler län här om du vill -->
+  </select>
+
+  <br />
+  <button id="fetchBtn">🔄 Hämta Trafikdata</button>
+  <ul id="results"></ul>
+
+  <script>
+    const BASE_URL = "https://trafik-q8va.onrender.com";
+
+    document.getElementById("fetchBtn").addEventListener("click", async () => {
+      const countyNo = document.getElementById("countySelect").value;
+      const results = document.getElementById("results");
+      results.innerHTML = "<li>🔄 Hämtar data...</li>";
+
+      try {
+        const res = await fetch(`${BASE_URL}/trafikinfo?county=${countyNo}`);
+        const data = await res.json();
+        results.innerHTML = "";
+
+        if (data.length === 0) {
+          results.innerHTML = "<li>Inga händelser just nu.</li>";
+          return;
+        }
+
+        data.forEach(dev => {
+          const li = document.createElement("li");
+
+          const header = (dev.Header || "Trafikstörning").trim().slice(0, 60);
+          const msg = (dev.Message || "").trim();
+          const link = `https://www.trafikverket.se/trafikinformation/sok/?sok=${dev.Id}`;
+          const sentences = msg.split(". ");
+          let shortDetails = sentences.slice(0, 2).join(". ").trim();
+
+          const maxTextLength = 160 - link.length - 20;
+          if (shortDetails.length > maxTextLength) {
+            shortDetails = shortDetails.slice(0, maxTextLength).trim() + "…";
+          }
+
+          const preview = `🚧 ${header}\n${shortDetails}\nLäs mer: ${link}`;
+
+          li.innerHTML = `
+            <strong>${header}</strong><br>
+            ${msg}<br>
+            <em>${dev.MessageTypeValue || "Okänd typ"} på ${dev.RoadNumber || "okänd väg"}</em><br>
+            <div style="font-size: 0.9em; margin-top: 0.5em; color: #333;">
+              <strong>📩 SMS-preview:</strong><br>
+              <pre style="white-space: pre-wrap; background: #f4f4f4; padding: 0.5em; border-radius: 5px;">${preview}</pre>
+            </div>
+            <div class="actions">
+              <button class="smsBtn">📲 Skicka SMS</button>
+              <button class="emailBtn">📧 Skicka Mail</button>
+            </div>
+          `;
+
+          li.querySelector(".smsBtn").addEventListener("click", async (e) => {
+            const btn = e.target;
+            btn.disabled = true;
+            btn.innerText = "⏳ Skickar SMS...";
+
+            if (!dev.Id) {
+              console.warn("❌ Saknar dev.Id – avbryter");
+              btn.innerText = "⚠️ Ogiltigt ID";
+              return;
+            }
+
+            const payload = {
+              devId: dev.Id,
+              countyNo: parseInt(countyNo, 10),
+              shortlinks: true
+            };
+            console.log("📤 Skickar SMS-request:", payload);
+
+            try {
+              const smsRes = await fetch(`${BASE_URL}/api/send_sms_for_deviation`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+              });
+
+              if (!smsRes.ok) throw new Error(`Serverfel: ${smsRes.status}`);
+              const result = await smsRes.json();
+              li.classList.add("sent");
+              btn.innerText = `✅ SMS (${result.count || 0})`;
+            } catch (e) {
+              console.error("❌ Fel vid SMS:", e);
+              btn.innerText = "⚠️ Fel vid SMS";
+            }
+          });
+
+          li.querySelector(".emailBtn").addEventListener("click", async (e) => {
+            const btn = e.target;
+            btn.disabled = true;
+            btn.innerText = "⏳ Skickar Mail...";
+
+            if (!dev.Id) {
+              console.warn("❌ Saknar dev.Id – avbryter");
+              btn.innerText = "⚠️ Ogiltigt ID";
+              return;
+            }
+
+            const payload = {
+              devId: dev.Id,
+              countyNo: parseInt(countyNo, 10)
+            };
+            console.log("📤 Skickar MAIL-request:", payload);
+
+            try {
+              const mailRes = await fetch(`${BASE_URL}/api/send_email_for_deviation`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+              });
+
+              if (!mailRes.ok) throw new Error(`Serverfel: ${mailRes.status}`);
+              const result = await mailRes.json();
+              li.classList.add("sent");
+              btn.innerText = `✅ Mail (${result.count || "OK"})`;
+            } catch (e) {
+              console.error("❌ Fel vid mail:", e);
+              btn.innerText = "⚠️ Fel vid mail";
+            }
+          });
+
+          results.appendChild(li);
+        });
+
+      } catch (err) {
+        console.error("❌ Fel vid hämtning av data:", err);
+        results.innerHTML = "<li>❌ Fel vid hämtning av data.</li>";
+      }
+    });
+
+    // 🔧 Testfunktion du kan köra manuellt i konsolen
+    window.testSms = () => {
+      fetch(`${BASE_URL}/api/send_sms_for_deviation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          devId: "SE_STA_TRISSID_1_7162682",
+          countyNo: 24,
+          shortlinks: true
+        })
+      }).then(res => res.json()).then(console.log).catch(console.error);
+    };
+  </script>
+</body>
+</html>

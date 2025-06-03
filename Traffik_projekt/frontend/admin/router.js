@@ -1,9 +1,9 @@
-import adminLogin from "./components/adminLogin.js"; 
-import adminHome from "./components/adminHome.js";
-import adminPricing from "./components/adminPricing.js";
-import administration from "./components/administration.js";
-import adminAccount from "./components/adminAccount.js";
-import adminSubscriptions from "./components/adminSubscriptions.js";
+import adminLogin from "./adminLogin.js"; 
+import adminHome from "./adminHome.js";
+import adminPricing from "./adminPricing.js";
+import administration from "./administration.js";
+import adminAccount from "./adminAccount.js";
+import adminSubscriptions from "./adminSubscriptions.js";
 
 
 

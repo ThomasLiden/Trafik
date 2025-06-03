@@ -6,6 +6,7 @@ const BASE_URL =
 
 //importerar fetch-funktion.
 import { apiFetch } from "./api.js";
+import regions from "./regions.js";
 
 export default {
   data() {
@@ -14,7 +15,8 @@ export default {
       lan: "",
       phone: "",
       email: "",
-      message: ""
+      message: "",
+      regions,
     };
   },
   //När komponenten skapas - hämta aktuell kontoinformation. 
@@ -70,8 +72,13 @@ export default {
       </div>
 
       <div class="form-row">
-        <label>Län</label>
-        <input v-model="lan" type="text" placeholder="Län" />
+        <label>Region (län):</label>
+          <select v-model="lan">
+            <option disabled value="">Välj län</option>
+                <option v-for="r in regions" :key="r" :value="r">
+                {{ r }} 
+                </option>
+          </select>
       </div>
 
       <div class="form-row">

@@ -12,24 +12,6 @@ from routes.trafikverket_proxy import trafikverket_proxy
 
 app = Flask(__name__)
 
-
-# CORS-inställningar (tillåt API-åtkomst från frontend)
-CORS(app,
-     supports_credentials=True,
-     resources={r"/api/*": {"origins": [
-         "https://trafik-frontend-hzww.onrender.com",
-         "https://admin-lqz8.onrender.com",
-         "http://localhost:5500",
-         "http://127.0.0.1:5500"
-     ]}},
-     expose_headers=["Content-Type", "Authorization"],
-     allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "OPTIONS"]
-)
-
-
-
-
 # Logga inkommande requests
 @app.before_request
 def debug():
@@ -46,13 +28,25 @@ app.register_blueprint(trafikverket_proxy)
 # CORS-inställningar (tillåt API-åtkomst från frontend)
 CORS(app,
      supports_credentials=True,
-     resources={r"/api/*": {"origins": [
-         "https://trafik-frontend-hzww.onrender.com",
-         "https://admin-lqz8.onrender.com",
-         "https://www.dagspressutgivarna.se",
-         "http://127.0.0.1:5500" # <<< TILLAGD: För lokal utveckling av frontend
-          # Överväg "http://localhost:PORT" för kundens eventuella lokala tester
-     ]}},
+     resources={
+         r"/api/*": {"origins": [
+             "https://trafik-frontend-hzww.onrender.com",
+             "https://trafik-q8va.onrender.com",
+             "https://admin-lqz8.onrender.com",
+             "https://www.dagspressutgivarna.se",
+             "http://127.0.0.1:5500"
+         ]},
+         r"/admin/*": {"origins": [
+             "https://admin-lqz8.onrender.com",
+             "http://127.0.0.1:5500"
+         ]},
+         r"/trafikinfo": {"origins": [
+             "https://trafik-frontend-hzww.onrender.com",
+             "https://trafik-q8va.onrender.com",
+             "https://www.dagspressutgivarna.se",
+             "http://127.0.0.1:5500"
+         ]}
+     },
      expose_headers=["Content-Type", "Authorization"],
      allow_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"]

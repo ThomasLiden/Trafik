@@ -8,6 +8,7 @@ from flask_cors import CORS
 """ from supabase import create_client, Client """
 from models.supabase_client import supabase
 # ändrat till centraliserad hämtningn
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")  # fallback för lokal dev
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -23,13 +24,13 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) """
 
 # Skapa en ny blueprint för betalningar
 payments_blueprint = Blueprint('payments', __name__)
-CORS(payments_blueprint, resources={
-    r"/api/*": {
-        "origins": ["http://127.0.0.1:5500", "http://localhost:5500"],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "Accept"]
-    }
-})
+# CORS(payments_blueprint, resources={
+#     r"/api/*": {
+#         "origins": ["http://127.0.0.1:5500", "http://localhost:5500", FRONTEND_URL],
+#         "methods": ["GET", "POST", "OPTIONS"],
+#         "allow_headers": ["Content-Type", "Authorization", "Accept"]
+#     }
+# })
 
 # Konfigurera Stripe secret key och price ID
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
@@ -51,7 +52,7 @@ def create_checkout_session():
             }],
             mode='subscription',
             ui_mode='embedded',
-            return_url='http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}',
+            return_url='f"{FRONTEND_URL}/return?session_id={CHECKOUT_SESSION_ID}',
         )
         
         return jsonify({
@@ -65,34 +66,45 @@ def create_checkout_session_api():
     # Hantera CORS preflight request
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'http://127.0.0.1:5500')
+        response.headers.add('Access-Control-Allow-Origin', FRONTEND_URL)
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept')
         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
         return response
-        
+
     try:
         # Hämta användar-ID från request
         data = request.get_json()
         logger.info(f"Received data: {data}")
         user_id = data.get('user_id')
-        logger.info(f"Creating checkout session for user: {user_id}")
+        if not user_id or user_id == "None":
+            logger.error("Ogiltigt eller saknat user_id i request")
+            return jsonify({"error": "Ingen giltig user_id angiven"}), 400
+
+        logger.info(f"Skapar checkout session för user_id: {user_id}")
 
         # Hämta reseller_id för användaren
-        user_row = supabase.table("users").select("reseller_id").eq("user_id", user_id).single().execute()
-        if not user_row.data:
-            return jsonify({"error": "User not found"}), 400
-        reseller_id = user_row.data["reseller_id"]
+        user_result = supabase.table("users").select("reseller_id").eq("user_id", user_id).limit(1).execute()
 
-        # Hämta aktivt stripe_price_id för denna reseller
-        product_data = supabase.table("reseller_products")\
+        if not user_result.data or len(user_result.data) == 0:
+            logger.error(f"Inget användarobjekt hittades för user_id: {user_id}")
+            return jsonify({"error": "User not found"}), 404
+
+        reseller_id = user_result.data[0]["reseller_id"]
+
+        #hämta aktivt stripe_price_id för denna reseller
+        product_result = supabase.table("reseller_products")\
             .select("stripe_price_id")\
             .eq("reseller_id", reseller_id)\
             .eq("active", True)\
-            .single()\
+            .limit(1)\
             .execute()
-        if not product_data.data:
-            return jsonify({"error": "No active product found for this reseller"}), 400
-        stripe_price_id = product_data.data['stripe_price_id']
+
+        if not product_result.data or len(product_result.data) == 0:
+            logger.error(f"Inga aktiva produkter hittades för reseller_id: {reseller_id}")
+            return jsonify({"error": "No active product found for this reseller"}), 404
+
+        stripe_price_id = product_result.data[0]["stripe_price_id"]
+
 
         # Skapa checkout session med rätt pris
         session = stripe.checkout.Session.create(
@@ -103,7 +115,7 @@ def create_checkout_session_api():
             }],
             mode='subscription',
             ui_mode='embedded',
-            return_url='http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}',
+            return_url=f'{FRONTEND_URL}/return?session_id={{CHECKOUT_SESSION_ID}}',
             client_reference_id=user_id,
             metadata={
                 "reseller_id": reseller_id
@@ -111,7 +123,7 @@ def create_checkout_session_api():
         )
         logger.info(f"Checkout session created successfully: {session.id}")
 
-        # spara betalningen i Supabase
+        # Spara betalningen i Supabase
         payment_data = {
             "stripe_session_id": session.id,
             "stripe_subscription_id": session.subscription,  
@@ -126,62 +138,81 @@ def create_checkout_session_api():
         except Exception as supa_err:
             logger.error(f"Failed to save payment to Supabase: {supa_err}")
 
-        # Returnera client secret som frontend behöver för att initiera checkout
+        # Returnera client secret
         response = jsonify({
             'clientSecret': session.client_secret
         })
-        response.headers.add('Access-Control-Allow-Origin', 'http://127.0.0.1:5500')
+        response.headers.add('Access-Control-Allow-Origin', FRONTEND_URL)
         return response
-        
+
     except Exception as e:
-        # returnera fel
         logger.error(f"Error in create_checkout_session: {str(e)}", exc_info=True)
         response = jsonify({'error': str(e)}), 500
-        response[0].headers.add('Access-Control-Allow-Origin', 'http://127.0.0.1:5500')
-        return response 
+        response[0].headers.add('Access-Control-Allow-Origin', FRONTEND_URL)
+        return response
 
-#  kod för webhook
+@payments_blueprint.route('/api/stripe-webhook', methods=['POST'])
+def stripe_webhook():
+    """
+    Hanterar Stripe-webhooks för betalnings- och prenumerationshändelser.
+    Uppdaterar Supabase med rätt status och ID:n.
+    """
+    payload = request.data
+    sig_header = request.headers.get('Stripe-Signature')
+    webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+    event = None
+    try:
+        # Verifiera att webhooken kommer från Stripe
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, webhook_secret
+        )
+        logger.info(f"✅ Stripe webhook event mottaget: {event['type']}")
+    except ValueError as e:
+        logger.error(f"Ogiltig payload: {e}")
+        return 'Invalid payload', 400
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Ogiltig signatur: {e}")
+        return 'Invalid signature', 400
+    except Exception as e:
+        logger.error(f"Annat fel vid webhook-verifiering: {e}")
+        return 'Webhook error', 400
 
-# from flask import request
-# import stripe
+    # Hantera olika Stripe events
+    try:
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            stripe_session_id = session['id']
+            stripe_subscription_id = session.get('subscription')
+            logger.info(f"🔄 Uppdaterar payment status till 'paid' för session: {stripe_session_id}")
+            # Uppdatera betalning i Supabase till status 'paid'
+            supabase.table('payments').update({
+                'status': 'paid',
+                'stripe_subscription_id': stripe_subscription_id
+            }).eq('stripe_session_id', stripe_session_id).execute()
 
-# @payments_blueprint.route('/api/stripe-webhook', methods=['POST'])
-# def stripe_webhook():
-#     payload = request.data
-#     sig_header = request.headers.get('Stripe-Signature')
-#     webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
-#     event = None
-#     try:
-#         event = stripe.Webhook.construct_event(
-#             payload, sig_header, webhook_secret
-#         )
-#     except ValueError as e:
-#         # Invalid payload
-#         return 'Invalid payload', 400
-#     except stripe.error.SignatureVerificationError as e:
-#         # Invalid signature
-#         return 'Invalid signature', 400
-#
-#     # Hantera olika Stripe events
-#     if event['type'] == 'checkout.session.completed':
-#         session = event['data']['object']
-#         # uppdatera betalning i Supabase till status 'paid'
-#         supabase.table('payments').update({'status': 'paid'}).eq('stripe_session_id', session['id']).execute()
-#
-#     elif event['type'] == 'customer.subscription.updated':
-#         subscription = event['data']['object']
-#         # uppdatera subscription_id och status i Supabase
-#         supabase.table('payments').update({
-#             'stripe_subscription_id': subscription['id'],
-#             'status': subscription['status']
-#         }).eq('stripe_subscription_id', subscription['id']).execute()
-#
-#     elif event['type'] == 'customer.subscription.deleted':
-#         subscription = event['data']['object']
-#         # markera som avslutad i Supabase
-#         supabase.table('payments').update({
-#             'status': 'cancelled'
-#         }).eq('stripe_subscription_id', subscription['id']).execute()
-#
-#
-#     return '', 200 
+        elif event['type'] == 'customer.subscription.updated':
+            subscription = event['data']['object']
+            stripe_subscription_id = subscription['id']
+            status = subscription['status']  # t.ex. 'active', 'past_due', 'canceled'
+            logger.info(f"🔄 Uppdaterar subscription status till '{status}' för subscription: {stripe_subscription_id}")
+            # Uppdatera subscription_id och status i Supabase
+            supabase.table('payments').update({
+                'status': status
+            }).eq('stripe_subscription_id', stripe_subscription_id).execute()
+
+        elif event['type'] == 'customer.subscription.deleted':
+            subscription = event['data']['object']
+            stripe_subscription_id = subscription['id']
+            logger.info(f"🔄 Markerar subscription som 'cancelled' för subscription: {stripe_subscription_id}")
+            # Markera som avslutad i Supabase
+            supabase.table('payments').update({
+                'status': 'cancelled'
+            }).eq('stripe_subscription_id', stripe_subscription_id).execute()
+
+        else:
+            logger.info(f"ℹ️ Event-typen hanteras ej: {event['type']}")
+
+        return '', 200
+    except Exception as e:
+        logger.error(f"Fel vid hantering av Stripe-event: {e}", exc_info=True)
+        return 'Webhook handling error', 500

@@ -3,8 +3,14 @@ from models.supabase_client import supabase
 from supabase import create_client, Client
 import os
 from flask_cors import cross_origin
+import random
+from datetime import datetime, timedelta
+import requests  
 
 member_blueprint = Blueprint('member', __name__)
+
+def generate_sms_code():
+    return str(random.randint(100000, 999999))
 
 # Registrering
 
@@ -15,9 +21,10 @@ def signup():
 
     try:
         data = request.get_json()
-        
-        email      = data.get("email")
-        password   = data.get("password")
+        print("==> Inkommande data:", data)
+
+        email = data.get("email")
+        password = data.get("password")
         first_name = data.get("first_name")
         last_name  = data.get("last_name")
         phone      = data.get("phone")
@@ -49,27 +56,63 @@ def signup():
 
         user_id = user.id
 
-        # 4) Spara i ’users’‐tabellen
+        # 2. Lägg till användare i users-tabellen
         supabase.table("users").insert({
             "user_id": user_id,
             "email": email,
             "first_name": first_name,
             "last_name": last_name,
             "phone": phone,
-            "reseller_id": reseller_id
+            "reseller_id": reseller_id,
+            "phone_confirmed": False
         }).execute()
 
-        # 5) Skapa prenumeration
+        # 3. Lägg till prenumeration
         supabase.table("subscriptions").insert({
             "user_id": user_id,
             "active": True,
             "location_id": location_id
         }).execute()
 
-        return jsonify({"message": "User created", "email": email, "user_id": user_id}), 200
+        # 4. Generera och spara kod
+        verification_code = str(random.randint(100000, 999999))
+        expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+
+        supabase.table("sms_codes").upsert({
+            "phone": phone,
+            "code": verification_code,
+            "expires_at": expires_at
+        }).execute()
+
+        # 5. Skicka SMS via din sms-server
+        sms_response = requests.post(
+            os.getenv("SMS_SERVER_URL", "https://trafikwidget-projekt.onrender.com/send-sms"),
+            headers={
+                "x-api-key": os.getenv("X_API_KEY")
+            },
+            json={
+                "to": phone,
+                "message": f"Din verifieringskod är: {verification_code}",
+                "from": "TrafikInfo"
+            }
+        )
+
+        print("==> SMS response status:", sms_response.status_code)
+        print("==> SMS response body:", sms_response.text)
+
+
+        if sms_response.status_code != 200:
+            print("❌ Misslyckades att skicka SMS:", sms_response.text)
+
+        return jsonify({
+            "message": "User created",
+            "email": email,
+            "user_id": user_id
+        }), 200
 
     except Exception as e:
-        print("==> FEL I SIGNUP:", e)
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
 
 
@@ -256,3 +299,47 @@ def get_reseller_info():
     ##except Exception as e:
       #  print("==> FEL i /api/reseller-region:", e)
        # return jsonify({"error": str(e)}), 500
+
+@member_blueprint.route('/api/verify-sms', methods=['POST', 'OPTIONS'])
+def verify_sms_code():
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    try:
+        data = request.get_json()
+        phone = data.get("phone")
+        code = data.get("code")
+
+        if not phone or not code:
+            return jsonify({"error": "Både telefonnummer och kod krävs"}), 400
+
+        result = supabase.table("sms_codes") \
+                         .select("code, expires_at") \
+                         .eq("phone", phone) \
+                         .single() \
+                         .execute()
+
+        if not result.data:
+            return jsonify({"error": "Ingen kod hittades för detta nummer"}), 404
+
+        expected_code = result.data["code"]
+        expires_at = datetime.fromisoformat(result.data["expires_at"])
+
+        if datetime.utcnow() > expires_at:
+            return jsonify({"error": "Koden har gått ut"}), 400
+
+        if code != expected_code:
+            return jsonify({"error": "Fel kod"}), 400
+
+        # ✅ Verifiering lyckades
+        supabase.table("users") \
+                .update({"phone_confirmed": True}) \
+                .eq("phone", phone) \
+                .execute()
+
+        return jsonify({"message": "Verifiering lyckades"}), 200
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 400

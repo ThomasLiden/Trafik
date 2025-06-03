@@ -1,4 +1,4 @@
-import adminNavbar from "./components/adminNavbar.js";
+import adminNavbar from "./adminNavbar.js"; 
 import router from "./router.js";
 
 const { createApp } = Vue;
