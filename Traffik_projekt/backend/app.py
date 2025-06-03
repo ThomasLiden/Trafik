@@ -30,7 +30,7 @@ CORS(app,
      supports_credentials=True,
      resources={r"/api/*": {"origins": [
          "https://trafik-frontend-hzww.onrender.com",
-         "https://admin-lqz8.onrender.com",
+         "https://trafik-q8va.onrender.com",
          "https://www.dagspressutgivarna.se",
          "http://127.0.0.1:5500" # <<< TILLAGD: För lokal utveckling av frontend
           # Överväg "http://localhost:PORT" för kundens eventuella lokala tester

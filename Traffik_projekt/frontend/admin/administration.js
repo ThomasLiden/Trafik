@@ -6,7 +6,7 @@ import regions from "./regions.js";
 const BASE_URL =
   window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
     ? "http://localhost:5000/api"
-    : "https://admin-lqz8.onrender.com/api";
+    : "https://trafik-q8va.onrender.com/api";
 
 export default {
   //Registrera komponenter som används. 
