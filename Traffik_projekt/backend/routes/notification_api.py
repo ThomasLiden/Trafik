@@ -225,11 +225,24 @@ def send_email_for_deviation():
             f"{msg_text}\n\n"
             f"Läs mer: https://trafikinfo.trafikverket.se"
         )
-
         payload = {
             "to": [r["email"] for r in recipients],
             "subject": subject,
-            "message": message
+            "message": message,  # plaintext fallback
+            "html_message": f"""
+            <html>
+            <body style="font-family:Segoe UI,sans-serif; background:#f7f9fc; padding:1em; color:#333;">
+            <h2 style="color:#d7263d;">🚨 Ny trafikstörning i {county_name}</h2>
+            <p><strong>{header}</strong></p>
+            <p>{msg_text}</p>
+            <p><a href="https://www.trafikverket.se/trafikinformation/sok/?sok={dev_id}" target="_blank"
+                style="display:inline-block;padding:0.6em 1.2em;background-color:#0d3b66;color:white;text-decoration:none;border-radius:6px;">
+                📍 Visa mer information
+            </a></p>
+            <p style="font-size:0.9em;color:#666;">Du får detta mail eftersom du prenumererar på trafikstörningar i {county_name}.</p>
+            </body>
+            </html>
+            """
         }
 
         headers = {

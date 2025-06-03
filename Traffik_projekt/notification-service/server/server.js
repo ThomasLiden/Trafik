@@ -37,9 +37,9 @@ app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-// ✉️ Skicka e-post
+// ✉️ Skicka e-post (med stöd för HTML)
 app.post("/send-email", checkApiKey, async (req, res) => {
-  const { to, subject, message } = req.body;
+  const { to, subject, message, html_message } = req.body;
 
   if (!to || !subject || !message) {
     return res.status(400).json({ error: "Missing 'to', 'subject' or 'message'" });
@@ -62,7 +62,8 @@ app.post("/send-email", checkApiKey, async (req, res) => {
       from: process.env.SMTP_USER,
       to,
       subject,
-      text: message
+      text: message,
+      ...(html_message && { html: html_message })  // Lägg till html om det finns
     });
 
     console.log("✅ Mail skickat:", result.response || result);
