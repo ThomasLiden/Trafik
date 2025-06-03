@@ -115,12 +115,13 @@ def create_checkout_session_api():
             }],
             mode='subscription',
             ui_mode='embedded',
-            return_url=f'{FRONTEND_URL}/return?session_id={{CHECKOUT_SESSION_ID}}',
+            return_url=f'{FRONTEND_URL}/#/thank-you?session_id={{CHECKOUT_SESSION_ID}}',
             client_reference_id=user_id,
             metadata={
                 "reseller_id": reseller_id
             }
         )
+
         logger.info(f"Checkout session created successfully: {session.id}")
 
         # Spara betalningen i Supabase
