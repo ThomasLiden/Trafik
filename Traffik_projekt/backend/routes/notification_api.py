@@ -303,7 +303,6 @@ def verify_sms_code():
         if not phone or not code:
             return jsonify({"error": "Telefonnummer eller kod saknas"}), 400
 
-        # Hämta icke-verifierad kod
         result = supabase.table("sms_codes") \
             .select("*") \
             .eq("phone", phone) \
@@ -316,27 +315,22 @@ def verify_sms_code():
             return jsonify({"error": "Felaktig eller utgången kod"}), 400
 
         sms_code = rows[0]
-        expires_str = sms_code.get("expires_at")
+        expires_at = sms_code["expires_at"]
 
-        if not expires_str:
-            return jsonify({"error": "Kod saknar utgångsdatum"}), 400
-
-        try:
-            expires_at = datetime.fromisoformat(expires_str.rstrip("Z"))
-        except Exception as e:
-            print("❌ Kunde inte tolka expires_at:", expires_str, "| Fel:", e)
-            return jsonify({"error": "Felaktigt datumformat"}), 500
-
+        # Jämför direkt om det är datetime-objekt
         if expires_at < datetime.utcnow():
             return jsonify({"error": "Koden har gått ut"}), 400
 
-        # Uppdatera som verifierad
-        supabase.table("sms_codes") \
-            .update({"verified": True}) \
-            .eq("id", sms_code["id"]) \
-            .execute()
+        supabase.table("sms_codes").update({
+            "verified": True
+        }).eq("id", sms_code["id"]).execute()
 
         return jsonify({"message": "Telefonnummer verifierat"}), 200
+
+    except Exception as e:
+        print("❌ Fel i verify_sms_code:", e)
+        return jsonify({"error": "Verifiering misslyckades", "details": str(e)}), 500
+
 
     except Exception as e:
         print("❌ Fel i verify_sms_code:", e)
