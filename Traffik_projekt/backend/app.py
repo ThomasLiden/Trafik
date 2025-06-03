@@ -40,9 +40,18 @@ CORS(app,
              "https://admin-lqz8.onrender.com",
              "http://127.0.0.1:5500"
          ]},
-         r"/trafikinfo": {"origins": [
+         r"/trafikinfo*": {"origins": [
              "https://trafik-frontend-hzww.onrender.com",
              "https://trafik-q8va.onrender.com",
+             "https://trafik-pvfq.onrender.com",
+             "https://www.dagspressutgivarna.se",
+             "http://127.0.0.1:5500"
+         ]},
+         r"/*": {"origins": [  # Fallback för att fånga allt annat också
+             "https://trafik-frontend-hzww.onrender.com",
+             "https://trafik-q8va.onrender.com",
+             "https://trafik-pvfq.onrender.com",
+             "https://admin-lqz8.onrender.com",
              "https://www.dagspressutgivarna.se",
              "http://127.0.0.1:5500"
          ]}
