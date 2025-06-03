@@ -30,36 +30,42 @@ def send_sms_for_deviation():
         data = request.get_json()
         dev_id = data.get("devId")
         county_no = data.get("countyNo")
+        deviation = data.get("deviation", {})
+
         print("➡️ county_no från frontend:", county_no)
 
+        # 🧪 Validera indata
         if not dev_id or not county_no:
             return jsonify({"error": "devId och countyNo krävs"}), 400
 
-        location_resp = supabase.table("location").select("*").execute()
-        location_id = next((row["location_id"] for row in location_resp.data if str(row["county_no"]) == str(county_no)), None)
+        if not deviation:
+            print("⚠️ Ingen trafikhändelse-data mottagen från frontend.")
+            return jsonify({"error": "Ingen trafikhändelse-data medskickad"}), 400
+
+        # 📍 Hämta plats
+        location_data = supabase.table("location").select("*").execute()
+        location_id = next(
+            (row["location_id"] for row in location_data.data if str(row["county_no"]) == str(county_no)),
+            None
+        )
 
         if not location_id:
             return jsonify({"error": f"Inget län hittat med county_no = {county_no}"}), 404
 
         print("✅ Hittad plats:", location_id)
 
-        subs_resp = supabase.table("subscriptions").select("user_id") \
+        # 📋 Hämta aktiva prenumeranter
+        subscriptions = supabase.table("subscriptions").select("user_id") \
             .eq("location_id", location_id).eq("active", True).execute()
-        if not subs_resp.data:
+
+        if not subscriptions.data:
             return jsonify({"message": "Inga aktiva prenumeranter"}), 200
 
-        # ➕ Använd det som redan finns från frontend
-        deviation = data.get("deviation", {})
-
-        if not deviation:
-            print("⚠️ Ingen trafikhändelse-data mottagen från frontend.")
-            return jsonify({"error": "Ingen trafikhändelse-data medskickad"}), 400
-
+        # ✏️ Förbered sms-text
         header = deviation.get("Header", "Trafikstörning") or "Trafikstörning"
         message_text = deviation.get("Message", "")
-        link = f"https://www.trafikverket.se/trafikinformation/"
-
-        # Fallback om ingen meddelandetext finns
+        link = "https://www.trafikverket.se/trafikinformation/"
+        
         if message_text:
             sentences = message_text.split(". ")
             short_details = ". ".join(sentences[:2]).strip()
@@ -70,29 +76,28 @@ def send_sms_for_deviation():
         else:
             short_details = "Se mer information på Trafikverkets hemsida."
 
-        # Sätt ihop meddelandet
         composed_message = (
             f"🚧 {header.strip()[:60]}\n"
             f"{short_details}\n"
             f"Läs mer: {link}"
         )
 
-
+        # 👥 Hämta mottagare
         recipients = []
-        for sub in subs_resp.data:
+        for sub in subscriptions.data:
             user_id = sub["user_id"]
 
-            already_sent = supabase.table("notifications").select("id") \
+            # ❎ Kontrollera dubblett
+            existing_notification = supabase.table("notifications").select("id") \
                 .eq("user_id", user_id).eq("external_id", dev_id).eq("channel", "sms").execute()
-            if already_sent.data:
+            if existing_notification.data:
                 continue
 
-            user_resp = supabase.table("users").select("phone") \
-                .eq("user_id", user_id).execute()
-            if not user_resp.data:
+            user_data = supabase.table("users").select("phone").eq("user_id", user_id).execute()
+            if not user_data.data:
                 continue
 
-            phone = user_resp.data[0].get("phone")
+            phone = user_data.data[0].get("phone")
             if phone:
                 recipients.append({
                     "user_id": user_id,
@@ -104,6 +109,7 @@ def send_sms_for_deviation():
         if not recipients:
             return jsonify({"message": "Alla har redan fått detta sms eller saknar telefonnummer"}), 200
 
+        # ✉️ Skicka sms
         sms_payload = {
             "to": [r["phone"] for r in recipients],
             "message": composed_message,
@@ -120,6 +126,7 @@ def send_sms_for_deviation():
         sms_res = requests.post(SMS_SERVER_URL, json=sms_payload, headers=headers)
         sms_res.raise_for_status()
 
+        # 📝 Logga varje sms som skickats
         for r in recipients:
             supabase.table("notifications").insert({
                 "user_id": r["user_id"],
@@ -138,6 +145,7 @@ def send_sms_for_deviation():
         return jsonify({"error": "Fel vid sms-utskick", "details": str(e)}), 500
 
 
+
 @notification_api.route("/send_email_for_deviation", methods=["POST", "OPTIONS"])
 def send_email_for_deviation():
     print("✅ Route: /api/send_email_for_deviation REACHED")
@@ -149,39 +157,49 @@ def send_email_for_deviation():
         data = request.get_json()
         dev_id = data.get("devId")
         county_no = data.get("countyNo")
-        
+        deviation = data.get("deviation", {})
+
         print("➡️ county_no från frontend:", county_no)
 
+        # 🧪 Kontrollera indata
         if not dev_id or not county_no:
             return jsonify({"error": "devId och countyNo krävs"}), 400
 
-        location_resp = supabase.table("location").select("*").execute()
-        location_id = next((row["location_id"] for row in location_resp.data if str(row["county_no"]) == str(county_no)), None)
+        # 🗺️ Hämta platsdata från Supabase
+        location_data = supabase.table("location").select("*").execute()
+        location_id = next(
+            (row["location_id"] for row in location_data.data if str(row["county_no"]) == str(county_no)),
+            None
+        )
 
         if not location_id:
             return jsonify({"error": f"Inget län hittat med county_no = {county_no}"}), 404
 
         print("✅ Hittad plats:", location_id)
 
-        subs_resp = supabase.table("subscriptions").select("user_id") \
+        # 📋 Hämta alla aktiva prenumeranter för länet
+        subscriptions = supabase.table("subscriptions").select("user_id") \
             .eq("location_id", location_id).eq("active", True).execute()
-        if not subs_resp.data:
+
+        if not subscriptions.data:
             return jsonify({"message": "Inga aktiva e-postprenumeranter"}), 200
 
         recipients = []
-        for sub in subs_resp.data:
+        for sub in subscriptions.data:
             user_id = sub["user_id"]
 
-            already_sent = supabase.table("notifications").select("id") \
+            # ❎ Kontrollera att notifikation inte redan skickats
+            existing_notification = supabase.table("notifications").select("id") \
                 .eq("user_id", user_id).eq("external_id", dev_id).eq("channel", "email").execute()
-            if already_sent.data:
+            if existing_notification.data:
                 continue
 
-            user_resp = supabase.table("users").select("email").eq("user_id", user_id).execute()
-            if not user_resp.data:
+            # 📮 Hämta e-postadress
+            user_data = supabase.table("users").select("email").eq("user_id", user_id).execute()
+            if not user_data.data:
                 continue
 
-            email = user_resp.data[0].get("email")
+            email = user_data.data[0].get("email")
             if email:
                 recipients.append({
                     "user_id": user_id,
@@ -193,8 +211,20 @@ def send_email_for_deviation():
         if not recipients:
             return jsonify({"message": "Alla har redan fått mail eller saknar e-post"}), 200
 
-        subject = f"🚨 Ny trafikstörning i län {county_no}"
-        message = f"Trafikhändelse med ID {dev_id} rapporterad.\nSe mer på https://trafikinfo.trafikverket.se"
+        # 🧭 Hitta rätt länsnamn för rubrik
+        county_map = {str(row["county_no"]): row["region"] for row in location_data.data}
+        county_name = county_map.get(str(county_no), f"län {county_no}")
+
+        # 📨 Skapa mejl
+        subject = f"🚨 Ny trafikstörning i {county_name}"
+        header = deviation.get("Header", "Trafikhändelse")
+        msg_text = deviation.get("Message", "Se mer info nedan.")
+
+        message = (
+            f"{header}\n\n"
+            f"{msg_text}\n\n"
+            f"Läs mer: https://trafikinfo.trafikverket.se"
+        )
 
         payload = {
             "to": [r["email"] for r in recipients],
@@ -204,13 +234,14 @@ def send_email_for_deviation():
 
         headers = {
             "Content-Type": "application/json",
-            "X-API-KEY": API_KEY  # 🔐 Nyckel till e-postservern
+            "X-API-KEY": API_KEY
         }
 
         print("📤 Payload till mailserver:", payload)
         email_res = requests.post(EMAIL_SERVER_URL, json=payload, headers=headers)
         email_res.raise_for_status()
 
+        # ✅ Logga utskick
         for r in recipients:
             supabase.table("notifications").insert({
                 "user_id": r["user_id"],
