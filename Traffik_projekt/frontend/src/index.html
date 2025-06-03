@@ -23,6 +23,8 @@
         iframe {
             display: block;
             border: none;
+            width: 100%;
+            height: 100%;
         }
         .iframe-wrapper.expanded-mode {
             position: fixed;
@@ -31,6 +33,14 @@
             transform: translate(-50%, -50%);
             z-index: 1000;
             background-color: white;
+        }
+        .iframe-wrapper.mobile-mode {
+            width: 100% !important;
+            max-width: 768px;
+            height: 500px !important;
+            margin: 0 auto;
+            box-shadow: none;
+            border: none;
         }
         #pageOverlay {
             display: none;
@@ -115,6 +125,10 @@
         // === KUNDENS KONFIGURATION SLUT ===
 
         const iframe = document.getElementById('appIframe');
+        const iframeWrapper = document.querySelector('.iframe-wrapper');
+        const pageOverlay = document.getElementById('pageOverlay');
+        const closeExpandedViewBtn = document.getElementById('closeExpandedViewBtn');
+        const expandIconBtn = document.getElementById('expandIconBtn');
 
         const baseAppUrl = vueAppBasePath + 'iframe_host.html';
         const queryParams = new URLSearchParams();
@@ -137,84 +151,139 @@
         iframe.src = finalIframeSrc;
         console.log("Dynamiskt satt iframe src till:", finalIframeSrc);
 
-        // Din befintliga JavaScript-kod för iframe-hantering:
-        const iframeWrapper = document.querySelector('.iframe-wrapper');
-        const pageOverlay = document.getElementById('pageOverlay');
-        const closeExpandedViewBtn = document.getElementById('closeExpandedViewBtn');
-        const expandIconBtn = document.getElementById('expandIconBtn');
-
+        const bannerSize = { width: 1000, height: 200 }; // Som diskuterat, för att trigga 200px height media query
         const expandedSize = { width: 1200, height: 700 };
-        const bannerSize = { width: 1000, height: 200 };
-        let currentMode = 'banner';
+        const mobileSize = { width: '100%', height: 500, maxWidth: 768 };
+        
+        // currentActiveMode håller reda på DET NUVERANDE visningsläget som är aktivt.
+        // Det kan vara 'banner', 'expanded' eller 'mobile'.
+        let currentActiveMode = null; 
 
-        function setIframeView(mode) {
-            const newSize = (mode === 'expanded') ? expandedSize : bannerSize;
-            const previousMode = currentMode;
-            currentMode = mode;
+        // Denna funktion bestämmer vilket läge iframen ska ha och applicerar det.
+        function setIframeDisplayMode(mode) {
+            // Om vi redan är i detta läge, gör inget (förutom om vi tvingar en uppdatering)
+            if (currentActiveMode === mode && mode !== 'force_update') {
+                console.log(`Host: Already in ${mode} mode, no change needed.`);
+                return;
+            }
 
-            iframe.setAttribute('width', String(newSize.width));
-            iframe.setAttribute('height', String(newSize.height));
-            iframeWrapper.style.width = newSize.width + 'px';
-            iframeWrapper.style.height = newSize.height + 'px';
+            currentActiveMode = mode; // Uppdatera det aktiva läget
 
+            let newWidth, newHeight;
+
+            // Rensa alla klasser och dölj knappar/overlay som standard
+            iframeWrapper.classList.remove('expanded-mode', 'mobile-mode');
+            pageOverlay.style.display = 'none';
+            closeExpandedViewBtn.style.display = 'none';
+            expandIconBtn.style.display = 'none';
+
+            // Nollställ max-width som standard för att undvika problem mellan lägen
+            iframeWrapper.style.maxWidth = '';
+
+            // Bestäm dimensioner och applicera klasser baserat på det nya läget
             if (mode === 'expanded') {
+                newWidth = expandedSize.width;
+                newHeight = expandedSize.height;
                 iframeWrapper.classList.add('expanded-mode');
                 pageOverlay.style.display = 'block';
                 closeExpandedViewBtn.style.display = 'block';
-                expandIconBtn.style.display = 'none';
-            } else { // 'banner' mode
-                iframeWrapper.classList.remove('expanded-mode');
-                pageOverlay.style.display = 'none';
-                closeExpandedViewBtn.style.display = 'none';
-                expandIconBtn.style.display = 'block';
-            }
-
-            if (previousMode !== currentMode || !iframe.dataset.initialModeSent) {
-                if (iframe.contentWindow) {
-                    iframe.contentWindow.postMessage({ action: 'setViewMode', mode: mode }, '*');
-                    iframe.dataset.initialModeSent = true;
+            } else if (mode === 'mobile') {
+                newWidth = mobileSize.width;
+                newHeight = mobileSize.height;
+                iframeWrapper.classList.add('mobile-mode');
+                iframeWrapper.style.maxWidth = mobileSize.maxWidth + 'px'; // Sätt max-width för mobil
+            } else { // mode === 'banner' (eller default/auto)
+                newWidth = bannerSize.width;
+                newHeight = bannerSize.height;
+                // I banner-läge, visa expand-knappen om fönstret är brett nog
+                if (window.innerWidth > 768) { 
+                    expandIconBtn.style.display = 'block';
                 }
             }
-            console.log(`Host: Switched to ${mode} mode. Size: ${newSize.width}x${newSize.height}`);
+
+            // Tillämpa dimensioner på iframeWrapper och iframe-attribut
+            if (typeof newWidth === 'number') {
+                iframeWrapper.style.width = newWidth + 'px';
+                iframe.setAttribute('width', String(newWidth));
+            } else { // Om '100%'
+                iframeWrapper.style.width = newWidth;
+                iframe.setAttribute('width', newWidth);
+            }
+            if (typeof newHeight === 'number') {
+                iframeWrapper.style.height = newHeight + 'px';
+                iframe.setAttribute('height', String(newHeight));
+            } else { // Om '100%'
+                iframeWrapper.style.height = newHeight;
+                iframe.setAttribute('height', newHeight);
+            }
+            
+            // Skicka meddelande till Vue-appen
+            if (iframe.contentWindow) {
+                // Skicka den faktiska bredden iframen upplever
+                iframe.contentWindow.postMessage({ action: 'setViewMode', mode: mode, viewportWidth: iframe.clientWidth }, '*');
+            }
+            console.log(`Host: Switched to ${mode} mode. Size: ${newWidth}x${newHeight}. Actual iframe width: ${iframe.clientWidth}`);
         }
+
+        // Bestämmer det ideala läget baserat på fönsterstorlek (ej manuellt expanderat)
+        function getIdealModeBasedOnWindowSize() {
+            const currentWindowWidth = window.innerWidth;
+            if (currentWindowWidth <= 768) {
+                return 'mobile';
+            } else {
+                return 'banner';
+            }
+        }
+
+        // Hanterar vad som ska hända vid resize eller initial laddning
+        function handleViewportState() {
+            const idealMode = getIdealModeBasedOnWindowSize();
+
+            if (currentActiveMode === 'expanded') {
+                // Om vi är i expanded läge, förbli det tills stängs
+                setIframeDisplayMode('expanded'); // Tvinga fram expanded igen för att uppdatera om fönstret ändras
+            } else {
+                // Annars, använd det ideala läget
+                setIframeDisplayMode(idealMode);
+            }
+        }
+
 
         iframe.addEventListener('load', () => {
             console.log("Iframe loaded with src:", iframe.src, ". Setting initial view.");
-            iframe.dataset.initialModeSent = false;
-            setIframeView('banner'); // Ställer in iframen till "banner"-läge vid laddning
-            if (currentMode === 'banner') { // Säkerställ att knappen visas
-                expandIconBtn.style.display = 'block';
-            }
+            handleViewportState(); // Sätt initialt läge baserat på fönsterstorlek
         });
         
         expandIconBtn.addEventListener('click', () => {
-            setIframeView('expanded');
+            setIframeDisplayMode('expanded');
         });
 
         closeExpandedViewBtn.addEventListener('click', () => {
-            setIframeView('banner');
+            // När man stänger expanded, återgå till det ideala läget baserat på fönsterstorlek
+            currentActiveMode = null;
+            handleViewportState(); 
         });
 
         pageOverlay.addEventListener('click', () => {
-            if (currentMode === 'expanded') {
-                setIframeView('banner');
+            if (currentActiveMode === 'expanded') {
+                currentActiveMode = null;
+                handleViewportState();
             }
         });
 
         window.addEventListener('message', (event) => {
-            // const expectedOrigin = new URL(vueAppBasePath, window.location.href).origin;
-            // if (event.origin !== expectedOrigin && ! (new URL(iframe.src).origin === event.origin) ) { // Tillåt även från iframe src origin
-            //     console.warn("Message received from unexpected origin:", event.origin);
-            //     return;
-            // }
-
+            // Origin-validering kan läggas till här
             if (event.data && event.data.action === 'requestExpandFromIframe') {
                 console.log("Host received requestExpandFromIframe from iframe.");
-                if (currentMode === 'banner') {
-                    setIframeView('expanded');
-                }
+                setIframeDisplayMode('expanded'); // Använd den nya funktionen
             }
         });
+
+        // Lyssna på fönstrets storleksändringar
+        window.addEventListener('resize', handleViewportState);
+
+        // Initial körning vid sidladdning (redundant med iframe.onload men skadar inte)
+        // handleViewportState(); 
     </script>
 
 </body>
