@@ -250,22 +250,21 @@ def send_sms_code():
         if not phone:
             return jsonify({"error": "Telefonnummer saknas"}), 400
 
-        code = str(random.randint(100000, 999999))
-        expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+        # 🔢 Skapa kod (ex. 6-siffrig slumpad kod)
+        code = random.randint(100000, 999999)
+        print(f"📨 Skickar verifieringskod {code} till: {phone}")
 
-        print(f"📨 Skickar kod {code} till: {phone}")
-
-        # Spara i sms_codes-tabellen i Supabase
+        # 💾 Spara kod till supabase
         supabase.table("sms_codes").insert({
             "phone": phone,
-            "code": code,
-            "expires_at": expires_at,
+            "code": str(code),
             "verified": False
         }).execute()
 
-        sms_payload = {
+        # 📤 Skicka SMS
+        payload = {
             "to": [phone],
-            "message": f"Din verifieringskod är: {code}",
+            "message": f"Din verifieringskod: {code}",
             "from": "TrafikInfo"
         }
 
@@ -274,9 +273,8 @@ def send_sms_code():
             "X-API-KEY": API_KEY
         }
 
-        sms_res = requests.post(SMS_SERVER_URL, json=sms_payload, headers=headers)
+        sms_res = requests.post(SMS_SERVER_URL, json=payload, headers=headers)
         sms_res.raise_for_status()
-        print("✅ SMS skickat!")
 
         return jsonify({"message": "Verifieringskod skickad"}), 200
 
