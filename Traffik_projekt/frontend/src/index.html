@@ -112,7 +112,7 @@
 
         // ** VIKTIGT FÖR KUNDEN ATT KONFIGURERA **
         const vueAppBasePath = './';
-        const resellerKey = "85273f02-3a86-43b6-bd6f-70203abfd74e";
+        const resellerKey = "296ffdc0-2656-4ba5-9f5b-1986e1db6ed5";
         /* lagt in rellser uuid */
         // === KUNDENS KONFIGURATION SLUT ===
 
@@ -129,7 +129,7 @@
         }
 
         if (resellerKey) {
-            queryParams.append('reseller, resellerKey');
+            queryParams.append('resellerKey', resellerKey);
         } /* lagt till reseller i url */
 
         let finalIframeSrc = baseAppUrl;

@@ -9,16 +9,16 @@ export default {
     },
     template: `
       <div class="modal">
-        <div class="modal-content">
-           <button class="close" @click="closeModal">X</button>
-  
+        <div class="modal-content"> 
+        <button class="close" @click="closeModal">X</button>
+
           <div v-if="step === 1">
             <h2>Prenumerera på trafikinfo</h2>
             <p>Du kommer få info om olyckor, hinder och vägarbete via SMS.</p>
-            <p> Måndadskostnad: {{ price }} </p>
+            <p> Måndadskostnad: {{ price }}SEK</p>
             <h3> Steg 1 av 4: Välj område </h3>
             <select v-model="region" class="option" >
-              <option disabled value="">Välj ett område</option>
+              <option disabled :value="null" selected>Välj ett område</option>
               <option v-for="r in regions" :key="r.location_id" :value="r">{{ r.region }}</option>
             </select>
                
@@ -35,7 +35,7 @@ export default {
           <div v-if="step === 3">
             <h3>Steg 3 av 4: Betalning</h3>
             <div class="payment-section">
-              <div class="payment-amount"> Pris: {{ price }}</div>
+              <div class="payment-amount"> Pris: {{ price }}SEK</div>
               <div id="stripe-checkout-container"></div>
               <div v-if="error" class="error-message">{{ error }}</div>
               <button @click="handlePayment" class="button-primary" :disabled="loading">
@@ -61,14 +61,15 @@ export default {
       return {
         step: 1,
         region: null, //använderens valda region
-        /* price: null, */
         email: '',
         phone: '',
         incidentTypes: [],
         regions: [], //listan över regioner
         userId: null,
         resellerId: null,
-        stripe: null,
+        resellerName: null,
+        price: null, //lagt till
+        stripe: null, //lagt till 
         loading: false,
         error: null
       };
@@ -85,6 +86,7 @@ export default {
       
       if (!regionsRes.ok) throw new Error("Kunde inte hämta regioner");
       this.regions = await regionsRes.json();
+      
     } catch (err) {
       console.error("Kunde inte hämta regioner:", err);
       this.error = "Kunde inte hämta regioner";
@@ -101,47 +103,22 @@ export default {
   
   console.log("→ Hittade resellerKey:", resellerKey);
 
-/*     const defaultRegion = this.regions.find(r => r.region === resellerData.region);
-    if (defaultRegion) {
-      this.region = defaultRegion;
-    } */
-  
+    // LAGT TILL - pris och namn från reseller 
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/api/reseller-info?reseller_id=${resellerKey}`);
+    const data = await response.json();
 
-/* 
-      if (!resellerRes.ok) {
-        console.error('Kunde inte hämta reseller‐data:', resellerData);
-        this.error = resellerData.error || 'Kunde inte hämta reseller-data.';
-        return;
-      }
- */
-      // Spara pris och namn om du vill (region kör vi separat nedan)
- 
+    if (!response.ok) throw new Error(data.error || "Fel vid hämtning");
 
-      /* fetch('https://trafik-q8va.onrender.com/api/regions')
-        .then(res => res.json())
-        .then(data => {
-          this.regions = data; 
+    this.resellerName = data.name;
+    this.price = data.price;
+    console.log("Återförsäljare:", this.resellerName, "| Pris:", this.price);
+  } catch (err) {
+    console.error("Kunde inte hämta återförsäljarinfo:", err);
+    this.error = "Kunde inte hämta återförsäljarinfo.";
+    return;
+  }
 
-           const domain = window.location.hostname;
-          return fetch(`https://trafik-q8va.onrender.com/api/reseller-region?domain=${domain}`); 
-          
-        })
-        .then(res => res.json ())
-        .then(data => {
-
-          this.price = data.price;
-
-          const resellerRegionName = data.region;
-
-          const defaultRegion = this.regions.find(r => r.region === resellerRegionName);
-          if (defaultRegion) {
-            this.region = defaultRegion;
-          }
-          console.log("Pris satt till:", this.price);
-        })
-        .catch(err => {
-          console.error('Kunde inte hämta regioner', err);
-        }); */
     },
     methods: {
       nextStep() {

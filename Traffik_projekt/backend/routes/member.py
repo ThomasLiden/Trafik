@@ -214,32 +214,45 @@ def get_regions ():
         print("==> FEL I /api/regions:", e)
         return jsonify({"error": str(e)}), 400
                            
-#Rutt för reseller-region
+#Rutt för reseller-info
+@member_blueprint.route('/api/reseller-info', methods=['GET'])
+def get_reseller_info():
+    reseller_id = request.args.get("reseller_id")
+    if not reseller_id:
+        return jsonify({"error": "reseller_id krävs"}), 400
+
+    try:
+        response = supabase.table("reseller") \
+                           .select("name, price") \
+                           .eq("reseller_id", reseller_id) \
+                           .single() \
+                           .execute()
+        return jsonify(response.data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 
 #ny version med hämtning från utl istället för host
-@member_blueprint.route('/api/reseller-region', methods=['GET'])
-def get_reseller_region():
+#@member_blueprint.route('/api/reseller-region', methods=['GET'])
+#def get_reseller_region():
     # 1) Läs ut resellerKey från query-string
-    reseller_key = request.args.get("resellerKey")
-    if not reseller_key:
-        return jsonify({"error": "resellerKey krävs"}), 400
+ #   reseller_key = request.args.get("resellerKey")
+  #  if not reseller_key:
+   #     return jsonify({"error": "resellerKey krävs"}), 400
 
-    try:
-        # 2) Hämta raden i 'reseller'-tabellen där id == resellerKey
-        response = supabase.table("reseller") \
-                           .select("reseller_id, price, name, region") \
-                           .eq("reseller_id", reseller_key) \
-                           .single() \
-                           .execute()
+    #try:
+     #   # 2) Hämta raden i 'reseller'-tabellen där id == resellerKey
+      #  response = supabase.table("reseller") \
+       #                    .select("reseller_id, price, name, region") \
+        ###                 .execute()
 
         # Om inget data returnerades, ge 404
-        if not response.data:
-            return jsonify({"error": "Ingen reseller hittades för detta resellerKey"}), 404
+       # if not response.data:
+       #     return jsonify({"error": "Ingen reseller hittades för detta resellerKey"}), 404
 
         # 3) Skicka tillbaka hela raden som JSON
-        return jsonify(response.data), 200
+        #return jsonify(response.data), 200
 
-    except Exception as e:
-        print("==> FEL i /api/reseller-region:", e)
-        return jsonify({"error": str(e)}), 500
+    ##except Exception as e:
+      #  print("==> FEL i /api/reseller-region:", e)
+       # return jsonify({"error": str(e)}), 500
