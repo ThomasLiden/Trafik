@@ -36,6 +36,10 @@ CORS(app,
              "https://www.dagspressutgivarna.se",
              "http://127.0.0.1:5500"
          ]},
+         r"/admin/*": {"origins": [
+             "https://admin-lqz8.onrender.com",
+             "http://127.0.0.1:5500"
+         ]},
          r"/trafikinfo": {"origins": [
              "https://trafik-frontend-hzww.onrender.com",
              "https://trafik-q8va.onrender.com",
