@@ -7,7 +7,7 @@ import logging
 from flask_cors import CORS
 """ from supabase import create_client, Client """
 from models.supabase_client import supabase
-from datetime import datetime  # Lägg till högst upp om det inte redan finns
+from datetime import datetime 
 # ändrat till centraliserad hämtningn
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")  # fallback för lokal dev
 
