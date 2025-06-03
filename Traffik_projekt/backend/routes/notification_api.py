@@ -255,8 +255,8 @@ def send_sms_code():
 
         print(f"📨 Skickar kod {code} till: {phone}")
 
-        # Spara i Supabase (tabell 'verifications')
-        supabase.table("verifications").insert({
+        # Spara i sms_codes-tabellen i Supabase
+        supabase.table("sms_codes").insert({
             "phone": phone,
             "code": code,
             "expires_at": expires_at,
