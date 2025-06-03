@@ -49,10 +49,25 @@ Du ska ha mottagit ett paket (t.ex. en ZIP-fil) som innehåller:
 
     Kontrollera noggrant att denna sökväg blir korrekt för din filstruktur. Det är här det oftast blir fel om iframen inte laddas.
 
-
-4.  **Anpassa Utseende (Valfritt):**
+4.  **Lägg till Reseller ID (VIKTIGT):**
     Leta upp sektionen `customerStyleConfig`:
-    ```javascript
+    const customerStyleConfig = {
+       fontFamily: "Georgia, serif", // Ditt val av typsnitt
+       primaryColor: "#006400",      // Din primära accentfärg
+       // ... eventuella andra framtida parametrar ...
+    };
+
+   Lägg till resellerId till `customerStyleConfig` objektet:
+   const customerStyleConfig = {
+       fontFamily: "Georgia, serif",
+       primaryColor: "#006400",
+       resellerId: "DIN_RESELLER_ID"  // <- Lägg till ert Reseller ID här (UUID format)
+    };
+
+    Ersätt "DIN_RESELLER_ID" med ert faktiska Reseller ID (UUID format).
+
+5.  **Anpassa Utseende (Valfritt):**
+    Leta upp sektionen `customerStyleConfig`:
     const customerStyleConfig = {
         fontFamily: "Georgia, serif", // Ditt val av typsnitt
         primaryColor: "#006400",      // Din primära accentfärg
@@ -61,7 +76,8 @@ Du ska ha mottagit ett paket (t.ex. en ZIP-fil) som innehåller:
     ```
     Ändra värdena för `fontFamily` (typsnitt för brödtext och rubriker) och `primaryColor` (primärfärg för knappar) som passar din tidning.
      Använd giltiga CSS-värden (t.ex. typsnittsnamn inom citattecken, färger som `"#RRGGBB"`).
-5.  **Anpassa Iframe-storlek (Valfritt):**
+
+6.  **Anpassa Iframe-storlek (Valfritt):**
     Du kan ändra `width` och `height` för `<iframe id="appIframe" ...>` direkt i HTML-koden om standardvärdena (1000x400) inte passar - detta är dock INTE rekommenderat för bästa användarupplevelse.
 
 ### Del 3: Informera [Utvecklarna AB] om Domänen (VIKTIGT)
