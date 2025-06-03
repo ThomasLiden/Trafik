@@ -17,7 +17,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 TRAFIKVERKET_API = os.getenv("TRAFIKVERKET_PROXY_URL", "http://localhost:5000/trafikinfo")
 SMS_SERVER_URL = os.getenv("RENDER_SMS_URL", "http://localhost:3000/send-sms")
 EMAIL_SERVER_URL = os.getenv("RENDER_EMAIL_URL", "http://localhost:3000/send-email")
-API_KEY = os.getenv("X-API-KEY")  # 🔐 Hämtas från .env
+API_KEY = os.getenv("X_API_KEY")  # 🔐 Hämtas från .env
 
 @notification_api.route("/send_sms_for_deviation", methods=["POST", "OPTIONS"])
 def send_sms_for_deviation():
