@@ -76,21 +76,33 @@
             const btn = e.target;
             btn.disabled = true;
             btn.innerText = "⏳ Skickar SMS...";
+
+            if (!dev.Id) {
+              console.warn("❌ Saknar dev.Id – avbryter");
+              btn.innerText = "⚠️ Ogiltigt ID";
+              return;
+            }
+
+            const payload = {
+              devId: dev.Id,
+              countyNo: parseInt(countyNo, 10),
+              shortlinks: true
+            };
+            console.log("📤 Skickar SMS-request:", payload);
+
             try {
               const smsRes = await fetch(`${BASE_URL}/api/send_sms_for_deviation`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  devId: dev.Id,
-                  countyNo: parseInt(countyNo, 10),
-                  shortlinks: true
-                })
+                body: JSON.stringify(payload)
               });
+
+              if (!smsRes.ok) throw new Error(`Serverfel: ${smsRes.status}`);
               const result = await smsRes.json();
               li.classList.add("sent");
               btn.innerText = `✅ SMS (${result.count || 0})`;
             } catch (e) {
-              console.error(e);
+              console.error("❌ Fel vid SMS:", e);
               btn.innerText = "⚠️ Fel vid SMS";
             }
           });
@@ -99,20 +111,32 @@
             const btn = e.target;
             btn.disabled = true;
             btn.innerText = "⏳ Skickar Mail...";
+
+            if (!dev.Id) {
+              console.warn("❌ Saknar dev.Id – avbryter");
+              btn.innerText = "⚠️ Ogiltigt ID";
+              return;
+            }
+
+            const payload = {
+              devId: dev.Id,
+              countyNo: parseInt(countyNo, 10)
+            };
+            console.log("📤 Skickar MAIL-request:", payload);
+
             try {
               const mailRes = await fetch(`${BASE_URL}/api/send_email_for_deviation`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  devId: dev.Id,
-                  countyNo: parseInt(countyNo, 10)
-                })
+                body: JSON.stringify(payload)
               });
+
+              if (!mailRes.ok) throw new Error(`Serverfel: ${mailRes.status}`);
               const result = await mailRes.json();
               li.classList.add("sent");
               btn.innerText = `✅ Mail (${result.count || "OK"})`;
             } catch (e) {
-              console.error(e);
+              console.error("❌ Fel vid mail:", e);
               btn.innerText = "⚠️ Fel vid mail";
             }
           });
@@ -121,10 +145,23 @@
         });
 
       } catch (err) {
-        console.error(err);
+        console.error("❌ Fel vid hämtning av data:", err);
         results.innerHTML = "<li>❌ Fel vid hämtning av data.</li>";
       }
     });
+
+    // 🔧 Testfunktion du kan köra manuellt i konsolen
+    window.testSms = () => {
+      fetch(`${BASE_URL}/api/send_sms_for_deviation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          devId: "SE_STA_TRISSID_1_7162682",
+          countyNo: 24,
+          shortlinks: true
+        })
+      }).then(res => res.json()).then(console.log).catch(console.error);
+    };
   </script>
 </body>
 </html>
