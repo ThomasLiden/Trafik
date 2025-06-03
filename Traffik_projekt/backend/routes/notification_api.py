@@ -254,11 +254,15 @@ def send_sms_code():
         code = random.randint(100000, 999999)
         print(f"📨 Skickar verifieringskod {code} till: {phone}")
 
+        # ⏳ Beräkna utgångstid
+        expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+
         # 💾 Spara kod till supabase
         supabase.table("sms_codes").insert({
             "phone": phone,
             "code": str(code),
-            "verified": False
+            "verified": False,
+            "expires_at": expires_at
         }).execute()
 
         # 📤 Skicka SMS
@@ -281,7 +285,7 @@ def send_sms_code():
     except Exception as e:
         print("❌ Fel i send_sms_code:", e)
         return jsonify({"error": "Misslyckades att skicka kod", "details": str(e)}), 500
-    
+
 @notification_api.route("/verify-sms-code", methods=["POST", "OPTIONS"])
 def verify_sms_code():
     if request.method == "OPTIONS":
@@ -297,7 +301,7 @@ def verify_sms_code():
 
         # Hämta senaste sms-kod
         response = supabase.table("sms_codes") \
-            .select("id, code, verified") \
+            .select("id, code, verified, expires_at") \
             .eq("phone", phone) \
             .order("created_at", desc=True) \
             .limit(1) \
@@ -307,9 +311,17 @@ def verify_sms_code():
             return jsonify({"error": "Ingen kod hittades för detta nummer"}), 404
 
         sms_code = response.data[0]
+
+        # Kontrollera om redan verifierad
         if sms_code["verified"]:
             return jsonify({"message": "Redan verifierad"}), 200
 
+        # Kontrollera om koden har gått ut
+        expires_at = datetime.fromisoformat(sms_code["expires_at"])
+        if datetime.utcnow() > expires_at:
+            return jsonify({"error": "Koden har gått ut"}), 410
+
+        # Kontrollera om koden stämmer
         if sms_code["code"] != str(code):
             return jsonify({"error": "Fel kod"}), 401
 
