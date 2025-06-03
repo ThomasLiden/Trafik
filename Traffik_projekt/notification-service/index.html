@@ -149,7 +149,8 @@
                 body: JSON.stringify({
                   devId: dev.Id,
                   countyNo: parseInt(countyNo),
-                  shortlinks: true
+                  shortlinks: true,
+                  deviation: dev 
                 })
               });
               const json = await res.json();

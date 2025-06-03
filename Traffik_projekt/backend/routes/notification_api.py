@@ -48,13 +48,12 @@ def send_sms_for_deviation():
         if not subs_resp.data:
             return jsonify({"message": "Inga aktiva prenumeranter"}), 200
 
-        try:
-            trv_res = requests.get(f"{TRAFIKVERKET_API}?id={dev_id}")
-            trv_data = trv_res.json()
-            deviation = next((d for d in trv_data if d.get("Id") == dev_id), {})
-        except Exception as err:
-            print("⚠️ Kunde inte hämta devId-data:", err)
-            deviation = {}
+        # ➕ Använd det som redan finns från frontend
+        deviation = data.get("deviation", {})
+
+        if not deviation:
+            print("⚠️ Ingen trafikhändelse-data mottagen från frontend.")
+            return jsonify({"error": "Ingen trafikhändelse-data medskickad"}), 400
 
         header = deviation.get("Header", "Trafikstörning") or "Trafikstörning"
         message_text = deviation.get("Message", "")
@@ -150,6 +149,7 @@ def send_email_for_deviation():
         data = request.get_json()
         dev_id = data.get("devId")
         county_no = data.get("countyNo")
+        
         print("➡️ county_no från frontend:", county_no)
 
         if not dev_id or not county_no:
