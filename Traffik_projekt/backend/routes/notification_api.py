@@ -247,18 +247,24 @@ def send_sms_code():
         print("🔍 Payload:", data)
 
         phone = data.get("phone")
-        if not phone:
-            print("❗ Telefonnummer saknas i requesten")
-            return jsonify({"error": "Telefonnummer saknas"}), 400
+        user_id = data.get("user_id")
 
-        # Generera kod
-        code = str(random.randint(100000, 999999))
-        expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+        if not phone or not user_id:
+            print("❌ Saknar phone eller user_id")
+            return jsonify({"error": "Telefonnummer eller användar-ID saknas"}), 400
 
-        print(f"📬 Skickar kod {code} till {phone}, utgår {expires_at}")
+        # Rensa gamla koder
+        supabase.table("sms_codes").delete().eq("phone", phone).execute()
 
-        # Spara i Supabase
+        # Skapa ny kod
+        code = f"{random.randint(100000, 999999)}"
+        expires_at = (datetime.utcnow() + timedelta(minutes=5)).isoformat()
+
+        print(f"📬 Skickar kod {code} till {phone}, gäller till {expires_at}")
+
+        # Spara koden i Supabase
         insert_result = supabase.table("sms_codes").insert({
+            "user_id": user_id,
             "phone": phone,
             "code": code,
             "verified": False,
@@ -266,20 +272,14 @@ def send_sms_code():
         }).execute()
         print("💾 Insert-resultat:", insert_result)
 
-        # Skicka till e-postservern (för SMS)
-        response = requests.post(EMAIL_SERVER_URL, json={
-            "to": phone,
-            "message": f"Din verifieringskod är: {code}"
-        }, headers={
-            "Content-Type": "application/json",
-            "X-API-KEY": API_KEY
-        })
-        print("📤 SMS-server svar:", response.status_code, response.text)
+        # Skicka till sms-server (eller e-post i dev)
+        sms_response = requests.post(
+            os.getenv("SMS_SERVER_URL", "http://localhost:3000/send-sms"),
+            json={"to": phone, "message": f"Din verifieringskod är {code}"}
+        )
+        print("📤 SMS-server svar:", sms_response.status_code, sms_response.text)
 
-        if response.status_code != 200:
-            return jsonify({"error": "Misslyckades att skicka SMS"}), 500
-
-        return jsonify({"message": "SMS-kod skickad"}), 200
+        return jsonify({"message": "Verifieringskod skickad"}), 200
 
     except Exception as e:
         print("❌ Undantag i /send-sms-code:", e)
