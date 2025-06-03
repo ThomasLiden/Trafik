@@ -31,7 +31,9 @@ Du ska ha mottagit ett paket (t.ex. en ZIP-fil) som innehåller:
 ### Del 2: Konfigurera och Placera Inbäddningssidan
 
 1.  **Kopiera Mallen:** Ta filen `index.html` och placera denna fil där du vill att den ska vara åtkomlig på din webbplats (t.ex. i roten `public_html/` eller i en specifik undermapp).
+
 2.  **Redigera Inbäddningssidan:** Öppna din nyskapade fil (t.ex. `index.html`) i en textredigerare.
+
 3.  **Ställ in Sökväg (VIKTIGT):**
     Leta upp raden (inuti `<script>`-taggen):
     ```javascript
