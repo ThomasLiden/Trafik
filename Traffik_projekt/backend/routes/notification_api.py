@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 from supabase import create_client
 import requests
 import os
+import random
+from datetime import datetime, timedelta
 
 notification_api = Blueprint("notification_api", __name__, url_prefix="/api")
 
@@ -235,6 +237,7 @@ def list_notifications():
         print("❌ Fel vid hämtning av notifikationer:", e)
         return jsonify({"error": "Kunde inte hämta notifikationer", "details": str(e)}), 500
     
+
 @notification_api.route("/send-sms-code", methods=["POST", "OPTIONS"])
 def send_sms_code():
     if request.method == "OPTIONS":
@@ -247,13 +250,33 @@ def send_sms_code():
         if not phone:
             return jsonify({"error": "Telefonnummer saknas"}), 400
 
-        print(f"📨 Skickar verifieringskod till: {phone}")
+        code = str(random.randint(100000, 999999))
+        expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
 
-        # Här kan du generera kod, spara den i databasen och skicka SMS:
-        # Exempel (utan riktig SMS-sändning):
-        # code = random.randint(100000, 999999)
-        # spara koden till databasen kopplad till telefonnummer
-        # skicka sms via SMS_SERVER_URL
+        print(f"📨 Skickar kod {code} till: {phone}")
+
+        # Spara i Supabase (tabell 'verifications')
+        supabase.table("verifications").insert({
+            "phone": phone,
+            "code": code,
+            "expires_at": expires_at,
+            "verified": False
+        }).execute()
+
+        sms_payload = {
+            "to": [phone],
+            "message": f"Din verifieringskod är: {code}",
+            "from": "TrafikInfo"
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-KEY": API_KEY
+        }
+
+        sms_res = requests.post(SMS_SERVER_URL, json=sms_payload, headers=headers)
+        sms_res.raise_for_status()
+        print("✅ SMS skickat!")
 
         return jsonify({"message": "Verifieringskod skickad"}), 200
 
