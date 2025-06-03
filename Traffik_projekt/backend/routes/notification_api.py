@@ -239,141 +239,141 @@ def list_notifications():
         return jsonify({"error": "Kunde inte hämta notifikationer", "details": str(e)}), 500
     
 
-@notification_api.route("/send-sms-code", methods=["POST"])
-def send_sms_code():
-    try:
-        print("📥 Mottaget request i /send-sms-code")
-        data = request.get_json()
-        print("🔍 Payload:", data)
+# @notification_api.route("/send-sms-code", methods=["POST"])
+# def send_sms_code():
+#     try:
+#         print("📥 Mottaget request i /send-sms-code")
+#         data = request.get_json()
+#         print("🔍 Payload:", data)
 
-        phone = data.get("phone")
-        if not phone:
-            return jsonify({"error": "Telefonnummer saknas"}), 400
+#         phone = data.get("phone")
+#         if not phone:
+#             return jsonify({"error": "Telefonnummer saknas"}), 400
 
-        # Rensa gamla koder
-        supabase.table("sms_codes").delete().eq("phone", phone).execute()
+#         # Rensa gamla koder
+#         supabase.table("sms_codes").delete().eq("phone", phone).execute()
 
-        # Skapa ny kod
-        code = f"{random.randint(100000, 999999)}"
-        expires_at = (datetime.utcnow() + timedelta(minutes=5)).isoformat() + "Z"
+#         # Skapa ny kod
+#         code = f"{random.randint(100000, 999999)}"
+#         expires_at = (datetime.utcnow() + timedelta(minutes=5)).isoformat() + "Z"
 
-        print(f"📬 Skickar kod {code} till {phone}, gäller till {expires_at}")
+#         print(f"📬 Skickar kod {code} till {phone}, gäller till {expires_at}")
 
-        # Spara koden i Supabase
-        insert_result = supabase.table("sms_codes").insert({
-            "phone": phone,
-            "code": code,
-            "verified": False,
-            "expires_at": expires_at
-        }).execute()
-        print("💾 Insert-resultat:", insert_result)
+#         # Spara koden i Supabase
+#         insert_result = supabase.table("sms_codes").insert({
+#             "phone": phone,
+#             "code": code,
+#             "verified": False,
+#             "expires_at": expires_at
+#         }).execute()
+#         print("💾 Insert-resultat:", insert_result)
 
-        # Skicka till sms-server
-        sms_response = requests.post(
-            SMS_SERVER_URL,
-            json={"to": phone, "message": f"Din verifieringskod är {code}"},
-            timeout=50
-        )
-        print("📤 SMS-server svar:", sms_response.status_code, sms_response.text)
+#         # Skicka till sms-server
+#         sms_response = requests.post(
+#             SMS_SERVER_URL,
+#             json={"to": phone, "message": f"Din verifieringskod är {code}"},
+#             timeout=50
+#         )
+#         print("📤 SMS-server svar:", sms_response.status_code, sms_response.text)
 
-        return jsonify({"message": "Verifieringskod skickad"}), 200
+#         return jsonify({"message": "Verifieringskod skickad"}), 200
 
-    except Exception as e:
-        print("❌ Undantag i /send-sms-code:", e)
-        return jsonify({"error": "Misslyckades att skicka kod", "details": str(e)}), 500
+#     except Exception as e:
+#         print("❌ Undantag i /send-sms-code:", e)
+#         return jsonify({"error": "Misslyckades att skicka kod", "details": str(e)}), 500
 
 
-@notification_api.route("/verify-sms-code", methods=["POST"])
-def verify_sms_code():
-    try:
-        data = request.get_json()
-        phone = data.get("phone")
-        code = data.get("code")
+# @notification_api.route("/verify-sms-code", methods=["POST"])
+# def verify_sms_code():
+#     try:
+#         data = request.get_json()
+#         phone = data.get("phone")
+#         code = data.get("code")
 
-        if not phone or not code:
-            return jsonify({"error": "Telefonnummer eller kod saknas"}), 400
+#         if not phone or not code:
+#             return jsonify({"error": "Telefonnummer eller kod saknas"}), 400
 
-        result = supabase.table("sms_codes") \
-            .select("*") \
-            .eq("phone", phone) \
-            .eq("code", code) \
-            .eq("verified", False) \
-            .execute()
+#         result = supabase.table("sms_codes") \
+#             .select("*") \
+#             .eq("phone", phone) \
+#             .eq("code", code) \
+#             .eq("verified", False) \
+#             .execute()
 
-        rows = result.data
-        if not rows:
-            return jsonify({"error": "Felaktig eller utgången kod"}), 400
+#         rows = result.data
+#         if not rows:
+#             return jsonify({"error": "Felaktig eller utgången kod"}), 400
 
-        sms_code = rows[0]
-        expires_at = sms_code.get("expires_at")
+#         sms_code = rows[0]
+#         expires_at = sms_code.get("expires_at")
 
-        if not expires_at:
-            print("⚠️ 'expires_at' saknas i raden:", sms_code)
-            return jsonify({"error": "Intern fel – kod saknar utgångstid"}), 500
+#         if not expires_at:
+#             print("⚠️ 'expires_at' saknas i raden:", sms_code)
+#             return jsonify({"error": "Intern fel – kod saknar utgångstid"}), 500
 
-        if isinstance(expires_at, str):
-            # Tar bort Z från slutet för att undvika ValueError i fromisoformat
-            expires_at = datetime.fromisoformat(expires_at.replace("Z", ""))
+#         if isinstance(expires_at, str):
+#             # Tar bort Z från slutet för att undvika ValueError i fromisoformat
+#             expires_at = datetime.fromisoformat(expires_at.replace("Z", ""))
 
-        print(f"⏰ expires_at: {expires_at}, nu: {datetime.utcnow()}")
+#         print(f"⏰ expires_at: {expires_at}, nu: {datetime.utcnow()}")
 
-        if expires_at < datetime.utcnow():
-            return jsonify({"error": "Koden har gått ut"}), 400
+#         if expires_at < datetime.utcnow():
+#             return jsonify({"error": "Koden har gått ut"}), 400
 
-        supabase.table("sms_codes").update({
-            "verified": True
-        }).eq("id", sms_code["id"]).execute()
+#         supabase.table("sms_codes").update({
+#             "verified": True
+#         }).eq("id", sms_code["id"]).execute()
 
-        return jsonify({"message": "Telefonnummer verifierat"}), 200
+#         return jsonify({"message": "Telefonnummer verifierat"}), 200
 
-    except Exception as e:
-        print("❌ Fel i verify_sms_code:", e)
-        return jsonify({"error": "Verifiering misslyckades", "details": str(e)}), 500
+#     except Exception as e:
+#         print("❌ Fel i verify_sms_code:", e)
+#         return jsonify({"error": "Verifiering misslyckades", "details": str(e)}), 500
 
-@notification_api.route("/resend-sms-code", methods=["POST", "OPTIONS"])
-def resend_sms_code():
-    if request.method == "OPTIONS":
-        return jsonify({"ok": True}), 200
+# @notification_api.route("/resend-sms-code", methods=["POST", "OPTIONS"])
+# def resend_sms_code():
+#     if request.method == "OPTIONS":
+#         return jsonify({"ok": True}), 200
 
-    try:
-        data = request.get_json()
-        phone = data.get("phone")
+#     try:
+#         data = request.get_json()
+#         phone = data.get("phone")
 
-        if not phone:
-            return jsonify({"error": "Telefonnummer saknas"}), 400
+#         if not phone:
+#             return jsonify({"error": "Telefonnummer saknas"}), 400
 
-        code = random.randint(100000, 999999)
-        print(f"🔁 Skickar om verifieringskod {code} till: {phone}")
+#         code = random.randint(100000, 999999)
+#         print(f"🔁 Skickar om verifieringskod {code} till: {phone}")
 
-        expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+#         expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
 
-        supabase.table("sms_codes").update({
-            "code": str(code),
-            "verified": False,
-            "expires_at": expires_at
-        }).eq("phone", phone).execute()
+#         supabase.table("sms_codes").update({
+#             "code": str(code),
+#             "verified": False,
+#             "expires_at": expires_at
+#         }).eq("phone", phone).execute()
 
-        payload = {
-            "to": [phone],
-            "message": f"Din nya verifieringskod: {code}",
-            "from": "TrafikInfo"
-        }
+#         payload = {
+#             "to": [phone],
+#             "message": f"Din nya verifieringskod: {code}",
+#             "from": "TrafikInfo"
+#         }
 
-        headers = {
-            "Content-Type": "application/json",
-            "X-API-KEY": API_KEY
-        }
+#         headers = {
+#             "Content-Type": "application/json",
+#             "X-API-KEY": API_KEY
+#         }
 
-        sms_res = requests.post(
-            SMS_SERVER_URL,
-            json=payload,
-            headers=headers,
-            timeout=50
-        )
-        sms_res.raise_for_status()
+#         sms_res = requests.post(
+#             SMS_SERVER_URL,
+#             json=payload,
+#             headers=headers,
+#             timeout=50
+#         )
+#         sms_res.raise_for_status()
 
-        return jsonify({"message": "Verifieringskod skickad igen"}), 200
+#         return jsonify({"message": "Verifieringskod skickad igen"}), 200
 
-    except Exception as e:
-        print("❌ Fel i resend_sms_code:", e)
-        return jsonify({"error": "Misslyckades att skicka om kod", "details": str(e)}), 500
+#     except Exception as e:
+#         print("❌ Fel i resend_sms_code:", e)
+#         return jsonify({"error": "Misslyckades att skicka om kod", "details": str(e)}), 500
