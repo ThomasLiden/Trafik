@@ -76,11 +76,12 @@ def create_checkout_session_api():
         data = request.get_json()
         logger.info(f"Received data: {data}")
         user_id = data.get('user_id')
+        location_id = data.get('location_id')
         if not user_id or user_id == "None":
             logger.error("Ogiltigt eller saknat user_id i request")
             return jsonify({"error": "Ingen giltig user_id angiven"}), 400
 
-        logger.info(f"Skapar checkout session för user_id: {user_id}")
+        logger.info(f"Skapar checkout session för user_id: {user_id}, location_id: {location_id}")
 
         # Hämta reseller_id för användaren
         user_result = supabase.table("users").select("reseller_id").eq("user_id", user_id).limit(1).execute()
@@ -131,6 +132,7 @@ def create_checkout_session_api():
             "stripe_confirmation": session.client_secret,
             "user_id": user_id,
             "reseller_id": reseller_id,
+            "location_id": location_id,
             "status": "pending"
         }
         try:
@@ -184,12 +186,27 @@ def stripe_webhook():
             session = event['data']['object']
             stripe_session_id = session['id']
             stripe_subscription_id = session.get('subscription')
+            user_id = session.get('client_reference_id')  # Hämtas från Stripe-sessionen
             logger.info(f"🔄 Uppdaterar payment status till 'paid' för session: {stripe_session_id}")
             # Uppdatera betalning i Supabase till status 'paid'
             supabase.table('payments').update({
                 'status': 'paid',
                 'stripe_subscription_id': stripe_subscription_id
             }).eq('stripe_session_id', stripe_session_id).execute()
+
+            # Hämta location_id från payments-tabellen
+            payment_resp = supabase.table('payments').select('location_id').eq('stripe_session_id', stripe_session_id).single().execute()
+            location_id = payment_resp.data['location_id'] if payment_resp.data and 'location_id' in payment_resp.data else None
+
+            # Skapa eller aktivera prenumeration i subscriptions-tabellen
+            if user_id and location_id:
+                supabase.table('subscriptions').upsert({
+                    'user_id': user_id,
+                    'location_id': location_id,
+                    'active': True
+                }).execute()
+            else:
+                logger.warning(f"Kunde inte skapa/aktivera subscription: user_id={user_id}, location_id={location_id}")
 
         elif event['type'] == 'customer.subscription.updated':
             subscription = event['data']['object']

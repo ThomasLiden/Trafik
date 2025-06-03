@@ -155,7 +155,7 @@ export default {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
-            body: JSON.stringify({ user_id: userIdToSend })
+            body: JSON.stringify({ user_id: userIdToSend, location_id: this.region.location_id })
           });
       
           if (!response.ok) {
