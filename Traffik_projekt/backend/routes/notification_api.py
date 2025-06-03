@@ -1,4 +1,4 @@
-import time
+from datetime import timezone
 from flask import Blueprint, request, jsonify
 from supabase import create_client
 import requests
@@ -255,7 +255,7 @@ def send_sms_code():
 
         # Skapa ny kod
         code = f"{random.randint(100000, 999999)}"
-        expires_at = (datetime.utcnow() + timedelta(minutes=5)).isoformat()
+        expires_at = (datetime.utcnow() + timedelta(minutes=5)).isoformat() + "Z"
 
         print(f"📬 Skickar kod {code} till {phone}, gäller till {expires_at}")
 
