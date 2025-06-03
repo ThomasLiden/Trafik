@@ -274,7 +274,6 @@ def send_sms_code():
             "X-API-KEY": API_KEY
         }
 
-        # 🧠 Lägg till retry
         MAX_RETRIES = 3
         for attempt in range(MAX_RETRIES):
             try:
@@ -304,7 +303,6 @@ def verify_sms_code():
         if not phone or not code:
             return jsonify({"error": "Telefonnummer eller kod saknas"}), 400
 
-        # Hämta kod från Supabase
         result = supabase.table("sms_codes") \
             .select("*") \
             .eq("phone", phone) \
@@ -317,10 +315,9 @@ def verify_sms_code():
             return jsonify({"error": "Felaktig eller utgången kod"}), 400
 
         sms_code = rows[0]
-        if sms_code["expires_at"] < datetime.utcnow().isoformat():
+        if datetime.fromisoformat(sms_code["expires_at"]) < datetime.utcnow():
             return jsonify({"error": "Koden har gått ut"}), 400
 
-        # Uppdatera till verifierad
         supabase.table("sms_codes").update({
             "verified": True
         }).eq("id", sms_code["id"]).execute()
@@ -330,6 +327,7 @@ def verify_sms_code():
     except Exception as e:
         print("❌ Fel i verify_sms_code:", e)
         return jsonify({"error": "Verifiering misslyckades", "details": str(e)}), 500
+
 
 @notification_api.route("/resend-sms-code", methods=["POST", "OPTIONS"])
 def resend_sms_code():
@@ -343,21 +341,17 @@ def resend_sms_code():
         if not phone:
             return jsonify({"error": "Telefonnummer saknas"}), 400
 
-        # 🔢 Ny kod
         code = random.randint(100000, 999999)
         print(f"🔁 Skickar om verifieringskod {code} till: {phone}")
 
-        # ⏳ Ny utgångstid
         expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
 
-        # 🔁 Uppdatera befintlig post
         supabase.table("sms_codes").update({
             "code": str(code),
             "verified": False,
             "expires_at": expires_at
         }).eq("phone", phone).execute()
 
-        # 📤 Skicka nytt SMS
         payload = {
             "to": [phone],
             "message": f"Din nya verifieringskod: {code}",
