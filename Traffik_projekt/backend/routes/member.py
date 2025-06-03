@@ -68,11 +68,11 @@ def signup():
         }).execute()
 
         # 3. Lägg till prenumeration
-        supabase.table("subscriptions").insert({
-            "user_id": user_id,
-            "active": True,
-            "location_id": location_id
-        }).execute()
+        # supabase.table("subscriptions").insert({
+        #    "user_id": user_id,
+        #    "active": True,
+        #    "location_id": location_id
+        #}).execute()
 
         # 4. Generera och spara kod
         verification_code = str(random.randint(100000, 999999))
@@ -331,7 +331,7 @@ def verify_sms_code():
         if code != expected_code:
             return jsonify({"error": "Fel kod"}), 400
 
-        # ✅ Verifiering lyckades
+        # Verifiering lyckades
         supabase.table("users") \
                 .update({"phone_confirmed": True}) \
                 .eq("phone", phone) \
