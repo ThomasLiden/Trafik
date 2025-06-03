@@ -234,3 +234,29 @@ def list_notifications():
     except Exception as e:
         print("❌ Fel vid hämtning av notifikationer:", e)
         return jsonify({"error": "Kunde inte hämta notifikationer", "details": str(e)}), 500
+    
+@notification_api.route("/send-sms-code", methods=["POST", "OPTIONS"])
+def send_sms_code():
+    if request.method == "OPTIONS":
+        return jsonify({"ok": True}), 200
+
+    try:
+        data = request.get_json()
+        phone = data.get("phone")
+
+        if not phone:
+            return jsonify({"error": "Telefonnummer saknas"}), 400
+
+        print(f"📨 Skickar verifieringskod till: {phone}")
+
+        # Här kan du generera kod, spara den i databasen och skicka SMS:
+        # Exempel (utan riktig SMS-sändning):
+        # code = random.randint(100000, 999999)
+        # spara koden till databasen kopplad till telefonnummer
+        # skicka sms via SMS_SERVER_URL
+
+        return jsonify({"message": "Verifieringskod skickad"}), 200
+
+    except Exception as e:
+        print("❌ Fel i send_sms_code:", e)
+        return jsonify({"error": "Misslyckades att skicka kod", "details": str(e)}), 500
