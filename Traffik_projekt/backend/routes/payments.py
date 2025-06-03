@@ -7,6 +7,7 @@ import logging
 from flask_cors import CORS
 """ from supabase import create_client, Client """
 from models.supabase_client import supabase
+from datetime import datetime  # Lägg till högst upp om det inte redan finns
 # ändrat till centraliserad hämtningn
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")  # fallback för lokal dev
 
@@ -205,6 +206,16 @@ def stripe_webhook():
                     'location_id': location_id,
                     'active': True
                 }).execute()
+                # Lägg till/uppdatera periodens slutdatum om subscription finns
+                if stripe_subscription_id:
+                    try:
+                        stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+                        if hasattr(stripe_subscription, 'current_period_end'):
+                            period_end = datetime.utcfromtimestamp(stripe_subscription.current_period_end).isoformat() + 'Z'
+                            supabase.table('subscriptions').update({'period': period_end}) \
+                                .eq('user_id', user_id).eq('location_id', location_id).execute()
+                    except Exception as e:
+                        logger.error(f'Kunde inte hämta/spara period_end: {e}')
             else:
                 logger.warning(f"Kunde inte skapa/aktivera subscription: user_id={user_id}, location_id={location_id}")
 
