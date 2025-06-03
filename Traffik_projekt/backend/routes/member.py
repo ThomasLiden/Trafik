@@ -13,6 +13,7 @@ def generate_sms_code():
     return str(random.randint(100000, 999999))
 
 # Registrering
+
 @member_blueprint.route('/api/signup', methods=['POST', 'OPTIONS'])
 def signup():
     if request.method == 'OPTIONS':
@@ -25,32 +26,25 @@ def signup():
         email = data.get("email")
         password = data.get("password")
         first_name = data.get("first_name")
-        last_name = data.get("last_name")
-        phone = data.get("phone")
+        last_name  = data.get("last_name")
+        phone      = data.get("phone")
         location_id = data.get("location_id")
-        domain = data.get("domain")
+        reseller_id = data.get("reseller_id")
 
-        if not domain:
-            raise ValueError("Ingen domän angiven från frontend.")
-        if ":" in domain:
-            domain = domain.split(":")[0]
-
-        print("==> Slår upp återförsäljare för domän:", domain)
-
-        reseller_lookup = supabase.table("reseller") \
-                                  .select("reseller_id") \
-                                  .eq("domain", domain) \
-                                  .single() \
-                                  .execute()
-
-        reseller_data = reseller_lookup.data if reseller_lookup else {}
-        reseller_id = reseller_data.get("reseller_id")
+        # 1) Kontrollera att reseller_id faktiskt skickats
         if not reseller_id:
-            raise ValueError(f"Ingen återförsäljare kopplad till domän {domain}")
+            return jsonify({"error": "reseller_id krävs"}), 400
 
-        print("==> Återförsäljare ID:", reseller_id)
+        # 2) Valfritt: Bekräfta att reseller_id finns i databasen
+        lookup = supabase.table("reseller") \
+                         .select("reseller_id") \
+                         .eq("reseller_id", reseller_id) \
+                         .single() \
+                         .execute()
+        if not lookup.data:
+            return jsonify({"error": f"Ingen reseller med id {reseller_id} hittades"}), 400
 
-        # 1. Skapa användare
+        # 3) Skapa Supabase‐användaren
         result = supabase.auth.sign_up({
             "email": email,
             "password": password
@@ -120,6 +114,7 @@ def signup():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 400
+
 
 
 # Logga in
@@ -262,24 +257,48 @@ def get_regions ():
         print("==> FEL I /api/regions:", e)
         return jsonify({"error": str(e)}), 400
                            
-#Rutt för reseller-region
-
-@member_blueprint.route('/api/reseller-region', methods=['GET'])
-def get_reseller_region():
-    domain = request.args.get("domain")
-    if not domain:
-        return jsonify({"error": "Domain krävs"}), 400
+#Rutt för reseller-info
+@member_blueprint.route('/api/reseller-info', methods=['GET'])
+def get_reseller_info():
+    reseller_id = request.args.get("reseller_id")
+    if not reseller_id:
+        return jsonify({"error": "reseller_id krävs"}), 400
 
     try:
         response = supabase.table("reseller") \
-                           .select("region, price, name") \
-                           .eq("domain", domain) \
+                           .select("name, price") \
+                           .eq("reseller_id", reseller_id) \
                            .single() \
                            .execute()
         return jsonify(response.data), 200
     except Exception as e:
-        print("==> FEL i /api/reseller-region:", e)
         return jsonify({"error": str(e)}), 400
+
+
+#ny version med hämtning från utl istället för host
+#@member_blueprint.route('/api/reseller-region', methods=['GET'])
+#def get_reseller_region():
+    # 1) Läs ut resellerKey från query-string
+ #   reseller_key = request.args.get("resellerKey")
+  #  if not reseller_key:
+   #     return jsonify({"error": "resellerKey krävs"}), 400
+
+    #try:
+     #   # 2) Hämta raden i 'reseller'-tabellen där id == resellerKey
+      #  response = supabase.table("reseller") \
+       #                    .select("reseller_id, price, name, region") \
+        ###                 .execute()
+
+        # Om inget data returnerades, ge 404
+       # if not response.data:
+       #     return jsonify({"error": "Ingen reseller hittades för detta resellerKey"}), 404
+
+        # 3) Skicka tillbaka hela raden som JSON
+        #return jsonify(response.data), 200
+
+    ##except Exception as e:
+      #  print("==> FEL i /api/reseller-region:", e)
+       # return jsonify({"error": str(e)}), 500
 
 @member_blueprint.route('/api/verify-sms', methods=['POST', 'OPTIONS'])
 def verify_sms_code():

@@ -416,12 +416,14 @@ h1, h2, h3, h4, h5, h6 {
     display: flex; justify-content: center; align-items: center;
     font-size: 1.2rem; 
     z-index: 1050;
-}
+} 
 .modal-content {
     position: relative; background: white; 
     padding: 2rem;
     border-radius: 0.75rem; max-width: 700px; width: 90%;
-    box-sizing: border-box; overflow-y: auto;
+    box-sizing: border-box; 
+    max-height: 85vh;
+    overflow-y: auto;
 }
 .close { 
     position: absolute; top: 15px; right: 20px;

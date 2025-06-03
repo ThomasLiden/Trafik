@@ -1,30 +1,36 @@
 
 
 export default {
-    template: `
+  template: `
       <div class="signup-form">
         <h2>Ändra kontaktuppgifter</h2>
         <form @submit.prevent="updateProfile">
-          <div class="form-row">
+          
             <div class="form-group">
-              <label>Förnamn<span class="required">*</span></label>
+              <label>Förnamn<span class="required"> *</span></label>
               <input v-model="first_name" type="text" class="form-field" placeholder="Förnamn" />
-            </div>
-           <div class="form-group">
-            <label>Efternamn<span class="required">*</span></label>
+            
+           
+              <label>Efternamn<span class="required"> *</span></label>
             <input v-model="last_name" type="text" class="form-field" placeholder="Efternamn" />
             </div>
-          </div>
-          <div class="form-row">
+          
+          
             <div class="form-group">
-              <label>Email<span class="required">*</span></label>
+              <label>Email<span class="required"> *</span></label>
               <input v-model="email" type="email" class="form-field" placeholder="E-post" />
               </div>
+              
               <div class="form-group">
-            <label>Telefonnummer<span class="required">*</span></label>
-            <input v-model="phone" type="text" class="form-field" placeholder="Telefonnummer" />
-            </div>
-          </div>
+        <label>Telefonnummer <span class="required">*</span></label>
+        <input
+          v-model="phone"
+          type="text"
+          class="form-field"
+          placeholder="Telefonnummer"
+        />
+      </div>
+          
           <button type="submit" class="button-primary">Spara</button>
           <button class="button-secondary" type="button" @click="cancelEdit">
             Avbryt
@@ -33,6 +39,7 @@ export default {
         <p v-if="message">{{ message }}</p>
       </div>
     `,
+    
     data() {
       return {
         first_name: "",

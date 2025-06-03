@@ -111,7 +111,17 @@ const app = Vue.createApp({
       this.$router.push({ name: "login" });
     },
     openSignup() {
-      this.$router.push({ name: "signup" });
+       const urlParams = new URLSearchParams(window.location.search);
+    const resellerKey = urlParams.get("resellerKey");
+
+    if (!resellerKey) {
+      alert("Ingen resellerKey hittades i URL!");
+      return;
+    }
+
+      this.$router.push({ name: "signup",
+        query: { resellerKey }
+       });
     },
     openAccount() {
       this.modalComponent = "LoggedInUser";

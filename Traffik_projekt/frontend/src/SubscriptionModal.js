@@ -1,112 +1,118 @@
 import SignupForm from "./SignupForm.js";
 
 export default {
-  name: 'subscription-modal',
-  components: {
-    SignupForm
-  },
-  template: `
-    <div class="modal">
-      <div class="modal-content">
-        <button class="close" @click="closeModal">X</button>
-
-        <div v-if="step === 1">
-          <h2>Prenumerera på trafikinfo</h2>
-          <p>Du kommer få info om olyckor, hinder och vägarbete via SMS.</p>
-          <p> Måndadskostnad: {{ price }} </p>
-          <h3> Steg 1 av 5: Välj område och händelsetyp </h3>
-          <select v-model="region" class="option" >
-            <option disabled value="">Välj ett område</option>
-            <option v-for="r in regions" :key="r.location_id" :value="r">{{ r.region }}</option>
-          </select>
-          <div class="incident-types">
-            <label><input type="checkbox" v-model="incidentTypes" value="olycka"> Olycka</label>
-            <label><input type="checkbox" v-model="incidentTypes" value="vägarbete"> Vägarbete</label>  
-          </div>         
-          <button class="button-primary" @click="nextStep">Nästa</button>
-        </div>
-
-        <div v-if="step === 2">
-          <signup-form :region="region" @signup-success="handleSignupSuccess" />
-        </div>
-
-        <div v-if="step === 3">
-          <h3>Steg 3 av 4: Verifiera mobilnummer</h3>
-          <p>Vi har skickat en kod till {{ phone }}. Skriv in den nedan för att bekräfta ditt nummer:</p>
-          <input v-model="smsCode" placeholder="6-siffrig kod" maxlength="6" class="option" />
-          <div v-if="codeError" class="error-message">{{ codeError }}</div>
-          <button @click="verifyCode" class="button-primary">Verifiera</button>
-          <p><button @click="resendCode" class="button-secondary">Skicka koden igen</button></p>
-          <p>Om du inte får koden, kontrollera att ditt nummer är korrekt.</p>
-        </div>
-
-        <div v-if="step === 4">
-          <h3>Steg 4 av 4: Betalning</h3>
-          <div class="payment-section">
-            <div class="payment-amount"> Pris: {{ price }}</div>
-            <div id="stripe-checkout-container"></div>
-            <div v-if="error" class="error-message">{{ error }}</div>
-            <button @click="handlePayment" class="button-primary" :disabled="loading">
-              {{ loading ? 'Laddar...' : 'Fortsätt till betalning' }}
-            </button>
+    name: 'subscription-modal',
+    components: {
+        SignupForm
+    },
+    template: `
+      <div class="modal">
+        <div class="modal-content">
+           <button class="close" @click="closeModal">X</button>
+  
+          <div v-if="step === 1">
+            <h2>Prenumerera på trafikinfo</h2>
+            <p>Du kommer få info om olyckor, hinder och vägarbete via SMS.</p>
+            <p> Måndadskostnad: {{ price }} SEK </p>
+            <h3> Steg 1 av 4: Välj område och händelsetyp </h3>
+            <select v-model="region" class="option" >
+              <option disabled :value="null" selected>Välj ett område</option>
+              <option v-for="r in regions" :key="r.location_id" :value="r">{{ r.region }}</option>
+            </select>        
+            <button class="button-primary" @click="nextStep">Nästa</button>
+          </div>
+  
+          <div v-if="step === 2">
+          <signup-form :region="region" :reseller-id="resellerId" @signup-success="handleSignupSuccess" />
+          </div>
+    
+          <div v-if="step === 3">
+            <h3>Steg 3 av 4: Betalning</h3>
+            <div class="payment-section">
+              <div class="payment-amount"> Pris: {{ price }}</div>
+              <div id="stripe-checkout-container"></div>
+              <div v-if="error" class="error-message">{{ error }}</div>
+              <button @click="handlePayment" class="button-primary" :disabled="loading">
+                {{ loading ? 'Laddar...' : 'Fortsätt till betalning' }}
+              </button>
+            </div>
+          </div>
+  
+          <div v-if="step === 4">
+            <h3>Tack!</h3>
+            <p>Du är nu prenumerant.</p>
+            <h3>Bekräftelse</h3>
+            <p>Område: {{ region.region }}<p>
+            <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
+            <p>Till: {{ phone }} ({{ email }})</p>
+            <p>Pris per månad: {{ price }} kr</p>
+            <button @click="submit" class="button-primary">Bekräfta</button>
           </div>
         </div>
-
-        <div v-if="step === 5">
-          <h3>Tack!</h3>
-          <p>Du är nu prenumerant.</p>
-          <h3>Bekräftelse</h3>
-          <p>Område: {{ region.region }}</p>
-          <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
-          <p>Till: {{ phone }} ({{ email }})</p>
-          <p>Pris per månad: {{ price }} kr</p>
-          <button @click="submit" class="button-primary">Bekräfta</button>
-        </div>
       </div>
-    </div>
-  `,
-  data() {
-    return {
-      step: 1,
-      region: '',
-      price: null,
-      email: '',
-      phone: '',
-      smsCode: '',
-      codeError: '',
-      incidentTypes: [],
-      regions: [],
-      userId: null,
-      resellerId: null,
-      stripe: null,
-      loading: false,
-      error: null
-    };
-  },
-  
-    mounted() {
+    `,
+    data() {
+      return {
+        step: 1,
+        region: null,
+        email: '',
+        phone: '',
+        incidentTypes: [],
+        regions: [],
+        userId: null,
+        resellerId: null,
+        resellerName: null,
+        price: null, //lagt till
+        stripe: null,
+        loading: false,
+        error: null
+      };
+    },
+
+    async mounted() {
+        // initziera stripe när componenten är mounted
       this.stripe = Stripe('pk_test_51RIsEVFPlu7UXDRDAlQtGOM9XRv0N27uADmwrhcb8f7PvRCZ1KDoViIn8QH3UuS38aBWsMYkhH9bcPJEH0DreFQX00tfP0ZdCF');
+
+      console.log("SubscriptionModal mounted, $route.query =", this.$route.query);
+      
+          try {
+      const regionsRes = await fetch("https://trafik-q8va.onrender.com/api/regions");
+      
+      if (!regionsRes.ok) throw new Error("Kunde inte hämta regioner");
+      this.regions = await regionsRes.json();
+      
+    } catch (err) {
+      console.error("Kunde inte hämta regioner:", err);
+      this.error = "Kunde inte hämta regioner";
+      return;
+    }
+
+
+      const resellerKey = this.$route.query.resellerKey;
+    if (!resellerKey) {
+      this.error = "Ingen resellerKey i URL.";
+      return;
+    }
+    this.resellerId = resellerKey;
   
-      fetch('https://trafik-q8va.onrender.com/api/regions')
-        .then(res => res.json())
-        .then(data => {
-          this.regions = data;
-          const domain = window.location.hostname;
-          return fetch(`https://trafik-q8va.onrender.com/api/reseller-region?domain=${domain}`);
-        })
-        .then(res => res.json())
-        .then(data => {
-          this.price = data.price;
-          const resellerRegionName = data.region;
-          const defaultRegion = this.regions.find(r => r.region === resellerRegionName);
-          if (defaultRegion) {
-            this.region = defaultRegion;
-          }
-          console.log("Pris satt till:", this.price);
-        })
-        .catch(err => {
-          console.error('Kunde inte hämta regioner', err);
-        });
+  console.log("→ Hittade resellerKey:", resellerKey);
+
+    // LAGT TILL - pris och namn från reseller 
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/api/reseller-info?reseller_id=${resellerKey}`);
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.error || "Fel vid hämtning");
+
+    this.resellerName = data.name;
+    this.price = data.price;
+    console.log("Återförsäljare:", this.resellerName, "| Pris:", this.price);
+  } catch (err) {
+    console.error("Kunde inte hämta återförsäljarinfo:", err);
+    this.error = "Kunde inte hämta återförsäljarinfo.";
+    return;
+  }
+
     },
   
     watch: {
@@ -119,6 +125,15 @@ export default {
   
     methods: {
       nextStep() {
+            if (!this.resellerId) {
+      alert("Vänta tills priset laddats innan du går vidare.");
+      return;
+    }
+    // 2) Kolla att region är valt (objekt med location_id)
+    if (!this.region || !this.region.location_id) {
+      alert("Välj ett område innan du går vidare.");
+      return;
+    }
         this.step++;
       },
   

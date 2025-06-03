@@ -1,11 +1,21 @@
 export default {
-  props: ['region'],
-  template: `
-    <div class="signup-modal-content">
-      <div class="form-header">
-        <h2>Steg 2/4: Registrera dig</h2>
-        <p>Vänligen fyll i alla obligatoriska fält innan du går vidare.</p>
-      </div>
+    props:  {
+    region: {
+    type: Object,
+    required: true
+  },
+  resellerId: {
+    type: String,
+    required: true
+  }
+    },
+  
+    template: `
+  <div class="signup-modal-content">
+    <div class="form-header">
+      <h2>Steg 2/4: Registrera dig</h2>
+      <p>Vänligen fyll i alla obligatoriska fält innan du går vidare.</p>
+    </div>
 
       <form class="signup-form" @submit.prevent="signup">
         <div class="form-row">
@@ -53,12 +63,24 @@ export default {
       phone: "",
       email: "",
       password: "",
-      message: ""
+      message: "", 
+      
     };
   },
+
   methods: {
     async signup() {
       this.message = "";
+
+      if (!this.resellerId) {
+        this.message = "Reseller-ID saknas.";
+        return;
+      }
+      if (!this.region || !this.region.location_id) {
+        this.message = "Region saknas.";
+        return;
+      }
+
 
       try {
         const payload = {
@@ -68,12 +90,13 @@ export default {
           email: this.email,
           location_id: this.region.location_id,
           password: this.password,
-          domain: window.location.hostname  // ⬅️ FIX: Skickar domän
+          reseller_id: this.resellerId
         };
 
         console.log("📤 Payload som skickas:", JSON.stringify(payload));
 
-        const response = await fetch("https://trafik-q8va.onrender.com/api/signup", {
+        const response =  await fetch("https://trafik-q8va.onrender.com/api/signup", 
+        {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
