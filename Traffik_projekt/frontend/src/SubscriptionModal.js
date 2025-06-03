@@ -159,7 +159,7 @@ export default {
         }
   
         try {
-          const res = await fetch("https://trafik-q8va.onrender.com/api/verify-sms", {
+          const res = await fetch("https://trafik-q8va.onrender.com/api/verify-sms-code", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
