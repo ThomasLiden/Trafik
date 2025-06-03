@@ -32,6 +32,7 @@ CORS(app,
          r"/api/*": {"origins": [
              "https://trafik-frontend-hzww.onrender.com",
              "https://trafik-q8va.onrender.com",
+             "https://admin-lqz8.onrender.com"
              "https://www.dagspressutgivarna.se",
              "http://127.0.0.1:5500"
          ]},
