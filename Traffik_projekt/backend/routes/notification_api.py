@@ -330,3 +330,50 @@ def verify_sms_code():
     except Exception as e:
         print("❌ Fel i verify_sms_code:", e)
         return jsonify({"error": "Verifiering misslyckades", "details": str(e)}), 500
+
+@notification_api.route("/resend-sms-code", methods=["POST", "OPTIONS"])
+def resend_sms_code():
+    if request.method == "OPTIONS":
+        return jsonify({"ok": True}), 200
+
+    try:
+        data = request.get_json()
+        phone = data.get("phone")
+
+        if not phone:
+            return jsonify({"error": "Telefonnummer saknas"}), 400
+
+        # 🔢 Ny kod
+        code = random.randint(100000, 999999)
+        print(f"🔁 Skickar om verifieringskod {code} till: {phone}")
+
+        # ⏳ Ny utgångstid
+        expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+
+        # 🔁 Uppdatera befintlig post
+        supabase.table("sms_codes").update({
+            "code": str(code),
+            "verified": False,
+            "expires_at": expires_at
+        }).eq("phone", phone).execute()
+
+        # 📤 Skicka nytt SMS
+        payload = {
+            "to": [phone],
+            "message": f"Din nya verifieringskod: {code}",
+            "from": "TrafikInfo"
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-KEY": API_KEY
+        }
+
+        sms_res = requests.post(SMS_SERVER_URL, json=payload, headers=headers)
+        sms_res.raise_for_status()
+
+        return jsonify({"message": "Verifieringskod skickad igen"}), 200
+
+    except Exception as e:
+        print("❌ Fel i resend_sms_code:", e)
+        return jsonify({"error": "Misslyckades att skicka om kod", "details": str(e)}), 500
