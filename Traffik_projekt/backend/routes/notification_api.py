@@ -242,46 +242,48 @@ def list_notifications():
 @notification_api.route("/send-sms-code", methods=["POST"])
 def send_sms_code():
     try:
+        print("📥 Mottaget request i /send-sms-code")
         data = request.get_json()
+        print("🔍 Payload:", data)
+
         phone = data.get("phone")
         if not phone:
+            print("❗ Telefonnummer saknas i requesten")
             return jsonify({"error": "Telefonnummer saknas"}), 400
 
-        # 🔢 Generera ny 6-siffrig kod (sträng med ledande nollor)
-        code = f"{random.randint(0, 999999):06}"
-        expires_at = datetime.utcnow() + timedelta(minutes=10)
+        # Generera kod
+        code = str(random.randint(100000, 999999))
+        expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
 
-        print(f"📨 Ny kod {code} genererad för {phone}")
+        print(f"📬 Skickar kod {code} till {phone}, utgår {expires_at}")
 
-        # 💾 Spara i databasen
-        supabase.table("sms_codes").insert({
+        # Spara i Supabase
+        insert_result = supabase.table("sms_codes").insert({
             "phone": phone,
             "code": code,
             "verified": False,
-            "expires_at": expires_at.isoformat()
+            "expires_at": expires_at
         }).execute()
+        print("💾 Insert-resultat:", insert_result)
 
-        # ✉️ Skicka SMS via e-postgateway (eller direkt-SMS om du har det)
-        payload = {
-            "phone": phone,
+        # Skicka till e-postservern (för SMS)
+        response = requests.post(EMAIL_SERVER_URL, json={
+            "to": phone,
             "message": f"Din verifieringskod är: {code}"
-        }
-        headers = {
+        }, headers={
             "Content-Type": "application/json",
             "X-API-KEY": API_KEY
-        }
+        })
+        print("📤 SMS-server svar:", response.status_code, response.text)
 
-        response = requests.post(EMAIL_SERVER_URL, json=payload, headers=headers)
         if response.status_code != 200:
-            print("⚠️ Kunde inte skicka SMS:", response.text)
-            return jsonify({"error": "Misslyckades att skicka kod"}), 500
+            return jsonify({"error": "Misslyckades att skicka SMS"}), 500
 
-        return jsonify({"message": "Verifieringskod skickad"}), 200
+        return jsonify({"message": "SMS-kod skickad"}), 200
 
     except Exception as e:
-        print("❌ Fel i send_sms_code:", e)
+        print("❌ Undantag i /send-sms-code:", e)
         return jsonify({"error": "Misslyckades att skicka kod", "details": str(e)}), 500
-
 
 @notification_api.route("/verify-sms-code", methods=["POST"])
 def verify_sms_code():
