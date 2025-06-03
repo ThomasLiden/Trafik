@@ -1,3 +1,4 @@
+import time
 from flask import Blueprint, request, jsonify
 from supabase import create_client
 import requests
@@ -250,14 +251,11 @@ def send_sms_code():
         if not phone:
             return jsonify({"error": "Telefonnummer saknas"}), 400
 
-        # 🔢 Skapa kod (ex. 6-siffrig slumpad kod)
         code = random.randint(100000, 999999)
         print(f"📨 Skickar verifieringskod {code} till: {phone}")
 
-        # ⏳ Beräkna utgångstid
         expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
 
-        # 💾 Spara kod till supabase
         supabase.table("sms_codes").insert({
             "phone": phone,
             "code": str(code),
@@ -265,7 +263,6 @@ def send_sms_code():
             "expires_at": expires_at
         }).execute()
 
-        # 📤 Skicka SMS
         payload = {
             "to": [phone],
             "message": f"Din verifieringskod: {code}",
@@ -277,14 +274,25 @@ def send_sms_code():
             "X-API-KEY": API_KEY
         }
 
-        sms_res = requests.post(SMS_SERVER_URL, json=payload, headers=headers)
-        sms_res.raise_for_status()
+        # 🧠 Lägg till retry
+        MAX_RETRIES = 3
+        for attempt in range(MAX_RETRIES):
+            try:
+                sms_res = requests.post(SMS_SERVER_URL, json=payload, headers=headers)
+                sms_res.raise_for_status()
+                break
+            except requests.exceptions.RequestException as e:
+                print(f"⚠️ Försök {attempt+1} misslyckades:", e)
+                time.sleep(2)
+        else:
+            return jsonify({"error": "Misslyckades att skicka kod", "details": str(e)}), 503
 
         return jsonify({"message": "Verifieringskod skickad"}), 200
 
     except Exception as e:
         print("❌ Fel i send_sms_code:", e)
         return jsonify({"error": "Misslyckades att skicka kod", "details": str(e)}), 500
+
 
 @notification_api.route("/verify-sms-code", methods=["POST", "OPTIONS"])
 def verify_sms_code():
