@@ -6,51 +6,60 @@ export default {
         SignupForm
     },
     template: `
-      <div class="modal">
-        <div class="modal-content">
-           <button class="close" @click="closeModal">X</button>
+    <div class="modal">
+      <div class="modal-content">
+        <button class="close" @click="closeModal">X</button>
   
-          <div v-if="step === 1">
-            <h2>Prenumerera på trafikinfo</h2>
-            <p>Du kommer få info om olyckor, hinder och vägarbete via SMS.</p>
-            <p> Måndadskostnad: {{ price }} SEK </p>
-            <h3> Steg 1 av 4: Välj område och händelsetyp </h3>
-            <select v-model="region" class="option" >
-              <option disabled :value="null" selected>Välj ett område</option>
-              <option v-for="r in regions" :key="r.location_id" :value="r">{{ r.region }}</option>
-            </select>        
-            <button class="button-primary" @click="nextStep">Nästa</button>
-          </div>
+        <div v-if="step === 1">
+          <h2>Prenumerera på trafikinfo</h2>
+          <p>Du kommer få info om olyckor, hinder och vägarbete via SMS.</p>
+          <p>Måndadskostnad: {{ price }} SEK</p>
+          <h3>Steg 1 av 5: Välj område och händelsetyp</h3>
+          <select v-model="region" class="option">
+            <option disabled :value="null" selected>Välj ett område</option>
+            <option v-for="r in regions" :key="r.location_id" :value="r">{{ r.region }}</option>
+          </select>        
+          <button class="button-primary" @click="nextStep">Nästa</button>
+        </div>
   
-          <div v-if="step === 2">
+        <div v-if="step === 2">
+          <h3>Steg 2 av 5: Ditt telefonnummer</h3>
           <signup-form :region="region" :reseller-id="resellerId" @signup-success="handleSignupSuccess" />
-          </div>
-    
-          <div v-if="step === 3">
-            <h3>Steg 3 av 4: Betalning</h3>
-            <div class="payment-section">
-              <div class="payment-amount"> Pris: {{ price }}</div>
-              <div id="stripe-checkout-container"></div>
-              <div v-if="error" class="error-message">{{ error }}</div>
-              <button @click="handlePayment" class="button-primary" :disabled="loading">
-                {{ loading ? 'Laddar...' : 'Fortsätt till betalning' }}
-              </button>
-            </div>
-          </div>
+        </div>
   
-          <div v-if="step === 4">
-            <h3>Tack!</h3>
-            <p>Du är nu prenumerant.</p>
-            <h3>Bekräftelse</h3>
-            <p>Område: {{ region.region }}</p>
-            <p>Du kommer att få SMS om: {{ incidentTypes.join(', ') }} i {{ region }}</p>
-            <p>Till: {{ phone }} ({{ email }})</p>
-            <p>Pris per månad: {{ price }} kr</p>
-            <button @click="submit" class="button-primary">Bekräfta</button>
+        <div v-if="step === 3">
+          <h3>Steg 3 av 5: Betalning</h3>
+          <div class="payment-section">
+            <div class="payment-amount">Pris: {{ price }}</div>
+            <div id="stripe-checkout-container"></div>
+            <div v-if="error" class="error-message">{{ error }}</div>
+            <button @click="handlePayment" class="button-primary" :disabled="loading">
+              {{ loading ? 'Laddar...' : 'Fortsätt till betalning' }}
+            </button>
           </div>
         </div>
+  
+        <div v-if="step === 4">
+          <h3>Steg 4 av 5: Bekräftelse</h3>
+          <p>🎉 Du är nu prenumerant!</p>
+          <p><strong>Område:</strong> {{ region.region }}</p>
+          <p><strong>Månadspris:</strong> {{ price }} kr</p>
+          <p><strong>SMS skickas till:</strong> {{ phone }}</p>
+          <p><strong>Bekräftelsemail skickas till:</strong> {{ email }}</p>
+          <p><strong>Notifierade händelser:</strong> {{ incidentTypes.join(', ') }}</p>
+          <button @click="step = 5" class="button-primary">Fortsätt</button>
+        </div>
+  
+        <div v-if="step === 5">
+          <h3>Steg 5 av 5: Klart!</h3>
+          <p>Tack för att du valt att prenumerera på trafikinfo 🚗</p>
+          <p>Du kan nu stänga fönstret eller återgå till startsidan.</p>
+          <button @click="closeModal" class="button-primary">Återgå till sidan</button>
+        </div>
       </div>
-    `,
+    </div>
+  `,
+  
     data() {
       return {
         step: 1,
@@ -141,45 +150,56 @@ export default {
       async handlePayment() {
         this.loading = true;
         this.error = null;
-    
+      
         try {
           const userIdToSend = this.userId || localStorage.getItem("user_id");
           if (!userIdToSend) throw new Error("Ingen giltig user_id tillgänglig för betalning");
-    
+      
           const response = await fetch('https://trafik-q8va.onrender.com/api/create-checkout-session', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ user_id: userIdToSend, location_id: this.region.location_id })
+            body: JSON.stringify({
+              user_id: userIdToSend,
+              location_id: this.region.location_id
+            })
           });
-    
+      
           if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Fel vid skapande av betalningssession');
           }
-    
+      
           const data = await response.json();
           if (!data.clientSecret) throw new Error('Inget clientSecret mottaget från servern');
-    
+      
           if (!this.stripe) throw new Error('Stripe är inte initialiserad');
-    
+      
           this.step = 3;
-    
+      
           this.$nextTick(async () => {
             const checkout = await this.stripe.initEmbeddedCheckout({
               clientSecret: data.clientSecret
             });
+      
             checkout.mount('#stripe-checkout-container');
+      
+            // 🆕 Lägg till eventlyssnare för att stega till "tack"-steget efter betalning
+            checkout.addEventListener('checkout.complete', () => {
+              console.log("💳 Stripe checkout slutförd");
+              this.step = 4;
+            });
           });
-    
+      
         } catch (error) {
           console.error('Fel i betalningsflöde:', error);
           this.error = error.message || 'Ett fel uppstod vid betalning';
         } finally {
           this.loading = false;
         }
-      },
+      }
+      ,
     
       async sendConfirmationEmail() {
         if (this.emailSent) return;
