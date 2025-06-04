@@ -53,7 +53,6 @@ def get_reseller_stats():
 
     reseller_id = request.user_id  # Hämtar reseller_id från token
 
-    #reseller_id = "296ffdc0-2656-4ba5-9f5b-1986e1db6ed5"  #Hårdkodat in reseller_id för test!
 
     if not reseller_id:
         return jsonify({"error": "reseller_id saknas"}), 400
@@ -121,7 +120,6 @@ def get_reseller_users():
     
     reseller_id = request.user_id  # Hämtar från token. 
 
-    #reseller_id = "296ffdc0-2656-4ba5-9f5b-1986e1db6ed5"  #Hårdkodat in reseller_id för test!
 
     if not reseller_id:
         return jsonify({"error": "reseller_id saknas"}), 400

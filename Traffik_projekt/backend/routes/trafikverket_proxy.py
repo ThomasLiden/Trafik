@@ -44,5 +44,5 @@ def trafikinfo():
 
         return jsonify(deviations[:10])  # returnera max 10
     except Exception as e:
-        print("❌ Trafikverket proxy error:", e)
+        print(" Trafikverket proxy error:", e)
         return jsonify({"error": "Fel vid hämtning", "details": str(e)}), 500

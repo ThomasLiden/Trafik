@@ -53,7 +53,7 @@ COUNTY_NAME_TO_NUMBER = {
 COUNTY_NUMBER_TO_NAME = {v: k for k, v in COUNTY_NAME_TO_NUMBER.items()}
 
 # Loggar att filen har laddats.
-logging.info("✅ traffic.py loaded!")
+logging.info("traffic.py loaded!")
 
 # Helperfunktion för att parsa WKT (Well-Known Text) POINT-strängar.
 # WKT är ett textbaserat format för att representera geografiska objekt.

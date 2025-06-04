@@ -68,7 +68,7 @@ def options_handler(path):
 
 @app.route("/")
 def healthcheck():
-    return "✅ Backend is running", 200
+    return "Backend is running", 200
 
 # Starta appen (Render-vänlig inställning)
 if __name__ == '__main__':

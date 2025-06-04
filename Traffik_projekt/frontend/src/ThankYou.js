@@ -11,7 +11,7 @@ export default {
     mounted() {
       const sessionId = this.$route.query.session_id;
       if (sessionId) {
-        console.log("✅ Stripe session ID:", sessionId);
+        console.log(" Stripe session ID:", sessionId);
         // Här kan du lägga till en validering mot backend om du vill
       }
     }

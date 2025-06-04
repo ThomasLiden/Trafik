@@ -41,7 +41,7 @@ export default {
   
         <div v-if="step === 4">
           <h3>Steg 4 av 5: Bekräftelse</h3>
-          <p>🎉 Du är nu prenumerant!</p>
+          <p> Du är nu prenumerant!</p>
           <p><strong>Område:</strong> {{ region.region }}</p>
           <p><strong>Månadspris:</strong> {{ price }} kr</p>
           <p><strong>SMS skickas till:</strong> {{ phone }}</p>
@@ -52,7 +52,7 @@ export default {
   
         <div v-if="step === 5">
           <h3>Steg 5 av 5: Klart!</h3>
-          <p>Tack för att du valt att prenumerera på trafikinfo 🚗</p>
+          <p>Tack för att du valt att prenumerera på trafikinfo </p>
           <p>Du kan nu stänga fönstret eller återgå till startsidan.</p>
           <button @click="closeModal" class="button-primary">Återgå till sidan</button>
         </div>
@@ -185,7 +185,7 @@ export default {
       
             checkout.mount('#stripe-checkout-container');
       
-            // 🆕 Lägg till eventlyssnare för att stega till "tack"-steget efter betalning
+            //  Lägg till eventlyssnare för att stega till "tack"-steget efter betalning
             checkout.addEventListener('checkout.complete', () => {
               console.log("💳 Stripe checkout slutförd");
               this.step = 4;
@@ -214,13 +214,13 @@ export default {
             },
             body: JSON.stringify({
               email: this.email,
-              subject: "🚦 Bekräftelse på trafikprenumeration",
+              subject: " Bekräftelse på trafikprenumeration",
               body: `
                 <h2>Tack för din prenumeration!</h2>
                 <p>Du kommer nu få SMS om trafikhändelser i <strong>${this.region.region}</strong>.</p>
                 <p>Telefon: <strong>${this.phone}</strong></p>
                 <p>Månadspris: <strong>${this.price} kr</strong></p>
-                <p>🔗 Du kan när som helst avsluta prenumerationen via vår hemsida.</p>
+                <p> Du kan när som helst avsluta prenumerationen via vår hemsida.</p>
               `
             })
           });
@@ -228,9 +228,9 @@ export default {
           const result = await response.json();
           if (!response.ok) throw new Error(result.error || "Misslyckades skicka bekräftelsemail");
     
-          console.log("✅ Bekräftelsemail skickat.");
+          console.log(" Bekräftelsemail skickat.");
         } catch (err) {
-          console.error("❌ Kunde inte skicka bekräftelsemail:", err);
+          console.error(" Kunde inte skicka bekräftelsemail:", err);
           alert("Ett fel uppstod vid utskick av bekräftelsemail.");
         }
       },

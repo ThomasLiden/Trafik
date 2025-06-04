@@ -125,11 +125,11 @@
     </select>
 
     <br />
-    <button @click="fetchData" :disabled="loading">🔍 Hämta trafikdata</button>
+    <button @click="fetchData" :disabled="loading"> Hämta trafikdata</button>
 
     <ul>
-      <li v-if="loading">🔄 Hämtar data från Trafikverket...</li>
-      <li v-if="!loading && results.length === 0">✅ Inga händelser just nu.</li>
+      <li v-if="loading"> Hämtar data från Trafikverket...</li>
+      <li v-if="!loading && results.length === 0"> Inga händelser just nu.</li>
 
       <li v-for="(dev, index) in results" :key="dev.Id" :class="{ sent: dev.sent }">
         <strong>{{ dev.Header || 'Trafikhändelse' }}</strong><br />
@@ -141,10 +141,10 @@
 
         <div class="actions">
           <button @click="sendSms(dev, index)" :disabled="dev.smsSending">
-            {{ dev.smsSending ? '⏳ Skickar SMS...' : dev.smsSent ? `✅ SMS skickat (${dev.smsCount || 0})` : '📲 Skicka SMS' }}
+            {{ dev.smsSending ? ' Skickar SMS...' : dev.smsSent ? ` SMS skickat (${dev.smsCount || 0})` : ' Skicka SMS' }}
           </button>
           <button @click="sendEmail(dev, index)" :disabled="dev.emailSending">
-            {{ dev.emailSending ? '⏳ Skickar Mail...' : dev.emailSent ? `✅ Mail skickat (${dev.emailCount || 'OK'})` : '📧 Skicka Mail' }}
+            {{ dev.emailSending ? ' Skickar Mail...' : dev.emailSent ? ` Mail skickat (${dev.emailCount || 'OK'})` : ' Skicka Mail' }}
           </button>
         </div>
       </li>
@@ -210,7 +210,7 @@
           } else {
             shortDetails = "Ingen ytterligare information – se länk.";
           }
-          return `🚧 ${header}\n${shortDetails}\nLäs mer: ${link}`;
+          return ` ${header}\n${shortDetails}\nLäs mer: ${link}`;
         }
 
         async function fetchData() {
@@ -220,7 +220,7 @@
             const data = await res.json();
             state.results = data.map(d => ({ ...d, smsSent: false, emailSent: false }));
           } catch (e) {
-            console.error("⚠️ Fel vid hämtning:", e);
+            console.error(" Fel vid hämtning:", e);
             state.results = [];
           } finally {
             state.loading = false;
@@ -244,7 +244,7 @@
             state.results[index].smsCount = json.count || 0;
             state.results[index].sent = true;
           } catch (e) {
-            console.error("❌ Fel vid SMS:", e);
+            console.error(" Fel vid SMS:", e);
           } finally {
             state.results[index].smsSending = false;
           }
@@ -267,7 +267,7 @@
             state.results[index].emailCount = json.count || "OK";
             state.results[index].sent = true;
           } catch (e) {
-            console.error("❌ Fel vid mail:", e);
+            console.error(" Fel vid mail:", e);
           } finally {
             state.results[index].emailSending = false;
           }

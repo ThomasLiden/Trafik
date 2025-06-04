@@ -60,7 +60,7 @@ router.beforeEach((to, from, next) => {
 
   // Skydda dashboard om användaren inte är inloggad
   } else if (to.path === "/dashboard" && !token) {
-    console.log("⛔ Försök att gå till /dashboard utan token – redirect till /login");
+    console.log(" Försök att gå till /dashboard utan token – redirect till /login");
     next({ path: "/login" });
 
   } else {

@@ -61,7 +61,7 @@ export default {
     
         } catch (error) {
           this.message = "Ett fel uppstod vid inloggningen.";
-          console.error("❌ Login error:", error);
+          console.error("Login error:", error);
         }
     },
 }

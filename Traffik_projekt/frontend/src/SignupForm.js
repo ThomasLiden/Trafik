@@ -93,7 +93,7 @@ export default {
           reseller_id: this.resellerId
         };
 
-        console.log("📤 Payload som skickas:", JSON.stringify(payload));
+        console.log(" Payload som skickas:", JSON.stringify(payload));
 
         const response =  await fetch("https://trafik-q8va.onrender.com/api/signup", 
         {
@@ -104,7 +104,7 @@ export default {
         });
 
         const data = await response.json();
-        console.log("📥 Svar från server:", data);
+        console.log(" Svar från server:", data);
 
         if (!response.ok) {
           this.message = data.error || data.message || "Något gick fel.";
@@ -118,14 +118,14 @@ export default {
             user_id: data.user_id
           });
         } else {
-          console.error("❌ user_id saknas i backend-svar:", data);
+          console.error(" user_id saknas i backend-svar:", data);
         }
 
         this.message = data.message || data.error;
 
       } catch (error) {
         this.message = "Fel vid registrering.";
-        console.error("❌ Fel vid fetch:", error);
+        console.error(" Fel vid fetch:", error);
       }
     }
   }

@@ -42,7 +42,7 @@
   
 
   <br />
-  <button id="fetchBtn">🔄 Hämta Trafikdata</button>
+  <button id="fetchBtn"> Hämta Trafikdata</button>
   <ul id="results"></ul>
 
   <script>
@@ -51,7 +51,7 @@
     document.getElementById("fetchBtn").addEventListener("click", async () => {
       const countyNo = document.getElementById("countySelect").value;
       const results = document.getElementById("results");
-      results.innerHTML = "<li>🔄 Hämtar data...</li>";
+      results.innerHTML = "<li> Hämtar data...</li>";
 
       try {
         const res = await fetch(`${BASE_URL}/trafikinfo?county=${countyNo}`);
@@ -77,14 +77,14 @@
             shortDetails = shortDetails.slice(0, maxTextLength).trim() + "…";
           }
 
-          const preview = `🚧 ${header}\n${shortDetails}\nLäs mer: ${link}`;
+          const preview = ` ${header}\n${shortDetails}\nLäs mer: ${link}`;
 
           li.innerHTML = `
             <strong>${header}</strong><br>
             ${msg}<br>
             <em>${dev.MessageTypeValue || "Okänd typ"} på ${dev.RoadNumber || "okänd väg"}</em><br>
             <div style="font-size: 0.9em; margin-top: 0.5em; color: #333;">
-              <strong>📩 SMS-preview:</strong><br>
+              <strong> SMS-preview:</strong><br>
               <pre style="white-space: pre-wrap; background: #f4f4f4; padding: 0.5em; border-radius: 5px;">${preview}</pre>
             </div>
             <div class="actions">
@@ -99,8 +99,8 @@
             btn.innerText = "⏳ Skickar SMS...";
 
             if (!dev.Id) {
-              console.warn("❌ Saknar dev.Id – avbryter");
-              btn.innerText = "⚠️ Ogiltigt ID";
+              console.warn(" Saknar dev.Id – avbryter");
+              btn.innerText = " Ogiltigt ID";
               return;
             }
 
@@ -109,7 +109,7 @@
               countyNo: parseInt(countyNo, 10),
               shortlinks: true
             };
-            console.log("📤 Skickar SMS-request:", payload);
+            console.log(" Skickar SMS-request:", payload);
 
             try {
               const smsRes = await fetch(`${BASE_URL}/api/send_sms_for_deviation`, {
@@ -121,10 +121,10 @@
               if (!smsRes.ok) throw new Error(`Serverfel: ${smsRes.status}`);
               const result = await smsRes.json();
               li.classList.add("sent");
-              btn.innerText = `✅ SMS (${result.count || 0})`;
+              btn.innerText = ` SMS (${result.count || 0})`;
             } catch (e) {
-              console.error("❌ Fel vid SMS:", e);
-              btn.innerText = "⚠️ Fel vid SMS";
+              console.error(" Fel vid SMS:", e);
+              btn.innerText = " Fel vid SMS";
             }
           });
 
@@ -134,8 +134,8 @@
             btn.innerText = "⏳ Skickar Mail...";
 
             if (!dev.Id) {
-              console.warn("❌ Saknar dev.Id – avbryter");
-              btn.innerText = "⚠️ Ogiltigt ID";
+              console.warn(" Saknar dev.Id – avbryter");
+              btn.innerText = " Ogiltigt ID";
               return;
             }
 
@@ -143,7 +143,7 @@
               devId: dev.Id,
               countyNo: parseInt(countyNo, 10)
             };
-            console.log("📤 Skickar MAIL-request:", payload);
+            console.log(" Skickar MAIL-request:", payload);
 
             try {
               const mailRes = await fetch(`${BASE_URL}/api/send_email_for_deviation`, {
@@ -155,10 +155,10 @@
               if (!mailRes.ok) throw new Error(`Serverfel: ${mailRes.status}`);
               const result = await mailRes.json();
               li.classList.add("sent");
-              btn.innerText = `✅ Mail (${result.count || "OK"})`;
+              btn.innerText = ` Mail (${result.count || "OK"})`;
             } catch (e) {
-              console.error("❌ Fel vid mail:", e);
-              btn.innerText = "⚠️ Fel vid mail";
+              console.error(" Fel vid mail:", e);
+              btn.innerText = " Fel vid mail";
             }
           });
 
@@ -166,8 +166,8 @@
         });
 
       } catch (err) {
-        console.error("❌ Fel vid hämtning av data:", err);
-        results.innerHTML = "<li>❌ Fel vid hämtning av data.</li>";
+        console.error(" Fel vid hämtning av data:", err);
+        results.innerHTML = "<li> Fel vid hämtning av data.</li>";
       }
     });
 

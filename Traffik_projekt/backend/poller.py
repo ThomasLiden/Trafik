@@ -4,21 +4,21 @@ import requests
 from supabase import create_client
 from dotenv import load_dotenv
 
-# 🧪 Ladda miljövariabler från .env
+#  Ladda miljövariabler från .env
 load_dotenv()
 
-# 🌍 Miljövariabler
+#  Miljövariabler
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 TRAFIKINFO_URL = os.getenv("TRAFIKVERKET_PROXY_URL", "http://localhost:5000/trafikinfo")
 SEND_SMS_URL = os.getenv("RENDER_SMS_URL", "http://localhost:5000/api/send_sms_for_deviation")
 API_KEY = os.getenv("X-API-KEY")
 
-# ✅ Kontrollera nycklar
+#  Kontrollera nycklar
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise Exception("❌ Saknar SUPABASE_URL eller SUPABASE_KEY – kontrollera .env!")
+    raise Exception(" Saknar SUPABASE_URL eller SUPABASE_KEY – kontrollera .env!")
 
-# 🔌 Initiera klient
+#  Initiera klient
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 INTERVAL_SECONDS = 600  # 10 minuter
 
@@ -72,16 +72,16 @@ def poll():
                         "external_id": dev_id,
                         "county_id": county_no
                     }).execute()
-                    print("✅ SMS skickat och notis loggad")
+                    print(" SMS skickat och notis loggad")
                 else:
-                    print(f"⚠️ Fel vid SMS: {send_res.status_code} - {send_res.text}")
+                    print(f" Fel vid SMS: {send_res.status_code} - {send_res.text}")
 
         except Exception as e:
-            print(f"❌ Fel vid polling av län {county_no}: {e}")
+            print(f" Fel vid polling av län {county_no}: {e}")
 
 if __name__ == "__main__":
-    print("🚀 Startar trafiknotis-poller")
+    print(" Startar trafiknotis-poller")
     while True:
         poll()
-        print(f"⏳ Väntar {INTERVAL_SECONDS} sekunder...\n")
+        print(f" Väntar {INTERVAL_SECONDS} sekunder...\n")
         time.sleep(INTERVAL_SECONDS)

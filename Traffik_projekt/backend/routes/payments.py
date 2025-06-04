@@ -170,7 +170,7 @@ def stripe_webhook():
         event = stripe.Webhook.construct_event(
             payload, sig_header, webhook_secret
         )
-        logger.info(f"✅ Stripe webhook event mottaget: {event['type']}")
+        logger.info(f" Stripe webhook event mottaget: {event['type']}")
     except ValueError as e:
         logger.error(f"Ogiltig payload: {e}")
         return 'Invalid payload', 400
@@ -188,7 +188,7 @@ def stripe_webhook():
             stripe_session_id = session['id']
             stripe_subscription_id = session.get('subscription')
             user_id = session.get('client_reference_id')  # Hämtas från Stripe-sessionen
-            logger.info(f"🔄 Uppdaterar payment status till 'paid' för session: {stripe_session_id}")
+            logger.info(f" Uppdaterar payment status till 'paid' för session: {stripe_session_id}")
             # Uppdatera betalning i Supabase till status 'paid'
             supabase.table('payments').update({
                 'status': 'paid',
@@ -223,7 +223,7 @@ def stripe_webhook():
             subscription = event['data']['object']
             stripe_subscription_id = subscription['id']
             status = subscription['status']  # t.ex. 'active', 'past_due', 'canceled'
-            logger.info(f"🔄 Uppdaterar subscription status till '{status}' för subscription: {stripe_subscription_id}")
+            logger.info(f" Uppdaterar subscription status till '{status}' för subscription: {stripe_subscription_id}")
             # Uppdatera subscription_id och status i Supabase
             supabase.table('payments').update({
                 'status': status
@@ -232,14 +232,14 @@ def stripe_webhook():
         elif event['type'] == 'customer.subscription.deleted':
             subscription = event['data']['object']
             stripe_subscription_id = subscription['id']
-            logger.info(f"🔄 Markerar subscription som 'cancelled' för subscription: {stripe_subscription_id}")
+            logger.info(f" Markerar subscription som 'cancelled' för subscription: {stripe_subscription_id}")
             # Markera som avslutad i Supabase
             supabase.table('payments').update({
                 'status': 'cancelled'
             }).eq('stripe_subscription_id', stripe_subscription_id).execute()
 
         else:
-            logger.info(f"ℹ️ Event-typen hanteras ej: {event['type']}")
+            logger.info(f" Event-typen hanteras ej: {event['type']}")
 
         return '', 200
     except Exception as e:

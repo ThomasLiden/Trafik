@@ -4,23 +4,23 @@ import nodemailer from "nodemailer";
 import axios from "axios";
 import cors from "cors";
 
-// 🔐 Ladda miljövariabler
+//  Ladda miljövariabler
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 📦 Middleware
+//  Middleware
 app.use(cors());
 app.use(express.json());
 
-// 🔐 API-nyckelkontroll
+//  API-nyckelkontroll
 const checkApiKey = (req, res, next) => {
   const providedKey = req.headers["x-api-key"];
   const expectedKey = process.env["X_API_KEY"];
 
-  console.log("🛡️ Mottagen:", providedKey);
-  console.log("🔐 Förväntad:", expectedKey);
+  console.log(" Mottagen:", providedKey);
+  console.log(" Förväntad:", expectedKey);
 
   if (!providedKey || providedKey !== expectedKey) {
     return res.status(401).json({
@@ -32,12 +32,12 @@ const checkApiKey = (req, res, next) => {
   next();
 };
 
-// ✅ Hälsokoll
+//  Hälsokoll
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-// ✉️ Skicka e-post (med stöd för HTML)
+//  Skicka e-post (med stöd för HTML)
 app.post("/send-email", checkApiKey, async (req, res) => {
   const { to, subject, message, html_message } = req.body;
 
@@ -56,7 +56,7 @@ app.post("/send-email", checkApiKey, async (req, res) => {
   });
 
   try {
-    console.log("📤 Försöker skicka mail till:", to);
+    console.log(" Försöker skicka mail till:", to);
 
     const result = await transporter.sendMail({
       from: process.env.SMTP_USER,
@@ -66,16 +66,16 @@ app.post("/send-email", checkApiKey, async (req, res) => {
       ...(html_message && { html: html_message })  // Lägg till html om det finns
     });
 
-    console.log("✅ Mail skickat:", result.response || result);
+    console.log(" Mail skickat:", result.response || result);
     res.status(200).json({ message: "Email sent!" });
 
   } catch (err) {
-    console.error("❌ SMTP error:", err);
+    console.error(" SMTP error:", err);
     res.status(502).json({ error: "Failed to send email", details: err.message });
   }
 });
 
-// 📲 Skicka SMS
+//  Skicka SMS
 const fromRegex = /^[A-Za-z0-9 _åäö]{3,11}$/i;
 
 app.post("/send-sms", checkApiKey, async (req, res) => {
@@ -122,7 +122,7 @@ app.post("/send-sms", checkApiKey, async (req, res) => {
       }
     );
 
-    console.log("✅ SMS skickat:", response.data);
+    console.log(" SMS skickat:", response.data);
     res.status(200).json({
       message: "SMS sent",
       actualFrom: from,
@@ -130,7 +130,7 @@ app.post("/send-sms", checkApiKey, async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ SMS error:", err.response?.data || err.message);
+    console.error(" SMS error:", err.response?.data || err.message);
     res.status(500).json({
       error: "Failed to send SMS",
       details: err.response?.data || err.message
@@ -138,7 +138,7 @@ app.post("/send-sms", checkApiKey, async (req, res) => {
   }
 });
 
-// 🚀 Starta server
+//  Starta server
 app.listen(PORT, () => {
-  console.log(`✅ Notification server running on port ${PORT}`);
+  console.log(` Notification server running on port ${PORT}`);
 });
