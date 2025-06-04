@@ -56,9 +56,9 @@ const app = Vue.createApp({
     </router-view>
 
     <router-view name="modal" v-slot="{ Component: ModalComp }">
-      <Modal v-if="ModalComp || modalComponent" @close="closeModal">
+      <Modal v-if="ModalComp || $route.name === 'subscription'" @close="closeModal">
         <component
-          :is="modalComponent || ModalComp"
+          :is="ModalComp || ($route.name === 'subscription' ? 'SubscriptionModal' : null)"
           @login-success="onLoginSuccess"
           @signup-success="onSignupSuccess"
           :user-id="userId"
