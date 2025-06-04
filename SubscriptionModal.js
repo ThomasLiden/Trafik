@@ -109,14 +109,7 @@ export default {
         });
     },
   
-    watch: {
-      step(newVal) {
-        if (newVal === 3) {
-          this.sendVerificationCode();
-        }
-      }
-    },
-  
+ 
     methods: {
       nextStep() {
         this.step++;
@@ -130,78 +123,8 @@ export default {
         this.step = 3;
       },
   
-      async sendVerificationCode() {
-        this.codeError = '';
-        try {
-          const response = await fetch('https://trafik-q8va.onrender.com/api/send-sms-code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: this.phone })
-          });
-  
-          const result = await response.json();
-          if (!response.ok) {
-            throw new Error(result.error || 'Misslyckades att skicka verifieringskoden.');
-          }
-  
-          console.log("✅ Verifieringskod skickad till", this.phone);
-        } catch (error) {
-          console.error("❌ Kunde inte skicka verifieringskod:", error);
-          this.codeError = "Kunde inte skicka verifieringskod: " + error.message;
-        }
-      },
-  
-      async verifyCode() {
-        this.codeError = '';
-        if (!this.smsCode || this.smsCode.length !== 6) {
-          this.codeError = "Koden måste vara 6 siffror.";
-          return;
-        }
-  
-        try {
-          const res = await fetch("https://trafik-q8va.onrender.com/api/verify-sms-code", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              phone: this.phone,
-              code: this.smsCode
-            })
-          });
-  
-          const data = await res.json();
-          if (!res.ok) {
-            throw new Error(data.error || "Ogiltig kod.");
-          }
-  
-          this.nextStep();
-        } catch (err) {
-          console.error("❌ Verifieringsfel:", err);
-          this.codeError = err.message || "Kunde inte verifiera koden.";
-        }
-      },
-  
-      async resendCode() {
-        try {
-          const response = await fetch('https://trafik-q8va.onrender.com/api/resend-sms-code', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ phone: this.phone })
-          });
-  
-          const result = await response.json();
-  
-          if (!response.ok) {
-            throw new Error(result.error || 'Misslyckades att skicka om koden');
-          }
-  
-          alert("En ny verifieringskod har skickats via SMS.");
-        } catch (error) {
-          console.error("❌ Kunde inte skicka om SMS:", error);
-          this.codeError = error.message;
-        }
-      },
+
+    
   
       async handlePayment() {
         this.loading = true;
