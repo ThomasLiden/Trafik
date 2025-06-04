@@ -19,6 +19,11 @@ const routes = [
     components: { modal: SubscriptionModal },
   },
   {
+    path: "/subscription",
+    name: "subscription",
+    components: { modal: SubscriptionModal },
+  },
+  {
     path: "/login",
     name: "login",
     components: { default: MapView, modal: LoginForm },

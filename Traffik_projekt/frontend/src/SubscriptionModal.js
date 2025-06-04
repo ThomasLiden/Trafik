@@ -89,6 +89,11 @@ export default {
       const sessionId = this.$route.query.session_id;
       if (sessionId) {
         console.log("Stripe session ID:", sessionId);
+        // Hämta användarinformation från localStorage
+        this.userId = localStorage.getItem("user_id");
+        this.email = localStorage.getItem("user_email");
+        this.phone = localStorage.getItem("user_phone");
+        this.region = JSON.parse(localStorage.getItem("user_region"));
         this.step = 4; // Gå direkt till bekräftelsesidan
       }
       
@@ -190,9 +195,14 @@ export default {
       
             checkout.mount('#stripe-checkout-container');
       
-            //  Lägg till eventlyssnare för att stega till "tack"-steget efter betalning
+            // Lägg till eventlyssnare för att stega till "tack"-steget efter betalning
             checkout.addEventListener('checkout.complete', () => {
               console.log("💳 Stripe checkout slutförd");
+              // Spara användarinformation i localStorage
+              localStorage.setItem("user_region", JSON.stringify(this.region));
+              localStorage.setItem("user_email", this.email);
+              localStorage.setItem("user_phone", this.phone);
+              // Uppdatera steg utan att stänga modalen
               this.step = 4;
             });
           });
@@ -203,8 +213,7 @@ export default {
         } finally {
           this.loading = false;
         }
-      }
-      ,
+      },
     
       async sendConfirmationEmail() {
         if (this.emailSent) return;

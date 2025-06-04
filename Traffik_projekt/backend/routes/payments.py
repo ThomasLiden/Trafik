@@ -117,7 +117,7 @@ def create_checkout_session_api():
             }],
             mode='subscription',
             ui_mode='embedded',
-            return_url=f'{FRONTEND_URL}/#/subscription?session_id={{CHECKOUT_SESSION_ID}}',
+            return_url=f'{FRONTEND_URL}/#/subscription?session_id={{CHECKOUT_SESSION_ID}}&show_modal=true',
             client_reference_id=user_id,
             metadata={
                 "reseller_id": reseller_id
