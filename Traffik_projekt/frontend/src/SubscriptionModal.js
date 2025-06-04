@@ -65,7 +65,8 @@ export default {
         price: null, //lagt till
         stripe: null,
         loading: false,
-        error: null
+        error: null,
+        emailSent: false,
       };
     },
 
@@ -118,18 +119,17 @@ export default {
   
     methods: {
       nextStep() {
-            if (!this.resellerId) {
-      alert("Vänta tills priset laddats innan du går vidare.");
-      return;
-    }
-    // 2) Kolla att region är valt (objekt med location_id)
-    if (!this.region || !this.region.location_id) {
-      alert("Välj ett område innan du går vidare.");
-      return;
-    }
+        if (!this.resellerId) {
+          alert("Vänta tills priset laddats innan du går vidare.");
+          return;
+        }
+        if (!this.region || !this.region.location_id) {
+          alert("Välj ett område innan du går vidare.");
+          return;
+        }
         this.step++;
       },
-  
+    
       handleSignupSuccess(payload) {
         this.email = payload.email;
         this.phone = payload.phone;
@@ -137,62 +137,95 @@ export default {
         localStorage.setItem("user_id", this.userId);
         this.step = 3;
       },
-  
- 
+    
       async handlePayment() {
         this.loading = true;
         this.error = null;
-      
+    
         try {
           const userIdToSend = this.userId || localStorage.getItem("user_id");
-          if (!userIdToSend) {
-            throw new Error("Ingen giltig user_id tillgänglig för betalning");
-          }
-      
+          if (!userIdToSend) throw new Error("Ingen giltig user_id tillgänglig för betalning");
+    
           const response = await fetch('https://trafik-q8va.onrender.com/api/create-checkout-session', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({ user_id: userIdToSend, location_id: this.region.location_id })
           });
-      
+    
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Något gick fel vid kommunikation med servern');
+            throw new Error(errorData.error || 'Fel vid skapande av betalningssession');
           }
-      
+    
           const data = await response.json();
-          if (!data.clientSecret) {
-            throw new Error('Inget client secret mottaget från servern');
-          }
-      
-          if (!this.stripe) {
-            throw new Error('Stripe är inte initialiserad');
-          }
-      
-          // Gå till steg 3 först (så att DOM-elementet finns)
+          if (!data.clientSecret) throw new Error('Inget clientSecret mottaget från servern');
+    
+          if (!this.stripe) throw new Error('Stripe är inte initialiserad');
+    
           this.step = 3;
-      
-          // Vänta tills DOM har uppdaterats innan vi mountar
+    
           this.$nextTick(async () => {
             const checkout = await this.stripe.initEmbeddedCheckout({
               clientSecret: data.clientSecret
             });
-      
             checkout.mount('#stripe-checkout-container');
           });
-      
+    
         } catch (error) {
-          console.error('Error in payment process:', error);
-          this.error = error.message || 'Ett fel uppstod vid betalningsprocessen';
+          console.error('Fel i betalningsflöde:', error);
+          this.error = error.message || 'Ett fel uppstod vid betalning';
         } finally {
           this.loading = false;
         }
       },
+    
+      async sendConfirmationEmail() {
+        if (this.emailSent) return;
+    
+        this.emailSent = true;
+    
+        try {
+          const response = await fetch("https://trafikwidget-projekt.onrender.com/send-email", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              email: this.email,
+              subject: "🚦 Bekräftelse på trafikprenumeration",
+              body: `
+                <h2>Tack för din prenumeration!</h2>
+                <p>Du kommer nu få SMS om trafikhändelser i <strong>${this.region.region}</strong>.</p>
+                <p>Telefon: <strong>${this.phone}</strong></p>
+                <p>Månadspris: <strong>${this.price} kr</strong></p>
+                <p>🔗 Du kan när som helst avsluta prenumerationen via vår hemsida.</p>
+              `
+            })
+          });
+    
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Misslyckades skicka bekräftelsemail");
+    
+          console.log("✅ Bekräftelsemail skickat.");
+        } catch (err) {
+          console.error("❌ Kunde inte skicka bekräftelsemail:", err);
+          alert("Ett fel uppstod vid utskick av bekräftelsemail.");
+        }
+      },
+    
       closeModal() {
         this.$emit('close');
       }
+    },
+    
+      watch: {
+        step(newVal) {
+          if (newVal === 4) {
+            this.sendConfirmationEmail();
+          }
+        }
+      }
     }
-};
+    

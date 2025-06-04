@@ -31,11 +31,10 @@ def signup():
         location_id = data.get("location_id")
         reseller_id = data.get("reseller_id")
 
-        # 1) Kontrollera att reseller_id faktiskt skickats
         if not reseller_id:
             return jsonify({"error": "reseller_id krävs"}), 400
 
-        # 2) Valfritt: Bekräfta att reseller_id finns i databasen
+        # Bekräfta att återförsäljaren finns
         lookup = supabase.table("reseller") \
                          .select("reseller_id") \
                          .eq("reseller_id", reseller_id) \
@@ -44,7 +43,7 @@ def signup():
         if not lookup.data:
             return jsonify({"error": f"Ingen reseller med id {reseller_id} hittades"}), 400
 
-        # 3) Skapa Supabase‐användaren
+        # Skapa Supabase-användare
         result = supabase.auth.sign_up({
             "email": email,
             "password": password
@@ -52,11 +51,11 @@ def signup():
 
         user = result.user
         if not user:
-            raise ValueError("Signup failed, no user returned")
+            raise ValueError("Signup misslyckades, ingen användare skapades")
 
         user_id = user.id
 
-        # 2. Lägg till användare i users-tabellen
+        # Spara användardata
         supabase.table("users").insert({
             "user_id": user_id,
             "email": email,
@@ -64,48 +63,11 @@ def signup():
             "last_name": last_name,
             "phone": phone,
             "reseller_id": reseller_id,
-            "phone_confirmed": False
+            "phone_confirmed": True  # Sätt till True direkt eftersom ingen verifiering sker
         }).execute()
-
-        # 3. Lägg till prenumeration
-        # supabase.table("subscriptions").insert({
-        #    "user_id": user_id,
-        #    "active": True,
-        #    "location_id": location_id
-        #}).execute()
-
-        # 4. Generera och spara kod
-        verification_code = str(random.randint(100000, 999999))
-        expires_at = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
-
-        supabase.table("sms_codes").upsert({
-            "phone": phone,
-            "code": verification_code,
-            "expires_at": expires_at
-        }).execute()
-
-        # 5. Skicka SMS via din sms-server
-        sms_response = requests.post(
-            os.getenv("SMS_SERVER_URL", "https://trafikwidget-projekt.onrender.com/send-sms"),
-            headers={
-                "x-api-key": os.getenv("X_API_KEY")
-            },
-            json={
-                "to": phone,
-                "message": f"Din verifieringskod är: {verification_code}",
-                "from": "TrafikInfo"
-            }
-        )
-
-        print("==> SMS response status:", sms_response.status_code)
-        print("==> SMS response body:", sms_response.text)
-
-
-        if sms_response.status_code != 200:
-            print("❌ Misslyckades att skicka SMS:", sms_response.text)
 
         return jsonify({
-            "message": "User created",
+            "message": "Användare skapad",
             "email": email,
             "user_id": user_id
         }), 200
@@ -114,8 +76,6 @@ def signup():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 400
-
-
 
 # Logga in
 @member_blueprint.route('/api/login', methods=['POST'])
