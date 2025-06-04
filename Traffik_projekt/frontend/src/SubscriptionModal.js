@@ -188,6 +188,11 @@ export default {
       
           if (!this.stripe) throw new Error('Stripe är inte initialiserad');
       
+          // Spara användarinformation i localStorage innan checkout
+          localStorage.setItem("user_region", JSON.stringify(this.region));
+          localStorage.setItem("user_email", this.email);
+          localStorage.setItem("user_phone", this.phone);
+      
           this.$nextTick(async () => {
             const checkout = await this.stripe.initEmbeddedCheckout({
               clientSecret: data.clientSecret
@@ -198,12 +203,15 @@ export default {
             // Lägg till eventlyssnare för att stega till "tack"-steget efter betalning
             checkout.addEventListener('checkout.complete', () => {
               console.log("💳 Stripe checkout slutförd");
-              // Spara användarinformation i localStorage
-              localStorage.setItem("user_region", JSON.stringify(this.region));
-              localStorage.setItem("user_email", this.email);
-              localStorage.setItem("user_phone", this.phone);
-              // Uppdatera steg utan att stänga modalen
-              this.step = 4;
+              // Använd Vue's nextTick för att säkerställa att DOM är uppdaterad
+              this.$nextTick(() => {
+                this.step = 4;
+                // Rensa checkout containern
+                const container = document.getElementById('stripe-checkout-container');
+                if (container) {
+                  container.innerHTML = '';
+                }
+              });
             });
           });
       
