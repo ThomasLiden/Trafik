@@ -200,19 +200,19 @@ export default {
       
             checkout.mount('#stripe-checkout-container');
       
-            // Lägg till eventlyssnare för att stega till "tack"-steget efter betalning
-            checkout.addEventListener('checkout.complete', () => {
-              console.log("💳 Stripe checkout slutförd");
-              // Använd Vue's nextTick för att säkerställa att DOM är uppdaterad
-              this.$nextTick(() => {
-                this.step = 4;
-                // Rensa checkout containern
-                const container = document.getElementById('stripe-checkout-container');
-                if (container) {
-                  container.innerHTML = '';
-                }
+            // Använd Promise för att vänta på checkout completion
+            await new Promise((resolve) => {
+              checkout.addEventListener('checkout.complete', () => {
+                resolve();
               });
             });
+      
+            // När Promise är resolved, uppdatera UI
+            this.step = 4;
+            const container = document.getElementById('stripe-checkout-container');
+            if (container) {
+              container.innerHTML = '';
+            }
           });
       
         } catch (error) {
@@ -221,6 +221,16 @@ export default {
         } finally {
           this.loading = false;
         }
+      },
+
+      handleCheckoutComplete() {
+        this.$nextTick(() => {
+          this.step = 4;
+          const container = document.getElementById('stripe-checkout-container');
+          if (container) {
+            container.innerHTML = '';
+          }
+        });
       },
     
       async sendConfirmationEmail() {
