@@ -181,5 +181,7 @@ const app = Vue.createApp({
   },
 });
 
+app.component('SubscriptionModal', SubscriptionModal);
+
 app.use(router);
 app.mount("#app");
