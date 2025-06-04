@@ -85,7 +85,14 @@ export default {
 
       console.log("SubscriptionModal mounted, $route.query =", this.$route.query);
       
-          try {
+      // Kontrollera om vi har en session_id från Stripe
+      const sessionId = this.$route.query.session_id;
+      if (sessionId) {
+        console.log("Stripe session ID:", sessionId);
+        this.step = 4; // Gå direkt till bekräftelsesidan
+      }
+      
+      try {
       const regionsRes = await fetch("https://trafik-q8va.onrender.com/api/regions");
       
       if (!regionsRes.ok) throw new Error("Kunde inte hämta regioner");
