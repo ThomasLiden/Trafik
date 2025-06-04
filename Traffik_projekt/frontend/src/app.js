@@ -138,12 +138,45 @@ const app = Vue.createApp({
     },
   },
 
-  mounted() {
+  async mounted() {
     // Anropa funktionen för att applicera stilar när appen är monterad
      applyCustomStylesFromUrl();
 
     if (this.loggedIn) {
       this.userId = localStorage.getItem("user_id");
+    }
+
+    // Visa SubscriptionModal om vi är på /subscription
+    if (this.$route.name === 'subscription') {
+      this.modalComponent = 'SubscriptionModal';
+    }
+
+    // Kontrollera om vi har en show_modal parameter i URL:en
+    const showModal = this.$route.query.show_modal;
+    if (showModal === 'true') {
+      this.showSubscriptionModal = true;
+    }
+
+    // Kontrollera om vi har en session_id från Stripe
+    const sessionId = this.$route.query.session_id;
+    if (sessionId) {
+      this.$router.push({ 
+        path: '/subscription',
+        query: { session_id: sessionId }
+      });
+    }
+
+    try {
+    } catch (error) {
+      console.error("Error in mounted:", error);
+    }
+  },
+
+  watch: {
+    '$route'(to) {
+      if (to.name === 'subscription') {
+        this.modalComponent = 'SubscriptionModal';
+      }
     }
   },
 });
