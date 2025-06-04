@@ -195,24 +195,22 @@ export default {
       
           this.$nextTick(async () => {
             const checkout = await this.stripe.initEmbeddedCheckout({
-              clientSecret: data.clientSecret
+              clientSecret: data.clientSecret,
+              onComplete: () => {
+                // Förhindra att modalen stängs
+                event?.preventDefault();
+                event?.stopPropagation();
+                
+                // Uppdatera UI
+                this.step = 4;
+                const container = document.getElementById('stripe-checkout-container');
+                if (container) {
+                  container.innerHTML = '';
+                }
+              }
             });
       
             checkout.mount('#stripe-checkout-container');
-      
-            // Använd Promise för att vänta på checkout completion
-            await new Promise((resolve) => {
-              checkout.addEventListener('checkout.complete', () => {
-                resolve();
-              });
-            });
-      
-            // När Promise är resolved, uppdatera UI
-            this.step = 4;
-            const container = document.getElementById('stripe-checkout-container');
-            if (container) {
-              container.innerHTML = '';
-            }
           });
       
         } catch (error) {
