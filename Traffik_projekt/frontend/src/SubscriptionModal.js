@@ -176,8 +176,6 @@ export default {
       
           if (!this.stripe) throw new Error('Stripe är inte initialiserad');
       
-          this.step = 3;
-      
           this.$nextTick(async () => {
             const checkout = await this.stripe.initEmbeddedCheckout({
               clientSecret: data.clientSecret
